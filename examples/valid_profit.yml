@@ -1,0 +1,106 @@
+# profitctl Example Configuration
+# This demonstrates all features of the MVP
+
+project:
+  name: Example SaaS Product
+
+# Fixed Costs (monthly)
+fixed_costs:
+  - name: AWS EC2
+    amount: 500
+    period: monthly
+    layer: infrastructure
+
+  - name: Database (RDS)
+    amount: 200
+    period: monthly
+    layer: infrastructure
+
+  - name: Auth Service (Auth0)
+    amount: 100
+    period: monthly
+    layer: service
+
+  - name: Dev Team Tools
+    amount: 300
+    period: monthly
+    layer: application
+
+# Variable Costs (per user, per month)
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
+
+  - name: Storage (S3)
+    cost_per_unit: 0.023
+    units_per_user: 5  # GB
+    distribution: uniform
+    min: 2
+    max: 10
+    layer: infrastructure
+
+  - name: LLM Tokens
+    cost_per_unit: 0.01
+    units_per_user: 5000
+    distribution: exponential
+    rate: 0.001
+    layer: service
+
+# Pricing Plans
+pricing:
+  plans:
+    - name: Basic
+      price: 10
+      limits:
+        users: 1000
+
+    - name: Pro
+      price: 29
+      limits:
+        users: 5000
+
+    - name: Enterprise
+      price: 99
+      limits:
+        users: 10000
+
+# Profit Covenants (threshold-based)
+covenants:
+  # Threshold-based covenant - enforce minimum margin
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 20
+    message: Gross margin must be at least 20%
+
+  # p95 margin threshold - stress test worst-case scenarios
+  - type: threshold
+    field: p95_margin
+    operator: gte
+    value: 15
+    message: p95 margin must be greater than 15% (worst 5% of cases)
+
+  # Cost per user cap - prevent per-user losses
+  - type: threshold
+    field: cost_per_user
+    operator: lte
+    value: 5
+    message: Cost per user must not exceed $5
+
+  # p95 cost per user - catch outlier expensive users
+  - type: threshold
+    field: p95_cost_per_user
+    operator: lte
+    value: 10
+    message: p95 cost per user must not exceed $10 (worst 5% of users)
+
+# Simulation Settings
+simulation:
+  base_users: 100
+  growth_factor: 1.5  # 50% growth per step
+  iterations: 10000   # Monte Carlo iterations

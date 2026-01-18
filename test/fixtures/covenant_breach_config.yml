@@ -1,0 +1,33 @@
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 1000
+
+fixed_costs:
+  - name: Expensive Server
+    amount: 10000
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: Expensive API
+    cost_per_unit: 1.0
+    units_per_user: 100
+    distribution: uniform
+    min: 90
+    max: 110
+    layer: application
+
+pricing:
+  plans:
+    - name: Basic
+      price: 5
+      limits:
+        users: 1000
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 50
+    message: Gross margin must be >= 50% (this will fail)

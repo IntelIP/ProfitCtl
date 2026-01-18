@@ -1,0 +1,74 @@
+project:
+  name: Test Project
+
+fixed_costs:
+  - name: AWS EC2
+    amount: 500
+    period: monthly
+    layer: infrastructure
+  - name: Database (RDS)
+    amount: 200
+    period: monthly
+    layer: infrastructure
+  - name: Auth Service (Auth0)
+    amount: 100
+    period: monthly
+    layer: service
+  - name: Dev Team Tools
+    amount: 300
+    period: monthly
+    layer: application
+
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
+  - name: Storage (S3)
+    cost_per_unit: 0.023
+    units_per_user: 5
+    distribution: uniform
+    min: 2
+    max: 10
+    layer: infrastructure
+  - name: LLM Tokens
+    cost_per_unit: 0.01
+    units_per_user: 5000
+    distribution: exponential
+    rate: 0.001
+    layer: service
+
+pricing:
+  plans:
+    - name: Basic
+      price: 10
+      limits:
+        users: 1000
+    - name: Pro
+      price: 29
+      limits:
+        users: 5000
+    - name: Enterprise
+      price: 99
+      limits:
+        users: 10000
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 20
+    message: Gross margin must be at least 20%
+  - type: threshold
+    field: cost_per_user
+    operator: lte
+    value: 5
+    message: Cost per user must be <= $5
+
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000

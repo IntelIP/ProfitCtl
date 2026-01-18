@@ -347,25 +347,41 @@ Task 20: Go Learning Guide
       amount: number
       period: monthly | yearly | daily
       layer: infrastructure | application | service
+  
   variable_costs:
     - name: string
       cost_per_unit: number
-      units_per_user: number | distribution
+      units_per_user: number
+      # Distribution-specific parameters (all required per distribution type)
       distribution: normal | exponential | uniform
+      # Normal distribution parameters:
+      mean: number
+      stddev: number
+      # Uniform distribution parameters:
+      min: number
+      max: number
+      # Exponential distribution parameters:
+      rate: number
       layer: infrastructure | application | service
+  
   pricing:
     plans:
       - name: string
         price: number
         limits:
           users: number
+        
   covenants:
-    - type: threshold | expression
-      field: string  # for threshold
+    - type: threshold  # MVP: threshold-only (expression deferred to v2)
+      field: string  # "margin", "cost_per_user", "p95_margin"
       operator: gt | lt | gte | lte | eq
       value: number
-      expression: string  # for expression
       message: string
+  
+  simulation:
+    base_users: number  # Default: 100
+    growth_factor: number  # Default: 1.5
+    iterations: number     # Default: 10000 (Monte Carlo)
   ```
 
   **Go Learning Context**:
@@ -413,7 +429,7 @@ Task 20: Go Learning Guide
   - `golang.org/x/exp/slices` - Immutable operations
   - `github.com/google/go-cmp` - Value comparison for testing
 
-  **Type Definitions**:
+  **Type Definitions** (with distribution parameters):
   ```go
   type CostLayer string
   const (
@@ -436,6 +452,7 @@ Task 20: Go Learning Guide
       DistUniform     DistributionType = "uniform"
   )
 
+  // FixedCost represents fixed infrastructure/application costs
   type FixedCost struct {
       Name   string     `yaml:"name" validate:"required"`
       Amount float64    `yaml:"amount" validate:"required,min=0"`
@@ -443,21 +460,36 @@ Task 20: Go Learning Guide
       Layer  CostLayer  `yaml:"layer" validate:"required,oneof=infrastructure application service"`
   }
 
+  // VariableCost represents per-user variable costs with statistical distributions
   type VariableCost struct {
-      Name             string          `yaml:"name" validate:"required"`
-      CostPerUnit      float64         `yaml:"cost_per_unit" validate:"required,min=0"`
-      UnitsPerUser     float64         `yaml:"units_per_user" validate:"required,min=0"`
-      DistributionType DistributionType `yaml:"distribution" validate:"required,oneof=normal exponential uniform"`
-      DistributionParams map[string]float64 // mean, stddev, min, max
-      Layer            CostLayer       `yaml:"layer" validate:"required,oneof=infrastructure application service"`
+      Name         string            `yaml:"name" validate:"required"`
+      CostPerUnit  float64           `yaml:"cost_per_unit" validate:"required,min=0"`
+      UnitsPerUser float64           `yaml:"units_per_user" validate:"required,min=0"`
+      Distribution DistributionType  `yaml:"distribution" validate:"required,oneof=normal exponential uniform"`
+      
+      // Distribution-specific parameters (validated based on Distribution field)
+      Mean         *float64 `yaml:"mean,omitempty"`   // Required for normal
+      StdDev       *float64 `yaml:"stddev,omitempty"` // Required for normal
+      Min          *float64 `yaml:"min,omitempty"`    // Required for uniform
+      Max          *float64 `yaml:"max,omitempty"`    // Required for uniform
+      Rate         *float64 `yaml:"rate,omitempty"`   // Required for exponential
+      
+      Layer        CostLayer `yaml:"layer" validate:"required,oneof=infrastructure application service"`
   }
 
+  // CostLayerBreakdown separates costs by infrastructure layer
   type CostLayerBreakdown struct {
       Infrastructure float64 `json:"infrastructure"`
       Application    float64 `json:"application"`
       Service        float64 `json:"service"`
   }
   ```
+
+  **Distribution Validation Rules**:
+  - **normal**: mean and stddev must be present and > 0
+  - **uniform**: min and max must be present, min < max
+  - **exponential**: rate must be present and > 0
+  - Validation implemented via custom struct-level validator
 
   **Go Learning Context**:
   - Structs: Value types, passed by value unless using pointer
@@ -914,7 +946,7 @@ Task 20: Go Learning Guide
   - `github.com/expr-lang/expr` - Safe expression evaluation (optional)
   - Custom simple expression parser for MVP (recommended)
 
-  **Threshold Rules**:
+  **Threshold Rules** (MVP: threshold-only, expression deferred to v2):
   ```go
   type ThresholdCovenant struct {
       Field    string  // "margin", "cost_per_user", "p95_margin"
@@ -922,24 +954,26 @@ Task 20: Go Learning Guide
       Value    float64
       Message  string
   }
-
+  
   // Examples:
   // { field: "margin", operator: "gte", value: 20, message: "Gross margin must be >= 20%" }
   // { field: "cost_per_user", operator: "lte", value: 5, message: "Cost per user must be <= $5" }
+  // { field: "p95_margin", operator: "gte", value: 15, message: "p95 margin must be >= 15%" }
   ```
-
-  **Expression Rules**:
-  ```go
-  type ExpressionCovenant struct {
-      Expression string // "p95_margin > 20"
-      Message    string
-  }
-
-  // Parser evaluates simple expressions:
-  // - Operators: >, <, >=, <=, ==, !=
-  // - Fields: margin, p95_margin, cost_per_user, p95_cost_per_user
-  // - Logical: &&, || (optional for v2)
-  ```
+  
+  **Expression Rules (DEFERRED to v2)**:
+  - Complex expression parsing out of scope for MVP
+  - Threshold rules cover 80% of use cases
+  - Custom expression parser adds security/complexity risks
+  - Re-evaluate based on user feedback for v2
+  
+  **Cross-Field Validation**:
+  Validation must ensure:
+  1. Pricing plan limits increase with tier  
+  2. Distribution parameters match distribution type (see Task 3)
+  3. Required fields present based on distribution selection
+  
+  Implement via custom struct-level validator in Task 2/3
 
   **Go Learning Context**:
   - String parsing: `strings.Split()` for basic tokenization
@@ -1192,58 +1226,61 @@ Task 20: Go Learning Guide
 - [ ] 15. Init Command (Repo Scanner)
 
   **What to do**:
-  - Implement `profitctl init` command
-  - Create repo scanner to detect technology stack
-  - Generate initial `profit.yml` from detected stack
+  - Implement `profitctl init` command with manual stack selection
+  - Create template-based config generator (not auto-detection)
+  - Generate initial `profit.yml` from selected template
   - Include sensible defaults for common stacks
   - Allow user to edit generated config
-
-  **Must NOT do**:
-  - No simulation in init command
-
-  **Parallelizable**: NO (CLI integration)
-
-  **References**:
-
-  **Pattern References** (existing code to follow):
-  - `github.com/github/linguist` - Language detection
-  - `github.com/infracost/infracost` - Stack detection patterns
-
-  **File Detection**:
+  - Templates for: Go, Node.js, Python, Rust, etc.
+  
+  **Template Structure**:
   ```
-  go.mod → Go
-  package.json → Node.js
-  requirements.txt → Python
-  Cargo.toml → Rust
-  Dockerfile → Container
-  terraform/*.tf → Infrastructure
-  next.config.js → Next.js
-  astro.config.mjs → Astro
+  internal/scanner/
+  ├── templates/
+  │   ├── go.yml      # Go stack defaults
+  │   ├── node.yml    # Node.js stack defaults
+  │   ├── python.yml  # Python stack defaults
+  │   └── rust.yml    # Rust stack defaults
+  ├── generator.go    # Template selection & generation
+  └── scanner.go      # File existence checks (simplified)
   ```
-
+  
+  **Usage**:
+  ```bash
+  profitctl init --stack go      # Go template
+  profitctl init --stack node    # Node.js template  
+  profitctl init --help          # See available stacks
+  ```
+  
+  **Why Templates vs Auto-Detection**:
+  - Lower complexity: No pattern matching logic
+  - User control: Explicit stack selection
+  - Maintainable: Static templates, no runtime detection bugs
+  - Clear: Users understand what's being generated
+  
   **Go Learning Context**:
   - File existence: `os.Stat(path)` returns FileInfo
-  - Path joining: `filepath.Join(dir, "go.mod")`
-  - Reading: `ioutil.ReadFile()` (deprecated, use `os.ReadFile()`)
+  - Path joining: `filepath.Join(dir, "template")`
+  - Reading: `os.ReadFile()`
 
   **Acceptance Criteria**:
   - [ ] Init command: `cmd/init.go`
-  - [ ] Repo scanner: `internal/scanner/scanner.go`
-  - [ ] Template generator: `internal/scanner/template.go`
-  - [ ] Detects common stacks (Go, Node, Python, etc.)
-  - [ ] Generates valid profit.yml
-  - [ ] Run: `./profitctl init` → creates profit.yml
+  - [ ] Template generator: `internal/scanner/generator.go`
+  - [ ] Stack templates: `internal/scanner/templates/*.yml`
+  - [ ] Template selection with --stack flag
+  - [ ] Generates valid profit.yml from template
+  - [ ] Run: `./profitctl init --stack go` → creates profit.yml
   - [ ] Run: `./profitctl validate profit.yml` → valid
 
   **Manual Execution Verification**:
-  - [ ] Run: `./profitctl init`
-  - [ ] Verify: profit.yml created
-  - [ ] Verify: Detected stack mentioned in output
+  - [ ] Run: `./profitctl init --stack go`
+  - [ ] Verify: profit.yml created with Go stack defaults
   - [ ] Verify: Config is valid
+  - [ ] Verify: User can edit and re-run validate
 
   **Commit**: YES
-  - Message: `feat: implement init command with repo scanning`
-  - Files: `cmd/init.go`, `internal/scanner/scanner.go`, `internal/scanner/template.go`
+  - Message: `feat: implement init command with template selection`
+  - Files: `cmd/init.go`, `internal/scanner/generator.go`, `internal/scanner/templates/*.yml`
 
 ---
 
@@ -1400,9 +1437,9 @@ Task 20: Go Learning Guide
   - Error wrapping: `fmt.Errorf("failed: %w", err)` for context
 
   **Acceptance Criteria**:
-  - [ ] Exit code 0: Success
-  - [ ] Exit code 1: Covenant breach
-  - [ ] Exit code 2: Errors
+  - [ ] Exit code 0: Success (all checks passed)
+  - [ ] Exit code 1: Covenant breach (profit targets not met)
+  - [ ] Exit code 2: Errors (file not found, parsing error, etc.)
   - [ ] GitHub Actions workflow example: `.github/workflows/profit.yml`
   - [ ] Documentation in README
   - [ ] Test: `./profitctl simulate` → exit 0
@@ -1511,24 +1548,33 @@ Task 20: Go Learning Guide
 
   # Profit Covenants (hybrid: threshold + expression)
   covenants:
-    # Threshold-based covenant
+    # Threshold-based covenant - enforce minimum margin
     - type: threshold
       field: margin
       operator: gte
       value: 20
       message: "Gross margin must be at least 20%"
 
-    # Expression-based covenant
-    - type: expression
-      expression: "p95_margin > 15"
-      message: "p95 margin must be greater than 15%"
+    # p95 margin threshold - stress test worst-case scenarios
+    - type: threshold
+      field: p95_margin
+      operator: gte
+      value: 15
+      message: "p95 margin must be greater than 15% (worst 5% of cases)"
 
-    # Cost per user threshold
+    # Cost per user cap - prevent per-user losses
     - type: threshold
       field: cost_per_user
       operator: lte
       value: 5
       message: "Cost per user must not exceed $5"
+
+    # p95 cost per user - catch outlier expensive users
+    - type: threshold
+      field: p95_cost_per_user
+      operator: lte
+      value: 10
+      message: "p95 cost per user must not exceed $10 (worst 5% of users)"
 
   # Simulation Settings
   simulation:

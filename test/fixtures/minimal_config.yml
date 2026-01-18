@@ -1,0 +1,7 @@
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 1000
+
+fixed_costs: []
+variable_costs: []

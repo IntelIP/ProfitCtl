@@ -1,0 +1,19 @@
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 1000
+
+fixed_costs:
+  - name: Server
+    amount: 500
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
