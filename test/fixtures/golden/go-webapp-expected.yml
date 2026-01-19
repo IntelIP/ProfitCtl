@@ -1,0 +1,55 @@
+# Expected profit.yml output for go-webapp sample
+# Generated from LLM analysis of go.mod dependencies
+# This represents a typical SaaS web application with database, cache, cloud infra, and payments
+
+project:
+  name: "Go Web App"
+  description: "A Go-based web application with PostgreSQL, Redis, AWS infrastructure, and Stripe payments"
+
+# Fixed monthly costs (infrastructure, software licenses)
+fixed_costs:
+  - name: "AWS EC2 (t3.medium)"
+    amount: 45.00
+    period: monthly
+    layer: infrastructure
+  - name: "AWS RDS PostgreSQL (db.t3.micro)"
+    amount: 25.00
+    period: monthly
+    layer: infrastructure
+  - name: "AWS ElastiCache Redis (cache.t3.micro)"
+    amount: 15.00
+    period: monthly
+    layer: infrastructure
+  - name: "Stripe Monthly Fee"
+    amount: 0.00  # Base fee is $0, only transaction fees apply
+    period: monthly
+    layer: service
+
+# Variable costs (per user or per transaction)
+variable_costs:
+  - name: "Stripe Transaction Fee"
+    cost_per_unit: 0.029  # 2.9% + 30¢ per transaction
+    units_per_user: 0.5   # Assuming 0.5 transactions per user per month
+    distribution: normal
+    mean: 0.029
+    stddev: 0.005
+    layer: service
+  - name: "AWS Data Transfer"
+    cost_per_unit: 0.09   # $0.09 per GB
+    units_per_user: 0.5   # 500MB per user per month
+    distribution: normal
+    mean: 0.045
+    stddev: 0.01
+    layer: infrastructure
+
+# Business rules and profitability constraints
+covenants:
+  - name: "Gross Margin Minimum"
+    expression: "(revenue - total_cost) / revenue >= 0.3"
+    description: "Maintain at least 30% gross margin"
+  - name: "Cost Per User Maximum"
+    expression: "total_cost / users <= 10.00"
+    description: "Keep cost per user under $10"
+  - name: "Stripe Fee Cap"
+    expression: "stripe_cost / revenue <= 0.05"
+    description: "Stripe fees should not exceed 5% of revenue"

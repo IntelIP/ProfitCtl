@@ -45,8 +45,8 @@ type UsagePattern struct {
 
 // LLMProvider interface defines contract for LLM providers
 type LLMProvider interface {
-	Chat(ctx context.Context, messages []Message) (string, error)
-	IsAvailable(ctx context.Context) bool
+	Chat(ctx stdcontext.Context, messages []Message) (string, error)
+	IsAvailable(ctx stdcontext.Context) bool
 }
 
 // Message represents a single message in a conversation with LLM
