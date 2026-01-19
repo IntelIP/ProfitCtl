@@ -19,7 +19,7 @@ func NewOpenRouterProvider(apiKey, model string) (*OpenRouterProvider, error) {
 		return nil, fmt.Errorf("API key is required")
 	}
 	if model == "" {
-		model = "anthropic/claude-3-haiku" // Default cost-effective model
+		model = "mistralai/mistral-7b-instruct" // Best cheap open source model
 	}
 
 	client := openrouter.NewClient(apiKey)
@@ -36,12 +36,43 @@ func (p *OpenRouterProvider) Chat(ctx context.Context, messages []Message) (stri
 		return "", fmt.Errorf("messages cannot be empty")
 	}
 
-	// For now, return not implemented until API is clarified
-	return "", fmt.Errorf("OpenRouter provider not yet implemented - awaiting API clarification")
+	// Convert our Message type to OpenRouter format
+	var openRouterMessages []openrouter.ChatCompletionMessage
+	for _, msg := range messages {
+		openRouterMessages = append(openRouterMessages, openrouter.ChatCompletionMessage{
+			Role:    msg.Role,
+			Content: openrouter.Content{Text: msg.Content},
+		})
+	}
+
+	// Create chat completion request
+	req := openrouter.ChatCompletionRequest{
+		Model:    p.model,
+		Messages: openRouterMessages,
+	}
+
+	// Make the API call
+	resp, err := p.client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return "", fmt.Errorf("OpenRouter API error: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return "", fmt.Errorf("no response choices returned")
+	}
+
+	// Extract content from the response
+	content := resp.Choices[0].Message.Content.Text
+	return content, nil
 }
 
 // IsAvailable checks if the OpenRouter service is accessible
 func (p *OpenRouterProvider) IsAvailable(ctx context.Context) bool {
-	// Temporarily return false until implementation is complete
-	return false
+	// Try a simple chat completion to test connectivity
+	testMessages := []Message{
+		{Role: "user", Content: "Hello"},
+	}
+
+	_, err := p.Chat(ctx, testMessages)
+	return err == nil
 }
