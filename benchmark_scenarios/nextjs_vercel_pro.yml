@@ -1,0 +1,23 @@
+# Next.js on Vercel Pro (single seat)
+project:
+  name: "Next.js - Vercel Pro (1 seat)"
+
+fixed_costs:
+  - name: "Vercel Pro base fee (1 seat)"
+    amount: 20
+    period: monthly
+    layer: service
+
+variable_costs:
+  - name: "Fast Data Transfer (conservative)"
+    cost_per_unit: 0.15
+    units_per_user: 0.0018
+    distribution: normal
+    mean: 1
+    stddev: 0.25
+    layer: service
+
+simulation:
+  base_users: 50000
+  growth_factor: 1.15
+  iterations: 10000

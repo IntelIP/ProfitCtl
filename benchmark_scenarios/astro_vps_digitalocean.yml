@@ -1,0 +1,23 @@
+# Astro on DigitalOcean VPS (Basic 1GB)
+project:
+  name: "Astro VPS - DigitalOcean Basic 1GB"
+
+fixed_costs:
+  - name: "DigitalOcean Basic Droplet (1GB RAM)"
+    amount: 6
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: "Bandwidth egress (conservative)"
+    cost_per_unit: 0.01
+    units_per_user: 0.0018
+    distribution: normal
+    mean: 1
+    stddev: 0.25
+    layer: infrastructure
+
+simulation:
+  base_users: 50000
+  growth_factor: 1.15
+  iterations: 10000

@@ -1,0 +1,23 @@
+# Astro on Hetzner Cloud (EU pricing, CX22)
+project:
+  name: "Astro VPS - Hetzner CX22 (EU)"
+
+fixed_costs:
+  - name: "Hetzner CX22 (EU pricing)"
+    amount: 3.79
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: "Bandwidth egress (conservative)"
+    cost_per_unit: 0.00117
+    units_per_user: 0.0018
+    distribution: normal
+    mean: 1
+    stddev: 0.25
+    layer: infrastructure
+
+simulation:
+  base_users: 50000
+  growth_factor: 1.15
+  iterations: 10000
