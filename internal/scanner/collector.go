@@ -24,7 +24,15 @@ func NewCollector() *Collector {
 func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 	files := make(map[string]string)
 
-	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+	rootInfo, err := os.Stat(rootPath)
+	if err != nil {
+		return files, fmt.Errorf("invalid root path: %w", err)
+	}
+	if !rootInfo.IsDir() {
+		return files, fmt.Errorf("invalid root path: not a directory: %s", rootPath)
+	}
+
+	err = filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// Continue on errors but log them
 			return nil

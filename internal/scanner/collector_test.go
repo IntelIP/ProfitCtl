@@ -110,7 +110,7 @@ func TestCollector_Collect_FileSizeLimit(t *testing.T) {
 
 	// Create a small file
 	smallFile := filepath.Join(tempDir, "go.mod")
-	require.NoError(t, os.WriteFile(smallFile, []byte("module test"), 0644))
+	require.NoError(t, os.WriteFile(smallFile, []byte("mod"), 0644))
 
 	files, err := collector.Collect(tempDir)
 
@@ -126,6 +126,19 @@ func TestCollector_Collect_NonExistentDirectory(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Empty(t, files)
+}
+
+func TestCollector_Collect_PathIsFile(t *testing.T) {
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "not-a-directory.txt")
+	require.NoError(t, os.WriteFile(filePath, []byte("content"), 0644))
+
+	collector := NewCollector()
+	files, err := collector.Collect(filePath)
+
+	assert.Error(t, err)
+	assert.Empty(t, files)
+	assert.Contains(t, err.Error(), "not a directory")
 }
 
 func TestCollector_readFile(t *testing.T) {
