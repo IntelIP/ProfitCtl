@@ -19,10 +19,11 @@ steps:
   - name: publish-release-and-vps
     image: alpine:3.20
     environment:
-      DOPPLER_TOKEN:
+      doppler_token:
         from_secret: doppler_token_org
     commands:
-      - test -n "${DOPPLER_TOKEN:-}" || (echo "DOPPLER_TOKEN is required" && exit 1)
+      - test -n "${doppler_token:-}" || (echo "DOPPLER_TOKEN is required" && exit 1)
+      - export DOPPLER_TOKEN="${doppler_token}"
       - apk add --no-cache bash curl openssh-client rsync git
       - curl -Ls https://cli.doppler.com/install.sh | sh
       - doppler run --project profitctl --config prd_ci_woodpecker -- bash scripts/release/publish-github-release.sh "${CI_COMMIT_TAG}"
