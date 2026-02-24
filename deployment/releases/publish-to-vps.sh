@@ -36,7 +36,7 @@ else
   fi
 fi
 
-printf "%s\n" "${SSH_KEY_PAYLOAD}" | sed 's/\r$//' | ssh-add -
+printf "%s\n" "${SSH_KEY_PAYLOAD}" | ssh-add -
 ssh-keyscan -H "${VPS_HOST}" > "${HOME}/.ssh/known_hosts"
 chmod 600 "${HOME}/.ssh/known_hosts"
 
