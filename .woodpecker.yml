@@ -18,6 +18,9 @@ steps:
 
   - name: publish-release-and-vps
     image: alpine:3.20
+    environment:
+      DOPPLER_TOKEN:
+        from_secret: DOPPLER_TOKEN
     commands:
       - test -n "${DOPPLER_TOKEN:-}" || (echo "DOPPLER_TOKEN is required" && exit 1)
       - apk add --no-cache bash curl openssh-client rsync git
