@@ -3,8 +3,8 @@ package cost
 import (
 	"math"
 
-	"github.com/profitctl/profitctl/internal/config"
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/internal/config"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 // CostEngine provides a unified interface for calculating fixed and variable costs

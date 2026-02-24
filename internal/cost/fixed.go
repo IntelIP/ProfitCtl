@@ -3,7 +3,7 @@ package cost
 import (
 	"math"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 // CalculateMonthlyAmount converts any cost period to monthly amount

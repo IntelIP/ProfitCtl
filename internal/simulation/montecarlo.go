@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/profitctl/profitctl/internal/cost"
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/internal/cost"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 type MonteCarloResult struct {

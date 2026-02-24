@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"gopkg.in/yaml.v3"
 )
 
-// Config represents the complete profit.yml configuration
+// Config represents the complete profit.yml configuration.
 type Config struct {
 	Project       *ProjectInfo         `yaml:"project"`
 	FixedCosts    []types.FixedCost    `yaml:"fixed_costs"`
@@ -29,7 +29,7 @@ type PricingConfig struct {
 type PricingPlan struct {
 	Name   string      `yaml:"name" validate:"required"`
 	Price  float64     `yaml:"price" validate:"required,min=0"`
-	Limits *PlanLimits `yaml:"limits"`
+	Limits *PlanLimits `yaml:"limits" validate:"required"`
 }
 
 type PlanLimits struct {
@@ -38,9 +38,9 @@ type PlanLimits struct {
 
 type Covenant struct {
 	Type     string  `yaml:"type" validate:"required,oneof=threshold"`
-	Field    string  `yaml:"field,omitempty" validate:"required_if=Type=threshold"`
-	Operator string  `yaml:"operator,omitempty" validate:"required_if=Type=threshold,oneof=gt lt gte lte eq"`
-	Value    float64 `yaml:"value,omitempty" validate:"required_if=Type=threshold"`
+	Field    string  `yaml:"field,omitempty" validate:"required_if=Type threshold"`
+	Operator string  `yaml:"operator,omitempty" validate:"required_if=Type threshold,oneof=gt lt gte lte eq"`
+	Value    float64 `yaml:"value,omitempty" validate:"required_if=Type threshold"`
 	Message  string  `yaml:"message" validate:"required"`
 }
 
@@ -50,17 +50,21 @@ type SimulationConfig struct {
 	Iterations   int     `yaml:"iterations" validate:"required,min=1"`
 }
 
-// ParseConfig reads and validates profit.yml configuration file
+// ParseConfig reads and validates a profit.yml configuration file.
 func ParseConfig(filename string) (*Config, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var config Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	return &config, nil
+	if err := ValidateConfig(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
+	return &cfg, nil
 }

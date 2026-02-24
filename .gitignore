@@ -24,6 +24,9 @@ go.work
 *.swo
 *~
 
+# Local planning artifacts
+.sisyphus/
+
 # OS files
 .DS_Store
 Thumbs.db

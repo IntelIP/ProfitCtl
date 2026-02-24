@@ -3,7 +3,7 @@ package pricing
 import (
 	"testing"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 

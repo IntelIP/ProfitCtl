@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 type DistributionGenerator func() float64

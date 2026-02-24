@@ -3,7 +3,7 @@ package pricing
 import (
 	"math"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 // MarginResult represents calculated margin and cost metrics

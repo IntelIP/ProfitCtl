@@ -3,7 +3,7 @@ package covenant
 import (
 	"fmt"
 
-	"github.com/profitctl/profitctl/internal/config"
+	"github.com/IntelIP/ProfitCtl/internal/config"
 )
 
 // ValidationResult represents the result of covenant validation

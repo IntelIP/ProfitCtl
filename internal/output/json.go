@@ -44,9 +44,9 @@ type JSONResult struct {
 		} `json:"by_plan,omitempty"`
 	} `json:"revenue,omitempty"`
 	Margin struct {
-		Gross        float64 `json:"gross"`
-		CostPerUser  float64 `json:"cost_per_user"`
-		ByLayer      struct {
+		Gross       float64 `json:"gross"`
+		CostPerUser float64 `json:"cost_per_user"`
+		ByLayer     struct {
 			Infrastructure float64 `json:"infrastructure,omitempty"`
 			Application    float64 `json:"application,omitempty"`
 			Service        float64 `json:"service,omitempty"`
@@ -54,12 +54,12 @@ type JSONResult struct {
 	} `json:"margin,omitempty"`
 	StressTest struct {
 		P95 struct {
-			Margin       float64 `json:"margin,omitempty"`
-			CostPerUser  float64 `json:"cost_per_user"`
+			Margin      float64 `json:"margin,omitempty"`
+			CostPerUser float64 `json:"cost_per_user"`
 		} `json:"p95"`
 		P99 struct {
-			Margin       float64 `json:"margin,omitempty"`
-			CostPerUser  float64 `json:"cost_per_user"`
+			Margin      float64 `json:"margin,omitempty"`
+			CostPerUser float64 `json:"cost_per_user"`
 		} `json:"p99"`
 		Mean struct {
 			CostPerUser float64 `json:"cost_per_user"`
@@ -67,7 +67,7 @@ type JSONResult struct {
 		WorstCaseTotalCost float64 `json:"worst_case_total_cost"`
 	} `json:"stress_test,omitempty"`
 	Covenants struct {
-		Passed    bool `json:"passed"`
+		Passed     bool `json:"passed"`
 		Violations []struct {
 			Field    string  `json:"field"`
 			Operator string  `json:"operator"`

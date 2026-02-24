@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/profitctl/profitctl/internal/cost"
-	"github.com/profitctl/profitctl/internal/covenant"
-	"github.com/profitctl/profitctl/internal/pricing"
-	"github.com/profitctl/profitctl/internal/simulation"
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/internal/cost"
+	"github.com/IntelIP/ProfitCtl/internal/covenant"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
+	"github.com/IntelIP/ProfitCtl/internal/simulation"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,8 +51,8 @@ func createMockSimulationResult() SimulationResult {
 			},
 		},
 		Margin: pricing.MarginResult{
-			GrossMargin:  30.0,
-			CostPerUser:  7.0,
+			GrossMargin: 30.0,
+			CostPerUser: 7.0,
 			LayerMargins: pricing.LayerMarginBreakdown{
 				Infrastructure: 9400,
 				Application:    9400,
@@ -77,7 +77,7 @@ func createMockSimulationResult() SimulationResult {
 			},
 		},
 		Covenants: covenant.ValidationResult{
-			Passed:    true,
+			Passed:     true,
 			Violations: []covenant.Violation{},
 		},
 	}
@@ -85,7 +85,7 @@ func createMockSimulationResult() SimulationResult {
 
 func TestFormatCLIResult_AllSections(t *testing.T) {
 	result := createMockSimulationResult()
-	
+
 	// Capture stdout
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
@@ -352,4 +352,17 @@ func TestPrintCLIResultToFile(t *testing.T) {
 	output := string(data)
 	assert.Contains(t, output, "=== profitctl Simulation Results ===")
 	assert.Contains(t, output, "Scenario: 1000 users")
+}
+func TestFormatCLIQuietResult(t *testing.T) {
+	result := createMockSimulationResult()
+	quiet := FormatCLIQuietResult(result)
+	assert.Contains(t, quiet, "PASSED")
+	assert.Contains(t, quiet, "margin=")
+	assert.Contains(t, quiet, "violations=0")
+
+	result.Covenants.Passed = false
+	result.Covenants.Violations = []covenant.Violation{{Message: "breach"}}
+	quiet = FormatCLIQuietResult(result)
+	assert.Contains(t, quiet, "FAILED")
+	assert.Contains(t, quiet, "violations=1")
 }

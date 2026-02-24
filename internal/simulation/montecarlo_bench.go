@@ -3,7 +3,7 @@ package simulation
 import (
 	"testing"
 
-	"github.com/profitctl/profitctl/pkg/types"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
 func BenchmarkRunMonteCarlo(b *testing.B) {
