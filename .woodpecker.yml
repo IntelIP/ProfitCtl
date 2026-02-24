@@ -41,7 +41,7 @@ labels:
 
 when:
   event: [tag, push, create]
-  ref: [refs/tags/v*.*.*]
+  ref: [v*.*.*, refs/tags/v*.*.*]
 
 steps:
   - name: build-and-package
