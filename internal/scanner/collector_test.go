@@ -110,7 +110,7 @@ func TestCollector_Collect_FileSizeLimit(t *testing.T) {
 
 	// Create a small file
 	smallFile := filepath.Join(tempDir, "go.mod")
-	require.NoError(t, os.WriteFile(smallFile, []byte("module test"), 0644))
+	require.NoError(t, os.WriteFile(smallFile, []byte("mod"), 0644))
 
 	files, err := collector.Collect(tempDir)
 
