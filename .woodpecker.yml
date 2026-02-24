@@ -9,7 +9,7 @@ when:
 
 steps:
   - name: verify-go-quality
-    image: golang:1.25
+    image: golang:1.23
     commands:
       - go version
       - test -z "$(gofmt -l .)"
@@ -30,7 +30,7 @@ when:
 
 steps:
   - name: verify-main
-    image: golang:1.25
+    image: golang:1.23
     commands:
       - go version
       - test -z "$(gofmt -l .)"
@@ -51,7 +51,7 @@ when:
 
 steps:
   - name: build-and-package
-    image: golang:1.25
+    image: golang:1.23
     commands:
       - export TAG="${CI_COMMIT_TAG}"
       - bash scripts/release/build-artifacts.sh "${TAG}"

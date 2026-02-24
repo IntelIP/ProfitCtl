@@ -103,7 +103,7 @@ func runDetect(cmd *cobra.Command, args []string) error {
 	}
 
 	if detectOut != "" {
-		if err := os.WriteFile(detectOut, append(jsonBytes, '\n'), 0644); err != nil {
+		if err := os.WriteFile(detectOut, append(jsonBytes, '\n'), 0600); err != nil {
 			return wrapExit(3, fmt.Errorf("failed to write detect report to %s: %w", detectOut, err))
 		}
 		return nil

@@ -24,7 +24,19 @@ mkdir -p "${HOME}/.ssh"
 chmod 700 "${HOME}/.ssh"
 eval "$(ssh-agent -s)"
 trap 'ssh-agent -k >/dev/null 2>&1 || true' EXIT
-printf "%s\n" "${VPS_SSH_PRIVATE_KEY}" | tr -d "\r" | ssh-add -
+
+# Support either raw multiline private keys or base64-encoded key payloads.
+if printf "%s" "${VPS_SSH_PRIVATE_KEY}" | grep -q "BEGIN .*PRIVATE KEY"; then
+  SSH_KEY_PAYLOAD="${VPS_SSH_PRIVATE_KEY}"
+else
+  SSH_KEY_PAYLOAD="$(printf "%s" "${VPS_SSH_PRIVATE_KEY}" | base64 -d 2>/dev/null || true)"
+  if [[ -z "${SSH_KEY_PAYLOAD}" ]]; then
+    echo "VPS_SSH_PRIVATE_KEY must be a raw private key or base64-encoded private key"
+    exit 1
+  fi
+fi
+
+printf "%s\n" "${SSH_KEY_PAYLOAD}" | sed 's/\r$//' | ssh-add -
 ssh-keyscan -H "${VPS_HOST}" > "${HOME}/.ssh/known_hosts"
 chmod 600 "${HOME}/.ssh/known_hosts"
 

@@ -12,6 +12,7 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 
 ## Required Secrets (Doppler: `profitctl` / `prd_ci_woodpecker`)
 
+- `DOPPLER_TOKEN`
 - `GITHUB_TOKEN_RELEASE`
 - `VPS_HOST`
 - `VPS_USER`
