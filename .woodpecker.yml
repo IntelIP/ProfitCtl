@@ -1,47 +1,11 @@
+name: wp-tag-release
+
 labels:
   pool: shared-kvm
 
 when:
-  event: pull_request
-  branch: [main]
-
-steps:
-  - name: verify-go-quality
-    image: golang:1.24
-    commands:
-      - go version
-      - test -z "$(gofmt -l .)"
-      - go mod tidy
-      - git diff --exit-code go.mod go.sum
-      - go vet ./...
-      - go test ./...
-
----
-labels:
-  pool: shared-kvm
-
-when:
-  event: push
-  branch: [main]
-
-steps:
-  - name: verify-main
-    image: golang:1.24
-    commands:
-      - go version
-      - test -z "$(gofmt -l .)"
-      - go mod tidy
-      - git diff --exit-code go.mod go.sum
-      - go vet ./...
-      - go test ./...
-
----
-labels:
-  pool: builder
-
-when:
-  event: [tag, push, create]
-  ref: [v*.*.*, refs/tags/v*.*.*]
+  - event: [tag, push]
+    ref: refs/tags/v*.*.*
 
 steps:
   - name: build-and-package
@@ -59,3 +23,45 @@ steps:
       - curl -Ls https://cli.doppler.com/install.sh | sh
       - doppler run --project profitctl --config prd_ci_woodpecker -- bash scripts/release/publish-github-release.sh "${CI_COMMIT_TAG}"
       - doppler run --project profitctl --config prd_ci_woodpecker -- bash deployment/releases/publish-to-vps.sh "${CI_COMMIT_TAG}"
+
+---
+name: wp-pr-fast
+
+labels:
+  pool: shared-kvm
+
+when:
+  - event: pull_request
+    branch: [main]
+
+steps:
+  - name: verify-go-quality
+    image: golang:1.24
+    commands:
+      - go version
+      - test -z "$(gofmt -l .)"
+      - go mod tidy
+      - git diff --exit-code go.mod go.sum
+      - go vet ./...
+      - go test ./...
+
+---
+name: wp-main-verify
+
+labels:
+  pool: shared-kvm
+
+when:
+  - event: push
+    branch: [main]
+
+steps:
+  - name: verify-main
+    image: golang:1.24
+    commands:
+      - go version
+      - test -z "$(gofmt -l .)"
+      - go mod tidy
+      - git diff --exit-code go.mod go.sum
+      - go vet ./...
+      - go test ./...
