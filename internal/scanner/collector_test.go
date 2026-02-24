@@ -128,6 +128,19 @@ func TestCollector_Collect_NonExistentDirectory(t *testing.T) {
 	assert.Empty(t, files)
 }
 
+func TestCollector_Collect_PathIsFile(t *testing.T) {
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "not-a-directory.txt")
+	require.NoError(t, os.WriteFile(filePath, []byte("content"), 0644))
+
+	collector := NewCollector()
+	files, err := collector.Collect(filePath)
+
+	assert.Error(t, err)
+	assert.Empty(t, files)
+	assert.Contains(t, err.Error(), "not a directory")
+}
+
 func TestCollector_readFile(t *testing.T) {
 	tempDir := t.TempDir()
 
