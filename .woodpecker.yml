@@ -1,5 +1,3 @@
-name: wp-pr-fast
-
 labels:
   pool: shared-kvm
 
@@ -19,8 +17,6 @@ steps:
       - go test ./...
 
 ---
-name: wp-main-verify
-
 labels:
   pool: shared-kvm
 
@@ -40,8 +36,6 @@ steps:
       - go test ./...
 
 ---
-name: wp-tag-release
-
 labels:
   pool: builder
 
