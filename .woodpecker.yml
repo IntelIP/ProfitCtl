@@ -46,7 +46,7 @@ labels:
   pool: builder
 
 when:
-  - event: tag
+  - event: [tag, push, create]
     ref: [refs/tags/v*.*.*]
 
 steps:
