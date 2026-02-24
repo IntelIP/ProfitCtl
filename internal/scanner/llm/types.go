@@ -1,55 +1,53 @@
 package llm
 
-import (
-	stdcontext "context"
-)
+import stdcontext "context"
 
-// CodeContext holds collected file contents for LLM analysis
+// CodeContext holds collected file contents for LLM analysis.
 type CodeContext struct {
 	Files map[string]string
 }
 
-// AnalysisRequest represents a request for LLM analysis
+// AnalysisRequest represents a request for LLM analysis.
 type AnalysisRequest struct {
 	Context CodeContext
 	Prompt  string
 }
 
-// AnalysisResponse represents LLM analysis results
+// AnalysisResponse represents LLM analysis results.
 type AnalysisResponse struct {
-	Services     []DetectedService
-	Dependencies []DetectedDependency
-	Patterns     []UsagePattern
+	Services     []DetectedService    `json:"services"`
+	Dependencies []DetectedDependency `json:"dependencies"`
+	Patterns     []UsagePattern       `json:"patterns"`
 }
 
-// DetectedService represents a service detected from config files
+// DetectedService represents a service detected from config files.
 type DetectedService struct {
-	Name         string
-	Type         string
-	Provider     string
-	FixedCost   *float64 `json:"fixed_cost,omitempty"`
+	Name         string   `json:"name"`
+	Type         string   `json:"type"`
+	Provider     string   `json:"provider"`
+	FixedCost    *float64 `json:"fixed_cost,omitempty"`
 	VariableCost *float64 `json:"variable_cost,omitempty"`
 }
 
-// DetectedDependency represents a dependency detected from config files
+// DetectedDependency represents a dependency detected from config files.
 type DetectedDependency struct {
-	Name string
-	Type string
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
-// UsagePattern represents a usage pattern detected from config files
+// UsagePattern represents a usage pattern detected from config files.
 type UsagePattern struct {
-	Description string
-	Confidence  float64
+	Description string  `json:"description"`
+	Confidence  float64 `json:"confidence"`
 }
 
-// LLMProvider interface defines contract for LLM providers
+// LLMProvider defines the contract for LLM providers.
 type LLMProvider interface {
 	Chat(ctx stdcontext.Context, messages []Message) (string, error)
 	IsAvailable(ctx stdcontext.Context) bool
 }
 
-// Message represents a single message in a conversation with LLM
+// Message represents a single message in a conversation with an LLM.
 type Message struct {
 	Role    string
 	Content string

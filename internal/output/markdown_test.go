@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/profitctl/profitctl/internal/covenant"
-	"github.com/profitctl/profitctl/internal/pricing"
+	"github.com/IntelIP/ProfitCtl/internal/covenant"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,11 +17,11 @@ func TestFormatMarkdownResult_BasicStructure(t *testing.T) {
 
 	// Verify header
 	assert.Contains(t, markdown, "## profitctl Results")
-	
+
 	// Verify table structure
 	assert.Contains(t, markdown, "| Metric | Value |")
 	assert.Contains(t, markdown, "|--------|-------|")
-	
+
 	// Verify basic metrics
 	assert.Contains(t, markdown, "| Users | 1000 |")
 	assert.Contains(t, markdown, "| Margin | 30.0% |")
@@ -146,7 +146,7 @@ func TestFormatMarkdownResult_ValidMarkdownFormat(t *testing.T) {
 
 	// Verify table syntax is valid markdown
 	lines := strings.Split(markdown, "\n")
-	
+
 	// Check for table header rows
 	hasTableHeader := false
 	hasTableSeparator := false
@@ -158,7 +158,7 @@ func TestFormatMarkdownResult_ValidMarkdownFormat(t *testing.T) {
 			hasTableSeparator = true
 		}
 	}
-	
+
 	assert.True(t, hasTableHeader, "Should have table header")
 	assert.True(t, hasTableSeparator, "Should have table separator row")
 }

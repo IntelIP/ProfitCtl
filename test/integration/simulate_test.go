@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func getBinaryPath(t *testing.T) string {
-	// Build binary for testing
 	binaryPath := filepath.Join(t.TempDir(), "profitctl")
 	cmd := exec.Command("go", "build", "-o", binaryPath, "../..")
 	err := cmd.Run()
@@ -24,6 +24,17 @@ func getFixturePath(fixture string) string {
 	return filepath.Join("..", "fixtures", fixture)
 }
 
+func exitCodeFromErr(err error) int {
+	if err == nil {
+		return 0
+	}
+	ee, ok := err.(*exec.ExitError)
+	if !ok {
+		return -1
+	}
+	return ee.ExitCode()
+}
+
 func TestSimulate_ValidConfig(t *testing.T) {
 	binaryPath := getBinaryPath(t)
 	fixturePath := getFixturePath("valid_config.yml")
@@ -31,13 +42,11 @@ func TestSimulate_ValidConfig(t *testing.T) {
 	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath)
 	output, err := cmd.CombinedOutput()
 
-	// Should succeed (exit code 0) if covenants pass
 	if err != nil {
 		t.Logf("Command output: %s", string(output))
 		t.Logf("Error: %v", err)
 	}
 
-	// Verify output contains expected sections
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "=== profitctl Simulation Results ===")
 	assert.Contains(t, outputStr, "Scenario:")
@@ -57,18 +66,16 @@ func TestSimulate_JSONOutput(t *testing.T) {
 		t.Logf("Error: %v", err)
 	}
 
-	// Verify JSON is valid by unmarshaling into generic map
 	outputStr := string(output)
 	var jsonResult map[string]interface{}
 	err = json.Unmarshal([]byte(outputStr), &jsonResult)
 	assert.NoError(t, err, "Output should be valid JSON")
 
-	// Verify JSON structure
 	scenario, ok := jsonResult["scenario"].(map[string]interface{})
 	assert.True(t, ok, "Should have scenario field")
 	users, ok := scenario["users"].(float64)
 	assert.True(t, ok, "Should have users field")
-	assert.Equal(t, float64(100), users) // base_users from config
+	assert.Equal(t, float64(100), users)
 
 	costs, ok := jsonResult["costs"].(map[string]interface{})
 	assert.True(t, ok, "Should have costs field")
@@ -89,7 +96,6 @@ func TestSimulate_MarkdownOutput(t *testing.T) {
 		t.Logf("Error: %v", err)
 	}
 
-	// Verify markdown structure
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "## profitctl Results")
 	assert.Contains(t, outputStr, "| Metric | Value |")
@@ -103,10 +109,8 @@ func TestSimulate_CovenantBreach(t *testing.T) {
 	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath)
 	output, err := cmd.CombinedOutput()
 
-	// Should fail with exit code 1 (covenant breach)
-	// In Go, exec.Command doesn't return exit codes directly,
-	// but err will be non-nil if exit code is non-zero
-	assert.Error(t, err, "Should fail with covenant breach")
+	require.Error(t, err, "Should fail with covenant breach")
+	assert.Equal(t, 1, exitCodeFromErr(err))
 
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "❌ FAILED")
@@ -120,7 +124,6 @@ func TestSimulate_MinimalConfig(t *testing.T) {
 	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath)
 	output, _ := cmd.CombinedOutput()
 
-	// Minimal config should work (no pricing, but costs are zero)
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "=== profitctl Simulation Results ===")
 }
@@ -132,10 +135,8 @@ func TestSimulate_NoPricingConfig(t *testing.T) {
 	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath)
 	output, _ := cmd.CombinedOutput()
 
-	// Should handle missing pricing gracefully
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "=== profitctl Simulation Results ===")
-	// Margin should be zero without pricing
 }
 
 func TestSimulate_ConfigNotFound(t *testing.T) {
@@ -144,16 +145,9 @@ func TestSimulate_ConfigNotFound(t *testing.T) {
 	cmd := exec.Command(binaryPath, "simulate", "-f", "/nonexistent/file.yml")
 	output, err := cmd.CombinedOutput()
 
-	// Should error with exit code 2 (config error)
-	// Check for error or non-zero exit (in Go, exec.Command returns error on non-zero exit)
-	if err == nil {
-		// If no error, output should contain error message
-		outputStr := string(output)
-		assert.Contains(t, outputStr, "failed to parse config")
-	} else {
-		// Error expected for config not found
-		assert.Error(t, err)
-	}
+	require.Error(t, err)
+	assert.Equal(t, 2, exitCodeFromErr(err))
+	assert.Contains(t, string(output), "failed to parse config")
 }
 
 func TestSimulate_VerboseMode(t *testing.T) {
@@ -164,7 +158,6 @@ func TestSimulate_VerboseMode(t *testing.T) {
 	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
-	// Verbose mode should include additional details
 	assert.Contains(t, outputStr, "Scale Simulation:")
 	assert.Contains(t, outputStr, "Stress Test Details")
 }
@@ -177,8 +170,6 @@ func TestSimulate_QuietMode(t *testing.T) {
 	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
-	// Quiet mode should produce minimal or no output
-	// The quiet flag is checked in PrintCLIResult, which should produce minimal output
-	// For now, just verify it doesn't crash - actual quiet behavior tested in unit tests
-	assert.NotNil(t, outputStr) // Just verify output exists (may be empty or minimal)
+	assert.Contains(t, outputStr, "violations=")
+	assert.NotContains(t, outputStr, "=== profitctl Simulation Results ===")
 }

@@ -1,4 +1,4 @@
-module github.com/profitctl/profitctl
+module github.com/IntelIP/ProfitCtl
 
 go 1.25.6
 

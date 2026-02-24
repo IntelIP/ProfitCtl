@@ -3,7 +3,7 @@ package covenant
 import (
 	"testing"
 
-	"github.com/profitctl/profitctl/internal/config"
+	"github.com/IntelIP/ProfitCtl/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 

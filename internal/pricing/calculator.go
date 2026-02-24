@@ -3,7 +3,7 @@ package pricing
 import (
 	"math"
 
-	"github.com/profitctl/profitctl/internal/config"
+	"github.com/IntelIP/ProfitCtl/internal/config"
 )
 
 // RevenueResult represents the calculated revenue from pricing plans

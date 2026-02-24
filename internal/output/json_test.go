@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/profitctl/profitctl/internal/covenant"
-	"github.com/profitctl/profitctl/internal/pricing"
+	"github.com/IntelIP/ProfitCtl/internal/covenant"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -195,7 +195,7 @@ func TestFormatJSONResult_Indentation(t *testing.T) {
 
 	// Verify indentation (should have 2 spaces per level)
 	jsonStr := string(jsonBytes)
-	
+
 	// Should contain newlines and spaces for indentation
 	assert.Contains(t, jsonStr, "\n")
 	assert.Contains(t, jsonStr, "  \"scenario\"") // 2-space indent

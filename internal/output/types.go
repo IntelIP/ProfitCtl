@@ -1,10 +1,10 @@
 package output
 
 import (
-	"github.com/profitctl/profitctl/internal/cost"
-	"github.com/profitctl/profitctl/internal/covenant"
-	"github.com/profitctl/profitctl/internal/pricing"
-	"github.com/profitctl/profitctl/internal/simulation"
+	"github.com/IntelIP/ProfitCtl/internal/cost"
+	"github.com/IntelIP/ProfitCtl/internal/covenant"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
+	"github.com/IntelIP/ProfitCtl/internal/simulation"
 )
 
 // SimulationResult contains all results from a simulation run
