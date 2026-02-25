@@ -6,19 +6,26 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 
 `/.woodpecker.yml` defines:
 
-- `wp-pr-fast` (`pool=shared-kvm`): PR checks for `main`
-- `wp-main-verify` (`pool=shared-kvm`): push checks for `main`
-- `wp-tag-release` (`pool=builder`): semver tag release + VPS publish
+- PR workflow (`pool=shared-kvm`): checks for `main`
+- Main workflow (`pool=shared-kvm`): push checks for `main`
+- Tag release workflow (`pool=shared-kvm`): semver tag release + VPS publish
 
 ## Required Secrets (Doppler: `profitctl` / `prd_ci_woodpecker`)
 
-- `DOPPLER_TOKEN`
 - `GITHUB_TOKEN_RELEASE`
 - `VPS_HOST`
 - `VPS_USER`
 - `VPS_SSH_PRIVATE_KEY`
 - `VPS_RELEASES_DIR=/opt/profitctl/releases`
 - `DOWNLOAD_BASE_URL=https://downloads.intelip.co/profitctl`
+
+## Required Secrets (Woodpecker)
+
+- Org secret name: `doppler_token_org`
+- Secret value: Doppler service token for `profitctl` / `prd_ci_woodpecker`
+- Events: include `tag` (recommended: allow all events to avoid filter mismatch)
+- Image filters: leave empty (`[]`) so command steps can consume it
+- Repo trust: set `IntelIP/ProfitCtl` as trusted in Woodpecker so `from_secret` works in command steps
 
 ## Artifact Layout on VPS
 
