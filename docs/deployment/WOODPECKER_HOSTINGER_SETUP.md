@@ -21,9 +21,9 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 
 ## Required Secrets (Woodpecker)
 
-- Org secret name: `doppler_token_org`
+- Repo secret name: `DOPPLER_TOKEN`
 - Secret value: Doppler service token for `profitctl` / `prd_ci_woodpecker`
-- Events: include `tag` (recommended: allow all events to avoid filter mismatch)
+- Events: include `tag`
 - Image filters: leave empty (`[]`) so command steps can consume it
 - Repo trust: set `IntelIP/ProfitCtl` as trusted in Woodpecker so `from_secret` works in command steps
 
