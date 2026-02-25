@@ -9,10 +9,11 @@ steps:
   - name: build-and-package
     image: golang:1.24
     commands:
-      - TAG="$(bash scripts/release/resolve-tag.sh)"; test -n "${TAG}" || (echo "TAG is required" && exit 1)
       - apt-get update && apt-get install -y --no-install-recommends zip && rm -rf /var/lib/apt/lists/*
-      - TAG="$(bash scripts/release/resolve-tag.sh)"; bash scripts/release/build-artifacts.sh "${TAG}"
-      - TAG="$(bash scripts/release/resolve-tag.sh)"; bash scripts/release/create-checksums.sh "${TAG}"
+      - |
+        TAG="$(bash scripts/release/resolve-tag.sh)"
+        bash scripts/release/build-artifacts.sh "${TAG}"
+        bash scripts/release/create-checksums.sh "${TAG}"
 
   - name: publish-release-and-vps
     image: alpine:3.20
@@ -23,8 +24,10 @@ steps:
       - test -n "${DOPPLER_TOKEN:-}" || (echo "DOPPLER_TOKEN is required" && exit 1)
       - apk add --no-cache bash curl openssh-client rsync git
       - curl -Ls https://cli.doppler.com/install.sh | sh
-      - TAG="$(bash scripts/release/resolve-tag.sh)"; DOPPLER_TOKEN="${DOPPLER_TOKEN}" doppler run --project profitctl --config prd_ci_woodpecker -- bash scripts/release/publish-github-release.sh "${TAG}"
-      - TAG="$(bash scripts/release/resolve-tag.sh)"; DOPPLER_TOKEN="${DOPPLER_TOKEN}" doppler run --project profitctl --config prd_ci_woodpecker -- bash deployment/releases/publish-to-vps.sh "${TAG}"
+      - |
+        TAG="$(bash scripts/release/resolve-tag.sh)"
+        doppler run --project profitctl --config prd_ci_woodpecker -- bash scripts/release/publish-github-release.sh "${TAG}"
+        doppler run --project profitctl --config prd_ci_woodpecker -- bash deployment/releases/publish-to-vps.sh "${TAG}"
 
 ---
 labels:
