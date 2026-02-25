@@ -21,7 +21,7 @@ steps:
       DOPPLER_TOKEN:
         from_secret: doppler_token
     commands:
-      - test -n "${DOPPLER_TOKEN:-}" || (echo "DOPPLER_TOKEN is required" && exit 1)
+      - test -n "$${DOPPLER_TOKEN}" || (echo "DOPPLER_TOKEN is required" && exit 1)
       - apk add --no-cache bash curl openssh-client rsync git
       - curl -Ls https://cli.doppler.com/install.sh | sh
       - |
