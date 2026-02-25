@@ -2,7 +2,7 @@ labels:
   pool: shared-kvm
 
 when:
-  - event: push
+  - event: tag
     ref: refs/tags/v*.*.*
 
 steps:
