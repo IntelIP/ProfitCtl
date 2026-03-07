@@ -68,13 +68,15 @@ steps:
     image: ghcr.io/gitleaks/gitleaks:v8.30.0
     commands:
       - mkdir -p reports
-      - gitleaks git --report-format sarif --report-path reports/gitleaks.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/gitleaks.sarif
+      - gitleaks git --report-format sarif --report-path reports/gitleaks.sarif . || true
+      - '[ -f reports/gitleaks.sarif ] || echo ''{"version":"2.1.0","runs":[]}'' > reports/gitleaks.sarif'
 
   - name: osv
     image: ghcr.io/google/osv-scanner:v2.3.3
     commands:
       - mkdir -p reports
-      - osv-scanner --recursive --json=reports/osv.json . || echo '{"results":[]}' > reports/osv.json
+      - osv-scanner --recursive --json=reports/osv.json . || true
+      - '[ -f reports/osv.json ] || echo ''{"results":[]}'' > reports/osv.json'
 
   - name: upload-findings
     image: curlimages/curl:8.11.0
