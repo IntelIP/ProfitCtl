@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-if [ "$#" -lt 5 ]; then
+if [ "$#" -lt 6 ]; then
   echo "usage: upload_scan.sh <api_url> <repo> <commit> <tool> <format> [pr_number] <report_path>"
   exit 1
 fi

@@ -83,6 +83,7 @@ See [SECURITY.md](SECURITY.md).
 
 Required Woodpecker secret:
 
+- `APPSEC_API_URL`
 - `APPSEC_API_TOKEN`
 
 Required `appsec-mvp` runtime config:

@@ -53,25 +53,25 @@ steps:
       - go test ./...
 
   - name: semgrep
-    image: semgrep/semgrep:latest
+    image: semgrep/semgrep:1.154.0
     commands:
       - mkdir -p reports
       - semgrep scan --config p/default --sarif --sarif-output reports/semgrep.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/semgrep.sarif
 
   - name: trivy-fs
-    image: aquasec/trivy:latest
+    image: aquasec/trivy:0.69.3
     commands:
       - mkdir -p reports
       - trivy fs --scanners vuln,misconfig,secret --format sarif -o reports/trivy.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
 
   - name: gitleaks
-    image: ghcr.io/gitleaks/gitleaks:latest
+    image: ghcr.io/gitleaks/gitleaks:v8.30.0
     commands:
       - mkdir -p reports
       - gitleaks git --report-format sarif --report-path reports/gitleaks.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/gitleaks.sarif
 
   - name: osv
-    image: ghcr.io/google/osv-scanner:latest
+    image: ghcr.io/google/osv-scanner:v2.3.3
     commands:
       - mkdir -p reports
       - osv-scanner --recursive --json=reports/osv.json . || echo '{"results":[]}' > reports/osv.json
@@ -79,7 +79,8 @@ steps:
   - name: upload-findings
     image: curlimages/curl:8.11.0
     environment:
-      APPSEC_API_URL: http://172.17.0.1:18080
+      APPSEC_API_URL:
+        from_secret: APPSEC_API_URL
       APPSEC_API_TOKEN:
         from_secret: APPSEC_API_TOKEN
     commands:
@@ -91,7 +92,8 @@ steps:
   - name: evaluate-gate
     image: alpine:3.21
     environment:
-      APPSEC_API_URL: http://172.17.0.1:18080
+      APPSEC_API_URL:
+        from_secret: APPSEC_API_URL
       APPSEC_API_TOKEN:
         from_secret: APPSEC_API_TOKEN
     commands:

@@ -29,6 +29,9 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 - Repo secret name: `APPSEC_API_TOKEN`
 - Secret value: bearer token used by `appsec-mvp` ingestion and summary endpoints
 - Events: include `pull_request`
+- Repo secret name: `APPSEC_API_URL`
+- Secret value: reachable base URL for the deployed `appsec-mvp` API, for example `http://172.17.0.1:18080`
+- Events: include `pull_request`
 
 ## Required AppSec MVP Runtime Configuration
 
