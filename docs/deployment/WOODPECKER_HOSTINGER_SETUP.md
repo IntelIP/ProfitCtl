@@ -32,6 +32,9 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 - Repo secret name: `APPSEC_API_URL`
 - Secret value: reachable base URL for the deployed `appsec-mvp` API, for example `http://172.17.0.1:18080`
 - Events: include `pull_request`
+- Optional repo secret name: `APPSEC_STRICT_API`
+- Rollout default: leave unset or set to `false` so AppSec transport failures do not block PRs while `/.appsec.yml` is still `report_only`
+- Post-rollout: set to `true` when the service is stable and you want CI to fail closed on AppSec API errors
 
 ## Required AppSec MVP Runtime Configuration
 

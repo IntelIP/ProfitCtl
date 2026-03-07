@@ -92,7 +92,7 @@ Required `appsec-mvp` runtime config:
 - `GITHUB_APP_PRIVATE_KEY_PEM` or `GITHUB_APP_PRIVATE_KEY_PATH`
 - `GITHUB_WEBHOOK_SECRET`
 
-The initial `/.appsec.yml` policy is set to `report_only` for rollout validation. Switch PR gates to `enforce` after signal quality is acceptable.
+The initial `/.appsec.yml` policy is set to `report_only` for rollout validation, and the helper scripts default `APPSEC_STRICT_API` to `false` so AppSec service outages do not hard-fail PRs during onboarding. Switch the policy to `enforce` and set `APPSEC_STRICT_API=true` once the integration is stable.
 
 ## License
 

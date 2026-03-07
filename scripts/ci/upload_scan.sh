@@ -11,17 +11,21 @@ REPO="$2"
 COMMIT="$3"
 TOOL="$4"
 FORMAT="$5"
+STRICT_API="${APPSEC_STRICT_API:-false}"
 
 if [ "$#" -eq 7 ]; then
   PR_NUMBER="$6"
   REPORT_PATH="$7"
-else
+elif [ "$#" -eq 6 ]; then
   PR_NUMBER=""
   REPORT_PATH="$6"
+else
+  echo "usage: upload_scan.sh <api_url> <repo> <commit> <tool> <format> [pr_number] <report_path>"
+  exit 1
 fi
 
 if [ ! -f "$REPORT_PATH" ]; then
-  if [ "${APPSEC_STRICT_API:-true}" = "true" ]; then
+  if [ "$STRICT_API" = "true" ]; then
     echo "report file not found and APPSEC_STRICT_API=true: $REPORT_PATH"
     exit 1
   fi
@@ -40,7 +44,7 @@ if [ -n "${PR_NUMBER}" ]; then
     -F "tool=$TOOL" \
     -F "format=$FORMAT" \
     -F "report=@$REPORT_PATH"; then
-    if [ "${APPSEC_STRICT_API:-true}" = "true" ]; then
+    if [ "$STRICT_API" = "true" ]; then
       echo "upload failed and APPSEC_STRICT_API=true"
       exit 1
     fi
@@ -56,7 +60,7 @@ else
     -F "tool=$TOOL" \
     -F "format=$FORMAT" \
     -F "report=@$REPORT_PATH"; then
-    if [ "${APPSEC_STRICT_API:-true}" = "true" ]; then
+    if [ "$STRICT_API" = "true" ]; then
       echo "upload failed and APPSEC_STRICT_API=true"
       exit 1
     fi
