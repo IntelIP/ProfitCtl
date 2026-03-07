@@ -52,6 +52,61 @@ steps:
       - go vet ./...
       - go test ./...
 
+  - name: semgrep
+    image: semgrep/semgrep:1.154.0
+    commands:
+      - mkdir -p reports
+      - semgrep scan --config p/default --sarif --sarif-output reports/semgrep.sarif . || true
+      - '[ -f reports/semgrep.sarif ] || echo ''{"version":"2.1.0","runs":[]}'' > reports/semgrep.sarif'
+
+  - name: trivy-fs
+    image: aquasec/trivy:0.69.3
+    commands:
+      - mkdir -p reports
+      - trivy fs --scanners vuln,misconfig,secret --format sarif -o reports/trivy.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
+
+  - name: gitleaks
+    image: ghcr.io/gitleaks/gitleaks:v8.30.0
+    commands:
+      - mkdir -p reports
+      - gitleaks git --report-format sarif --report-path reports/gitleaks.sarif . || true
+      - '[ -f reports/gitleaks.sarif ] || echo ''{"version":"2.1.0","runs":[]}'' > reports/gitleaks.sarif'
+
+  - name: osv
+    image: ghcr.io/google/osv-scanner:v2.3.3
+    commands:
+      - mkdir -p reports
+      - osv-scanner scan --recursive --format json --output reports/osv.json . || true
+      - '[ -f reports/osv.json ] || echo ''{"results":[]}'' > reports/osv.json'
+
+  - name: upload-findings
+    image: curlimages/curl:8.11.0
+    environment:
+      APPSEC_API_URL:
+        from_secret: APPSEC_API_URL
+      APPSEC_API_TOKEN:
+        from_secret: APPSEC_API_TOKEN
+      APPSEC_STRICT_API:
+        from_secret: APPSEC_STRICT_API
+    commands:
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" semgrep sarif "$CI_COMMIT_PULL_REQUEST" reports/semgrep.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" trivy sarif "$CI_COMMIT_PULL_REQUEST" reports/trivy.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" gitleaks sarif "$CI_COMMIT_PULL_REQUEST" reports/gitleaks.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" osv json "$CI_COMMIT_PULL_REQUEST" reports/osv.json
+
+  - name: evaluate-gate
+    image: alpine:3.21
+    environment:
+      APPSEC_API_URL:
+        from_secret: APPSEC_API_URL
+      APPSEC_API_TOKEN:
+        from_secret: APPSEC_API_TOKEN
+      APPSEC_STRICT_API:
+        from_secret: APPSEC_STRICT_API
+    commands:
+      - apk add --no-cache curl jq
+      - sh scripts/ci/evaluate_gate.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_PULL_REQUEST"
+
 ---
 labels:
   pool: shared-kvm

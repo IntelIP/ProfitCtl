@@ -1,0 +1,27 @@
+gates:
+  pr:
+    mode: report_only
+    fail_on_new:
+      - HIGH
+      - CRITICAL
+    fail_on_secrets: true
+suppression:
+  require_reason: true
+sla:
+  CRITICAL: 1
+  HIGH: 7
+  MEDIUM: 30
+  LOW: 60
+paths:
+  exclude:
+    - vendor/**
+    - node_modules/**
+    - dist/**
+    - test/fixtures/**
+    - benchmark_scenarios/**
+tools:
+  enabled:
+    - semgrep
+    - trivy
+    - gitleaks
+    - osv
