@@ -11,6 +11,11 @@ REPO_NAME="$2"
 PR_NUMBER="$3"
 STRICT_API="${APPSEC_STRICT_API:-false}"
 
+if [ -z "$PR_NUMBER" ]; then
+  echo "pr_number is required"
+  exit 1
+fi
+
 ENCODED_REPO="$(printf '%s' "$REPO_NAME" | jq -sRr @uri)"
 if ! RESP="$(curl -fsS -H "Authorization: Bearer ${APPSEC_API_TOKEN:-}" "$API_URL/v1/prs/$PR_NUMBER/summary?repo=$ENCODED_REPO")"; then
   if [ "$STRICT_API" = "true" ]; then

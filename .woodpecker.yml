@@ -56,7 +56,8 @@ steps:
     image: semgrep/semgrep:1.154.0
     commands:
       - mkdir -p reports
-      - semgrep scan --config p/default --sarif --sarif-output reports/semgrep.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/semgrep.sarif
+      - semgrep scan --config p/default --sarif --sarif-output reports/semgrep.sarif . || true
+      - '[ -f reports/semgrep.sarif ] || echo ''{"version":"2.1.0","runs":[]}'' > reports/semgrep.sarif'
 
   - name: trivy-fs
     image: aquasec/trivy:0.69.3
@@ -75,7 +76,7 @@ steps:
     image: ghcr.io/google/osv-scanner:v2.3.3
     commands:
       - mkdir -p reports
-      - osv-scanner --recursive --json=reports/osv.json . || true
+      - osv-scanner scan --recursive --format json --output reports/osv.json . || true
       - '[ -f reports/osv.json ] || echo ''{"results":[]}'' > reports/osv.json'
 
   - name: upload-findings
