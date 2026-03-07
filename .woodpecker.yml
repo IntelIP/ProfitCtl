@@ -52,6 +52,52 @@ steps:
       - go vet ./...
       - go test ./...
 
+  - name: semgrep
+    image: semgrep/semgrep:latest
+    commands:
+      - mkdir -p reports
+      - semgrep scan --config p/default --sarif --sarif-output reports/semgrep.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/semgrep.sarif
+
+  - name: trivy-fs
+    image: aquasec/trivy:latest
+    commands:
+      - mkdir -p reports
+      - trivy fs --scanners vuln,misconfig,secret --format sarif -o reports/trivy.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
+
+  - name: gitleaks
+    image: ghcr.io/gitleaks/gitleaks:latest
+    commands:
+      - mkdir -p reports
+      - gitleaks git --report-format sarif --report-path reports/gitleaks.sarif . || echo '{"version":"2.1.0","runs":[]}' > reports/gitleaks.sarif
+
+  - name: osv
+    image: ghcr.io/google/osv-scanner:latest
+    commands:
+      - mkdir -p reports
+      - osv-scanner --recursive --json=reports/osv.json . || echo '{"results":[]}' > reports/osv.json
+
+  - name: upload-findings
+    image: curlimages/curl:8.11.0
+    environment:
+      APPSEC_API_URL: http://172.17.0.1:18080
+      APPSEC_API_TOKEN:
+        from_secret: APPSEC_API_TOKEN
+    commands:
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" semgrep sarif "$CI_COMMIT_PULL_REQUEST" reports/semgrep.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" trivy sarif "$CI_COMMIT_PULL_REQUEST" reports/trivy.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" gitleaks sarif "$CI_COMMIT_PULL_REQUEST" reports/gitleaks.sarif
+      - sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_SHA" osv json "$CI_COMMIT_PULL_REQUEST" reports/osv.json
+
+  - name: evaluate-gate
+    image: alpine:3.21
+    environment:
+      APPSEC_API_URL: http://172.17.0.1:18080
+      APPSEC_API_TOKEN:
+        from_secret: APPSEC_API_TOKEN
+    commands:
+      - apk add --no-cache curl jq
+      - sh scripts/ci/evaluate_gate.sh "$APPSEC_API_URL" "$CI_REPO" "$CI_COMMIT_PULL_REQUEST"
+
 ---
 labels:
   pool: shared-kvm

@@ -6,7 +6,7 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 
 `/.woodpecker.yml` defines:
 
-- PR workflow (`pool=shared-kvm`): checks for `main`
+- PR workflow (`pool=shared-kvm`): checks for `main` plus AppSec scan upload/gate evaluation
 - Main workflow (`pool=shared-kvm`): push checks for `main`
 - Tag release workflow (`pool=shared-kvm`): semver tag release + VPS publish
 
@@ -26,6 +26,32 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 - Events: include `tag`
 - Image filters: leave empty (`[]`) so command steps can consume it
 - Repo trust: set `IntelIP/ProfitCtl` as trusted in Woodpecker so `from_secret` works in command steps
+- Repo secret name: `APPSEC_API_TOKEN`
+- Secret value: bearer token used by `appsec-mvp` ingestion and summary endpoints
+- Events: include `pull_request`
+
+## Required AppSec MVP Runtime Configuration
+
+`appsec-mvp` must already be deployed and reachable from the Woodpecker runner network.
+
+- `GITHUB_APP_ID`
+- `GITHUB_APP_PRIVATE_KEY_PEM` or `GITHUB_APP_PRIVATE_KEY_PATH`
+- `GITHUB_WEBHOOK_SECRET`
+- `APPSEC_API_TOKEN`
+- DB migration `0004_github_webhook_deliveries.sql` applied
+
+Install the AppSec GitHub App on `IntelIP/ProfitCtl` with:
+
+- `checks:write`
+- `pull_requests:write`
+- `contents:read`
+- `metadata:read`
+
+Subscribe the App to:
+
+- `pull_request`
+- `installation`
+- `installation_repositories`
 
 ## Artifact Layout on VPS
 
@@ -43,6 +69,7 @@ Tag push only (semver):
 
 - Keep existing Composio webhook unchanged.
 - Activate repository in Woodpecker to add/refresh Woodpecker webhook.
+- Add/refresh the AppSec GitHub App installation webhook on `IntelIP/ProfitCtl`.
 
 ## GitHub Actions
 

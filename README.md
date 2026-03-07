@@ -70,6 +70,29 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 See [SECURITY.md](SECURITY.md).
 
+## AppSec PR Review
+
+`ProfitCtl` can publish PR security findings into the separate `appsec-mvp` service.
+
+- PR scans run in Woodpecker via `semgrep`, `trivy`, `gitleaks`, and `osv-scanner`
+- findings are uploaded to `appsec-mvp`
+- GitHub PRs receive:
+  - commit status `appsec/mvp`
+  - check run `AppSec MVP Review`
+  - selective inline comments for high-confidence findings
+
+Required Woodpecker secret:
+
+- `APPSEC_API_TOKEN`
+
+Required `appsec-mvp` runtime config:
+
+- `GITHUB_APP_ID`
+- `GITHUB_APP_PRIVATE_KEY_PEM` or `GITHUB_APP_PRIVATE_KEY_PATH`
+- `GITHUB_WEBHOOK_SECRET`
+
+The initial `/.appsec.yml` policy is set to `report_only` for rollout validation. Switch PR gates to `enforce` after signal quality is acceptable.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
