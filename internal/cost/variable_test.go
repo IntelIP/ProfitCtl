@@ -254,6 +254,29 @@ func TestCalculateVariableCostWithVariability(t *testing.T) {
 	assert.Len(t, result.ByCost, 1, "Should have 1 cost line item")
 	assert.Len(t, result.Samples, 1, "Should have 1 sample")
 	assert.InDelta(t, result.Total, result.Samples[0], 0.01, "Sample should equal total cost within tolerance")
+	assert.InDelta(t, mean*0.01, result.ByCost[0].UnitsPerUser*0.01, 5.0, "sampled units per user should track distribution mean without double-multiplying base units")
+}
+
+func TestCalculateVariableCostWithVariability_UsesDistributionAsUnitsPerUser(t *testing.T) {
+	mean := 10000.0
+	stddev := 2000.0
+	variableCosts := []types.VariableCost{
+		{
+			Name:         "API Calls",
+			CostPerUnit:  0.0001,
+			UnitsPerUser: 10000,
+			Distribution: types.DistNormal,
+			Mean:         &mean,
+			StdDev:       &stddev,
+			Layer:        types.LayerApplication,
+		},
+	}
+
+	users := 50
+	result := CalculateVariableCostWithVariability(variableCosts, users)
+
+	assert.InDelta(t, 1.0, result.PerUser, 0.4, "per-user variable cost should stay near the sampled mean cost instead of exploding")
+	assert.InDelta(t, mean, result.ByCost[0].UnitsPerUser, 4000, "sampled units per user should stay near the configured mean")
 }
 
 func TestVariableCostLayerAggregation(t *testing.T) {

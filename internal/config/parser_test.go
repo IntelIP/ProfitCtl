@@ -191,9 +191,204 @@ variable_costs: []
 	assert.NotNil(t, cfg)
 	assert.NotNil(t, cfg.Pricing)
 	assert.Len(t, cfg.Pricing.Plans, 3)
+	assert.Equal(t, "tiered", cfg.Pricing.Mode)
 	assert.Equal(t, "basic", cfg.Pricing.Plans[0].Name)
 	assert.Equal(t, "pro", cfg.Pricing.Plans[1].Name)
 	assert.Equal(t, "enterprise", cfg.Pricing.Plans[2].Name)
+}
+
+func TestParseConfig_AllowsUnlimitedFinalPlan(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  plans:
+    - name: basic
+      price: 10
+      limits:
+        users: 1000
+    - name: unlimited
+      price: 29
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Pricing)
+	assert.Len(t, cfg.Pricing.Plans, 2)
+	assert.Equal(t, "tiered", cfg.Pricing.Mode)
+	assert.NotNil(t, cfg.Pricing.Plans[0].Limits)
+	assert.Nil(t, cfg.Pricing.Plans[1].Limits)
+}
+
+func TestParseConfig_MixMode(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  mode: mix
+  plans:
+    - name: free
+      price: 0
+      share: 0.7
+    - name: pro
+      price: 29
+      share: 0.3
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Pricing)
+	assert.Equal(t, "mix", cfg.Pricing.Mode)
+	assert.Len(t, cfg.Pricing.Plans, 2)
+	assert.NotNil(t, cfg.Pricing.Plans[0].Share)
+	assert.Nil(t, cfg.Pricing.Plans[0].Limits)
+	assert.Equal(t, 0.7, *cfg.Pricing.Plans[0].Share)
+}
+
+func TestParseConfig_HybridMode(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 500
+    per_seat_fee: 25
+    workspace_minimum: 2000
+    included_seats: 10
+    pilot:
+      setup_fee: 5000
+      monthly_fee: 1500
+      duration_months: 3
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Pricing)
+	assert.Equal(t, "hybrid", cfg.Pricing.Mode)
+	assert.NotNil(t, cfg.Pricing.Contract)
+	assert.Equal(t, 500.0, cfg.Pricing.Contract.BasePlatformFee)
+	assert.Equal(t, 25.0, cfg.Pricing.Contract.PerSeatFee)
+	assert.Equal(t, 2000.0, cfg.Pricing.Contract.WorkspaceMinimum)
+	assert.Equal(t, 10, cfg.Pricing.Contract.IncludedSeats)
+	assert.NotNil(t, cfg.Pricing.Contract.Pilot)
+	assert.Equal(t, 5000.0, cfg.Pricing.Contract.Pilot.SetupFee)
+	assert.Equal(t, 1500.0, cfg.Pricing.Contract.Pilot.MonthlyFee)
+	assert.Equal(t, 3, cfg.Pricing.Contract.Pilot.DurationMonths)
+}
+
+func TestParseConfig_PaymentFees(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+payment_fees:
+  processor: stripe
+  currency: usd
+  free_user_fee:
+    monthly_percent: 0
+    per_transaction: 0
+  paid_user_fee:
+    monthly_percent: 2.9
+    annual_percent: 2.0
+    per_transaction: 0.30
+  billing_mix:
+    monthly_share: 0.75
+    annual_share: 0.25
+  plan_burden:
+    - plan: pro
+      applies_to: annual
+      fee_multiplier: 0.5
+  assumptions:
+    annual_discount_percent: 10
+    annual_prepaid_months: 12
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.PaymentFees)
+	assert.Equal(t, "stripe", cfg.PaymentFees.Processor)
+	assert.Equal(t, "usd", cfg.PaymentFees.Currency)
+	assert.NotNil(t, cfg.PaymentFees.PaidUserFee)
+	assert.Equal(t, 2.9, cfg.PaymentFees.PaidUserFee.MonthlyPercent)
+	assert.NotNil(t, cfg.PaymentFees.BillingMix)
+	assert.Equal(t, 0.75, cfg.PaymentFees.BillingMix.MonthlyShare)
+	assert.Len(t, cfg.PaymentFees.PlanBurden, 1)
+	assert.Equal(t, 0.5, cfg.PaymentFees.PlanBurden[0].FeeMultiplier)
+}
+
+func TestParseConfig_Calibration(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+calibration:
+  period: 2026-03
+  source: stripe_export
+  gross_revenue: 125000
+  payment_fees: 4380
+  free_users: 12000
+  paid_users:
+    monthly: 1800
+    annual: 400
+  plan_mix:
+    starter: 0.65
+    pro: 0.35
+  usage:
+    api_calls: 3200000
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Calibration)
+	assert.Equal(t, "2026-03", cfg.Calibration.Period)
+	assert.Equal(t, 125000.0, cfg.Calibration.GrossRevenue)
+	assert.NotNil(t, cfg.Calibration.PaidUsers)
+	assert.Equal(t, 1800, cfg.Calibration.PaidUsers.Monthly)
+	assert.Equal(t, 0.65, cfg.Calibration.PlanMix["starter"])
 }
 
 func TestParseConfig_MultipleCovenants(t *testing.T) {

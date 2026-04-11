@@ -1,0 +1,34 @@
+project:
+  name: Payment Fees Test
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  plans:
+    - name: Starter
+      price: 100
+      limits:
+        users: 1000
+
+payment_fees:
+  percent_of_revenue: 2.9
+  fixed_per_payment: 0.30
+  monthly_transactions: 10
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 0
+    message: Margin should be non-negative
+
+simulation:
+  base_users: 10
+  growth_factor: 1.05
+  iterations: 500

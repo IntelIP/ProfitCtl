@@ -24,6 +24,7 @@ func TestFormatMarkdownResult_BasicStructure(t *testing.T) {
 
 	// Verify basic metrics
 	assert.Contains(t, markdown, "| Users | 1000 |")
+	assert.Contains(t, markdown, "| Pricing Mode | tiered |")
 	assert.Contains(t, markdown, "| Margin | 30.0% |")
 	assert.Contains(t, markdown, "| Cost per User | $7.00 |")
 	assert.Contains(t, markdown, "| Covenant Status | ✅ PASSED |")
@@ -210,4 +211,108 @@ func TestFormatMarkdownResult_NoP95MarginWithoutRevenue(t *testing.T) {
 
 	// Should not show p95 margin if revenue is zero
 	assert.NotContains(t, markdown, "| p95 Margin |")
+}
+
+func TestFormatMarkdownResult_MixModeRevenueTable(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue.Mode = "mix"
+	result.Revenue.ByPlan = []pricing.PlanRevenue{
+		{PlanName: "free", Price: 0, Share: floatPtr(0.7), Users: 700, Revenue: 0},
+		{PlanName: "pro", Price: 29, Share: floatPtr(0.3), Users: 300, Revenue: 8700},
+	}
+	result.Revenue.Total = 8700
+
+	markdown := FormatMarkdownResult(result)
+
+	assert.Contains(t, markdown, "### Revenue Mix")
+	assert.Contains(t, markdown, "| free | 70.0% | 700 | $0.00 | $0.00 |")
+	assert.Contains(t, markdown, "| pro | 30.0% | 300 | $29.00 | $8700.00 |")
+}
+
+func TestFormatMarkdownResult_HybridRevenueTable(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue = pricing.RevenueResult{
+		Mode:           "hybrid",
+		Total:          6500,
+		RecurringTotal: 2000,
+		OneTimeTotal:   5000,
+		MinimumUplift:  250,
+		Components: []pricing.RevenueComponent{
+			{Name: "base_platform_fee", Amount: 500},
+			{Name: "pilot_setup_fee", Amount: 5000},
+		},
+	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
+
+	markdown := FormatMarkdownResult(result)
+
+	assert.Contains(t, markdown, "| Booked Margin | 30.0% |")
+	assert.Contains(t, markdown, "| Operating Margin | 68.8% |")
+	assert.Contains(t, markdown, "| Booked Cost per User | $7.00 |")
+	assert.Contains(t, markdown, "| Operating Cost per User | $12.46 |")
+	assert.Contains(t, markdown, "### Hybrid Revenue")
+	assert.Contains(t, markdown, "| Total Revenue | $6500.00 |")
+	assert.Contains(t, markdown, "| Recurring Revenue | $2000.00 |")
+	assert.Contains(t, markdown, "| One-Time Revenue | $5000.00 |")
+	assert.Contains(t, markdown, "| Minimum Uplift | $250.00 |")
+	assert.Contains(t, markdown, "| base_platform_fee | $500.00 |")
+}
+
+func TestFormatMarkdownResult_PaymentFees(t *testing.T) {
+	result := createMockSimulationResult()
+	result.PaymentFees = pricing.PaymentFeeResult{
+		MonthlyAmount:         29,
+		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
+		PercentageAmount:      29,
+		FixedAmount:           3,
+		PaidUserAmount:        32,
+		Total:                 32,
+	}
+
+	markdown := FormatMarkdownResult(result)
+
+	assert.Contains(t, markdown, "### Payment Fees")
+	assert.Contains(t, markdown, "| Total Payment Fees | $32.00 |")
+	assert.Contains(t, markdown, "| Monthly Fees | $29.00 |")
+	assert.Contains(t, markdown, "| Annual Amortized Fees | $3.00 |")
+	assert.Contains(t, markdown, "| Operating Fees | $20.00 |")
+	assert.Contains(t, markdown, "| One-Time Fees | $12.00 |")
+	assert.Contains(t, markdown, "| Revenue Percentage Fee | $29.00 |")
+	assert.Contains(t, markdown, "| Fixed Transaction Fees | $3.00 |")
+	assert.Contains(t, markdown, "| Paid User Fees | $32.00 |")
+}
+
+func TestFormatMarkdownResult_Calibration(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Calibration = pricing.CalibrationResult{
+		Period:             "2026-03",
+		Source:             "stripe_export",
+		RevenueActual:      1000,
+		RevenueModeled:     1100,
+		RevenueDelta:       100,
+		PaymentFeesActual:  30,
+		PaymentFeesModeled: 32,
+		PaymentFeesDelta:   2,
+		FreeUsersActual:    700,
+		FreeUsersModeled:   680,
+		FreeUsersDelta:     -20,
+		PaidMonthlyActual:  225,
+		PaidMonthlyModeled: 220,
+		PaidMonthlyDelta:   -5,
+		PaidAnnualActual:   75,
+		PaidAnnualModeled:  80,
+		PaidAnnualDelta:    5,
+		PlanMixDeltas: map[string]float64{
+			"pro": 0.05,
+		},
+	}
+
+	markdown := FormatMarkdownResult(result)
+
+	assert.Contains(t, markdown, "### Calibration")
+	assert.Contains(t, markdown, "| Revenue | $1000.00 | $1100.00 | $100.00 |")
+	assert.Contains(t, markdown, "| Payment Fees | $30.00 | $32.00 | $2.00 |")
+	assert.Contains(t, markdown, "| Plan Mix pro | - | - | 0.05 |")
 }

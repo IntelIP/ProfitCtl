@@ -1,0 +1,66 @@
+project:
+  name: Hybrid Contract Example
+
+fixed_costs:
+  - name: Base Infrastructure
+    amount: 500
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 500
+    per_seat_fee: 25
+    workspace_minimum: 2000
+    included_seats: 10
+    pilot:
+      setup_fee: 5000
+      monthly_fee: 1500
+      duration_months: 3
+
+payment_fees:
+  processor: stripe
+  currency: usd
+  paid_user_fee:
+    monthly_percent: 2.9
+    annual_percent: 2.0
+    per_transaction: 0.30
+  billing_mix:
+    monthly_share: 1.0
+    annual_share: 0.0
+  assumptions:
+    annual_prepaid_months: 12
+
+calibration:
+  period: 2026-03
+  source: crm_export
+  gross_revenue: 6500
+  payment_fees: 200
+  free_users: 0
+  paid_users:
+    monthly: 50
+    annual: 0
+  plan_mix:
+    contract: 1.0
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 20
+    message: Gross margin must be >= 20%
+
+simulation:
+  base_users: 50
+  growth_factor: 1.2
+  iterations: 10000

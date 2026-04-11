@@ -1,0 +1,34 @@
+project:
+  name: Hybrid Pilot Contract Test
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 500
+    per_seat_fee: 25
+    workspace_minimum: 2000
+    included_seats: 10
+    pilot:
+      setup_fee: 5000
+      monthly_fee: 1500
+      duration_months: 3
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 0
+    message: Margin should be non-negative
+
+simulation:
+  base_users: 50
+  growth_factor: 1.05
+  iterations: 500

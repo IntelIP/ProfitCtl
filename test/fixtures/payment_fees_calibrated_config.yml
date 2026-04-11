@@ -1,0 +1,67 @@
+project:
+  name: Payment Fees Calibrated Test
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 10
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: mix
+  plans:
+    - name: free
+      price: 0
+      share: 0.7
+      cohort: free
+    - name: pro
+      price: 29
+      share: 0.3
+      cohort: paid
+
+payment_fees:
+  processor: stripe
+  currency: usd
+  free_user_fee:
+    monthly_percent: 0
+    per_transaction: 0
+  paid_user_fee:
+    monthly_percent: 2.9
+    annual_percent: 2.0
+    per_transaction: 0.30
+  billing_mix:
+    monthly_share: 0.75
+    annual_share: 0.25
+  plan_burden:
+    - plan: pro
+      applies_to: annual
+      fee_multiplier: 0.5
+  assumptions:
+    annual_discount_percent: 10
+    annual_prepaid_months: 12
+
+calibration:
+  period: 2026-03
+  source: stripe_export
+  gross_revenue: 9000
+  payment_fees: 250
+  free_users: 700
+  paid_users:
+    monthly: 225
+    annual: 75
+  plan_mix:
+    pro: 1.0
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 0
+    message: Margin should be non-negative
+
+simulation:
+  base_users: 1000
+  growth_factor: 1.05
+  iterations: 500

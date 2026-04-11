@@ -13,14 +13,23 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	fmt.Printf("Scenario: %d users\n", result.Users)
 	fmt.Println("───────────────────────────────")
 
+	if result.Revenue.Mode != "" {
+		fmt.Printf("Pricing mode: %s\n", result.Revenue.Mode)
+	}
+
 	if result.Margin.GrossMargin != 0 {
-		fmt.Printf("Mean margin: %.2f%%\n", result.Margin.GrossMargin)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked margin: %.2f%%\n", result.Margin.GrossMargin)
+			fmt.Printf("Operating margin: %.2f%%\n", result.OperatingMargin.GrossMargin)
+		} else {
+			fmt.Printf("Mean margin: %.2f%%\n", result.Margin.GrossMargin)
+		}
 	}
 
 	if result.StressResult.MonteCarlo.P95 > 0 && result.Revenue.Total > 0 {
-		p95TotalCost := result.StressResult.P95CostPerUser * float64(result.Users)
-		p95Margin := ((result.Revenue.Total - p95TotalCost) / result.Revenue.Total) * 100
-		fmt.Printf("p95 margin: %.2f%%\n", p95Margin)
+		if !hasOperatingView(result) {
+			fmt.Printf("p95 margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+		}
 	}
 
 	if result.StressResult.P95CostPerUser > 0 {
@@ -37,12 +46,78 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 
 	if result.VariableCosts.Total > 0 && result.Users > 0 {
 		fmt.Printf("Variable COGS: $%.4f/user\n", result.VariableCosts.PerUser)
-		fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked cost per user: $%.2f\n", result.Margin.CostPerUser)
+			fmt.Printf("Operating cost per user: $%.2f\n", result.OperatingMargin.CostPerUser)
+		} else {
+			fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		}
 	} else {
 		fmt.Printf("Variable COGS: $0.00/user\n")
-		fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked cost per user: $%.2f\n", result.Margin.CostPerUser)
+			fmt.Printf("Operating cost per user: $%.2f\n", result.OperatingMargin.CostPerUser)
+		} else {
+			fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		}
 	}
 	fmt.Println()
+
+	if result.Revenue.Mode == "hybrid" && result.Revenue.Total > 0 {
+		fmt.Printf("Revenue: $%.2f/month\n", result.Revenue.Total)
+		fmt.Printf("  Recurring: $%.2f\n", result.Revenue.RecurringTotal)
+		if result.Revenue.OneTimeTotal > 0 {
+			fmt.Printf("  One-time: $%.2f\n", result.Revenue.OneTimeTotal)
+		}
+		if result.Revenue.MinimumUplift > 0 {
+			fmt.Printf("  Minimum uplift: $%.2f\n", result.Revenue.MinimumUplift)
+		}
+		for _, component := range result.Revenue.Components {
+			fmt.Printf("  %s: $%.2f\n", component.Name, component.Amount)
+		}
+		fmt.Println()
+	}
+
+	if result.PaymentFees.Total > 0 {
+		fmt.Printf("Payment Fees: $%.2f\n", result.PaymentFees.Total)
+		fmt.Printf("  Monthly fees: $%.2f\n", result.PaymentFees.MonthlyAmount)
+		if result.PaymentFees.AnnualAmortizedAmount > 0 {
+			fmt.Printf("  Annual amortized fees: $%.2f\n", result.PaymentFees.AnnualAmortizedAmount)
+		}
+		if result.PaymentFees.OperatingAmount > 0 && result.PaymentFees.OperatingAmount != result.PaymentFees.Total {
+			fmt.Printf("  Operating fees: $%.2f\n", result.PaymentFees.OperatingAmount)
+		}
+		if result.PaymentFees.OneTimeAmount > 0 {
+			fmt.Printf("  One-time fees: $%.2f\n", result.PaymentFees.OneTimeAmount)
+		}
+		fmt.Printf("  Revenue percentage fee: $%.2f\n", result.PaymentFees.PercentageAmount)
+		if result.PaymentFees.FixedAmount > 0 {
+			fmt.Printf("  Fixed transaction fees: $%.2f\n", result.PaymentFees.FixedAmount)
+		}
+		if result.PaymentFees.FreeUserAmount > 0 {
+			fmt.Printf("  Free user fees: $%.2f\n", result.PaymentFees.FreeUserAmount)
+		}
+		if result.PaymentFees.PaidUserAmount > 0 {
+			fmt.Printf("  Paid user fees: $%.2f\n", result.PaymentFees.PaidUserAmount)
+		}
+		fmt.Println()
+	}
+
+	if result.Calibration.Period != "" || result.Calibration.Source != "" {
+		fmt.Println("Calibration:")
+		if result.Calibration.Period != "" {
+			fmt.Printf("  Period: %s\n", result.Calibration.Period)
+		}
+		if result.Calibration.Source != "" {
+			fmt.Printf("  Source: %s\n", result.Calibration.Source)
+		}
+		fmt.Printf("  Revenue delta: $%.2f\n", result.Calibration.RevenueDelta)
+		fmt.Printf("  Payment fee delta: $%.2f\n", result.Calibration.PaymentFeesDelta)
+		fmt.Printf("  Free user delta: %.2f\n", result.Calibration.FreeUsersDelta)
+		fmt.Printf("  Paid monthly delta: %.2f\n", result.Calibration.PaidMonthlyDelta)
+		fmt.Printf("  Paid annual delta: %.2f\n", result.Calibration.PaidAnnualDelta)
+		fmt.Println()
+	}
 
 	covenantStatus := "✅ PASSED"
 	if !result.Covenants.Passed {
@@ -62,6 +137,17 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	fmt.Println()
 
 	if verbose && len(result.ScaleResult.Scenarios) > 0 {
+		if result.Revenue.Mode == "mix" && len(result.Revenue.ByPlan) > 0 {
+			fmt.Println("Revenue Mix:")
+			for _, plan := range result.Revenue.ByPlan {
+				if plan.Share != nil {
+					fmt.Printf("  %s: %.1f%% -> %d users -> $%.2f\n",
+						plan.PlanName, *plan.Share*100, plan.Users, plan.Revenue)
+				}
+			}
+			fmt.Println()
+		}
+
 		fmt.Println("Scale Simulation:")
 		for _, scenario := range result.ScaleResult.Scenarios {
 			fmt.Printf("  Step %d: %d users - Total Cost: $%.2f\n",
@@ -75,6 +161,12 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 		fmt.Printf("  Mean: $%.2f\n", result.StressResult.MeanCostPerUser)
 		fmt.Printf("  P95: $%.2f\n", result.StressResult.P95CostPerUser)
 		fmt.Printf("  P99: $%.2f\n", result.StressResult.P99CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("  P95 booked margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+			fmt.Printf("  P95 operating margin: %.2f%%\n", operatingStressMargin(result, result.StressResult.P95CostPerUser))
+			fmt.Printf("  P99 booked margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P99CostPerUser))
+			fmt.Printf("  P99 operating margin: %.2f%%\n", operatingStressMargin(result, result.StressResult.P99CostPerUser))
+		}
 		fmt.Printf("  Worst Case Total Cost: $%.2f\n", result.StressResult.WorstCaseTotalCost)
 		fmt.Println()
 	}

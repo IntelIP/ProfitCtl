@@ -1,3 +1,19 @@
+# Benchmark Scenarios
+
+This folder now serves two purposes:
+
+- infrastructure benchmark comparisons such as Astro VPS vs Next.js on Vercel
+- reusable scenario fixtures for ProfitCtl pricing-model development
+
+Pricing-model fixtures currently live under `test/fixtures/` for automated regression coverage:
+
+- `mix_config.yml`
+- `hybrid_config.yml`
+- `hybrid_pilot_config.yml`
+- `payment_fees_config.yml`
+- `payment_fees_calibrated_config.yml`
+- `monthly_margin_regression.yml`
+
 # Benchmark Scenarios: Astro VPS vs Next.js on Vercel
 
 This folder contains ProfitCtl configs to compare a simple Astro deployment on a VPS against a Next.js deployment on Vercel Pro.

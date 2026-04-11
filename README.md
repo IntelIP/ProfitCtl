@@ -12,8 +12,13 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 ## Features
 
 - `simulate`: run 12-month scale + Monte Carlo stress simulations
+- `compare`: evaluate multiple pricing scenarios side by side
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
+- pricing modes: `tiered`, `mix`, and `hybrid`
+- payment-fee modeling with monthly vs annual billing mix
+- calibration deltas for modeled vs actual revenue and fees
+- booked vs operating margin reporting for one-time-heavy contract scenarios
 - Output formats: human CLI, JSON, Markdown
 - CI/CD via Woodpecker (Hostinger VPS + builder pool)
 
@@ -40,6 +45,15 @@ go install github.com/IntelIP/ProfitCtl@latest
 # simulate
 profitctl simulate -f examples/valid_profit.yml
 
+# mix-mode open-core pricing
+profitctl simulate -f examples/mix_profit.yml
+
+# hybrid contract pricing with pilot
+profitctl simulate -f examples/hybrid_profit.yml --json
+
+# compare steady-state vs pilot hybrid contracts
+profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
+
 # strict config validation
 profitctl validate -f examples/valid_profit.yml
 
@@ -60,6 +74,7 @@ Release artifacts are published to:
 - [Install Guide](docs/INSTALL.md)
 - [Quick Start](docs/QUICK_START.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Benchmark Scenarios](benchmark_scenarios/README.md)
 - [Woodpecker + Hostinger Runbook](docs/deployment/WOODPECKER_HOSTINGER_SETUP.md)
 
 ## Contributing

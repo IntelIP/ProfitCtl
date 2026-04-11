@@ -53,6 +53,7 @@ func TestFormatJSONResult_AllFields(t *testing.T) {
 	assert.Equal(t, 7000.0, jsonResult.Costs.Total)
 
 	// Verify revenue
+	assert.Equal(t, "tiered", jsonResult.Revenue.Mode)
 	assert.Equal(t, 10000.0, jsonResult.Revenue.Total)
 	assert.Len(t, jsonResult.Revenue.ByPlan, 1)
 	assert.Equal(t, "basic", jsonResult.Revenue.ByPlan[0].PlanName)
@@ -185,6 +186,142 @@ func TestFormatJSONResult_P95P99Margins(t *testing.T) {
 	p99TotalCost := 9.0 * 1000
 	expectedP99Margin := ((10000.0 - p99TotalCost) / 10000.0) * 100
 	assert.InDelta(t, expectedP99Margin, jsonResult.StressTest.P99.Margin, 0.01)
+}
+
+func TestFormatJSONResult_MixModeIncludesShares(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue.Mode = "mix"
+	result.Revenue.ByPlan = []pricing.PlanRevenue{
+		{PlanName: "free", Price: 0, Share: floatPtr(0.7), Users: 700, Revenue: 0},
+		{PlanName: "pro", Price: 29, Share: floatPtr(0.3), Users: 300, Revenue: 8700},
+	}
+	result.Revenue.Total = 8700
+
+	jsonBytes, err := FormatJSONResult(result)
+	assert.NoError(t, err)
+
+	var jsonResult JSONResult
+	err = json.Unmarshal(jsonBytes, &jsonResult)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "mix", jsonResult.Revenue.Mode)
+	assert.Len(t, jsonResult.Revenue.ByPlan, 2)
+	assert.NotNil(t, jsonResult.Revenue.ByPlan[0].Share)
+	assert.Equal(t, 0.7, *jsonResult.Revenue.ByPlan[0].Share)
+	assert.NotNil(t, jsonResult.Revenue.ByPlan[1].Share)
+	assert.Equal(t, 0.3, *jsonResult.Revenue.ByPlan[1].Share)
+}
+
+func TestFormatJSONResult_HybridModeIncludesBreakdown(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue = pricing.RevenueResult{
+		Mode:           "hybrid",
+		Total:          6500,
+		RecurringTotal: 2000,
+		OneTimeTotal:   5000,
+		MinimumUplift:  250,
+		Components: []pricing.RevenueComponent{
+			{Name: "base_platform_fee", Amount: 500},
+			{Name: "pilot_setup_fee", Amount: 5000},
+		},
+	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
+
+	jsonBytes, err := FormatJSONResult(result)
+	assert.NoError(t, err)
+
+	var jsonResult JSONResult
+	err = json.Unmarshal(jsonBytes, &jsonResult)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "hybrid", jsonResult.Revenue.Mode)
+	assert.Equal(t, 6500.0, jsonResult.Revenue.Total)
+	assert.Equal(t, 2000.0, jsonResult.Revenue.RecurringTotal)
+	assert.Equal(t, 5000.0, jsonResult.Revenue.OneTimeTotal)
+	assert.Equal(t, 250.0, jsonResult.Revenue.MinimumUplift)
+	assert.Len(t, jsonResult.Revenue.Components, 2)
+	assert.Equal(t, "base_platform_fee", jsonResult.Revenue.Components[0].Name)
+	assert.Equal(t, 68.85, jsonResult.Margin.OperatingGross)
+	assert.Equal(t, 12.46, jsonResult.Margin.OperatingCostPerUser)
+}
+
+func TestFormatJSONResult_PaymentFees(t *testing.T) {
+	result := createMockSimulationResult()
+	result.PaymentFees = pricing.PaymentFeeResult{
+		Processor:             "stripe",
+		Currency:              "usd",
+		MonthlyAmount:         29,
+		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
+		FreeUserAmount:        0,
+		PaidUserAmount:        32,
+		FreeUsers:             700,
+		PaidMonthlyUsers:      225,
+		PaidAnnualUsers:       75,
+		PercentageAmount:      29,
+		FixedAmount:           3,
+		Total:                 32,
+	}
+
+	jsonBytes, err := FormatJSONResult(result)
+	assert.NoError(t, err)
+
+	var jsonResult JSONResult
+	err = json.Unmarshal(jsonBytes, &jsonResult)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "stripe", jsonResult.PaymentFees.Processor)
+	assert.Equal(t, "usd", jsonResult.PaymentFees.Currency)
+	assert.Equal(t, 29.0, jsonResult.PaymentFees.Monthly)
+	assert.Equal(t, 3.0, jsonResult.PaymentFees.AnnualAmortized)
+	assert.Equal(t, 225.0, jsonResult.PaymentFees.PaidMonthlyUsers)
+	assert.Equal(t, 75.0, jsonResult.PaymentFees.PaidAnnualUsers)
+	assert.Equal(t, 29.0, jsonResult.PaymentFees.PercentageAmount)
+	assert.Equal(t, 3.0, jsonResult.PaymentFees.FixedAmount)
+	assert.Equal(t, 20.0, jsonResult.PaymentFees.OperatingTotal)
+	assert.Equal(t, 12.0, jsonResult.PaymentFees.OneTimeAmount)
+	assert.Equal(t, 32.0, jsonResult.PaymentFees.Total)
+}
+
+func TestFormatJSONResult_Calibration(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Calibration = pricing.CalibrationResult{
+		Period:             "2026-03",
+		Source:             "stripe_export",
+		RevenueActual:      1000,
+		RevenueModeled:     1100,
+		RevenueDelta:       100,
+		PaymentFeesActual:  30,
+		PaymentFeesModeled: 32,
+		PaymentFeesDelta:   2,
+		FreeUsersActual:    700,
+		FreeUsersModeled:   680,
+		FreeUsersDelta:     -20,
+		PaidMonthlyActual:  225,
+		PaidMonthlyModeled: 220,
+		PaidMonthlyDelta:   -5,
+		PaidAnnualActual:   75,
+		PaidAnnualModeled:  80,
+		PaidAnnualDelta:    5,
+		PlanMixDeltas: map[string]float64{
+			"pro": 0.05,
+		},
+	}
+
+	jsonBytes, err := FormatJSONResult(result)
+	assert.NoError(t, err)
+
+	var jsonResult JSONResult
+	err = json.Unmarshal(jsonBytes, &jsonResult)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "2026-03", jsonResult.Calibration.Period)
+	assert.Equal(t, "stripe_export", jsonResult.Calibration.Source)
+	assert.Equal(t, 100.0, jsonResult.Calibration.RevenueDelta)
+	assert.Equal(t, 2.0, jsonResult.Calibration.PaymentFeesDelta)
+	assert.Equal(t, -20.0, jsonResult.Calibration.FreeUsersDelta)
+	assert.Equal(t, 0.05, jsonResult.Calibration.PlanMixDeltas["pro"])
 }
 
 func TestFormatJSONResult_Indentation(t *testing.T) {

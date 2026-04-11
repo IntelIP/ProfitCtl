@@ -45,12 +45,23 @@ func createMockSimulationResult() SimulationResult {
 			},
 		},
 		Revenue: pricing.RevenueResult{
-			Total: 10000,
+			Mode:           "tiered",
+			Total:          10000,
+			RecurringTotal: 10000,
 			ByPlan: []pricing.PlanRevenue{
 				{PlanName: "basic", Price: 10, Users: 1000, Revenue: 10000},
 			},
 		},
 		Margin: pricing.MarginResult{
+			GrossMargin: 30.0,
+			CostPerUser: 7.0,
+			LayerMargins: pricing.LayerMarginBreakdown{
+				Infrastructure: 9400,
+				Application:    9400,
+				Service:        9700,
+			},
+		},
+		OperatingMargin: pricing.MarginResult{
 			GrossMargin: 30.0,
 			CostPerUser: 7.0,
 			LayerMargins: pricing.LayerMarginBreakdown{
@@ -274,6 +285,145 @@ func TestFormatCLIResult_ZeroVariableCosts(t *testing.T) {
 	assert.Contains(t, output, "Variable COGS: $0.00/user")
 }
 
+func TestFormatCLIResult_MixModeVerbose(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue.Mode = "mix"
+	result.Revenue.ByPlan = []pricing.PlanRevenue{
+		{PlanName: "free", Price: 0, Share: floatPtr(0.7), Users: 700, Revenue: 0},
+		{PlanName: "pro", Price: 29, Share: floatPtr(0.3), Users: 300, Revenue: 8700},
+	}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	FormatCLIResult(result, true)
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	assert.Contains(t, output, "Pricing mode: mix")
+	assert.Contains(t, output, "Revenue Mix:")
+	assert.Contains(t, output, "free: 70.0% -> 700 users")
+	assert.Contains(t, output, "pro: 30.0% -> 300 users")
+}
+
+func TestFormatCLIResult_HybridRevenueBreakdown(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Revenue = pricing.RevenueResult{
+		Mode:           "hybrid",
+		Total:          6500,
+		RecurringTotal: 2000,
+		OneTimeTotal:   5000,
+		MinimumUplift:  250,
+		Components: []pricing.RevenueComponent{
+			{Name: "base_platform_fee", Amount: 500},
+			{Name: "pilot_setup_fee", Amount: 5000},
+		},
+	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	FormatCLIResult(result, false)
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	assert.Contains(t, output, "Pricing mode: hybrid")
+	assert.Contains(t, output, "Booked margin: 30.00%")
+	assert.Contains(t, output, "Operating margin: 68.85%")
+	assert.Contains(t, output, "Booked cost per user: $7.00")
+	assert.Contains(t, output, "Operating cost per user: $12.46")
+	assert.Contains(t, output, "Revenue: $6500.00/month")
+	assert.Contains(t, output, "Recurring: $2000.00")
+	assert.Contains(t, output, "One-time: $5000.00")
+	assert.Contains(t, output, "Minimum uplift: $250.00")
+	assert.Contains(t, output, "base_platform_fee: $500.00")
+}
+
+func TestFormatCLIResult_PaymentFees(t *testing.T) {
+	result := createMockSimulationResult()
+	result.PaymentFees = pricing.PaymentFeeResult{
+		MonthlyAmount:         29,
+		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
+		PercentageAmount:      29,
+		FixedAmount:           3,
+		PaidUserAmount:        32,
+		Total:                 32,
+	}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	FormatCLIResult(result, false)
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	assert.Contains(t, output, "Payment Fees: $32.00")
+	assert.Contains(t, output, "Monthly fees: $29.00")
+	assert.Contains(t, output, "Annual amortized fees: $3.00")
+	assert.Contains(t, output, "Operating fees: $20.00")
+	assert.Contains(t, output, "One-time fees: $12.00")
+	assert.Contains(t, output, "Revenue percentage fee: $29.00")
+	assert.Contains(t, output, "Fixed transaction fees: $3.00")
+	assert.Contains(t, output, "Paid user fees: $32.00")
+}
+
+func TestFormatCLIResult_Calibration(t *testing.T) {
+	result := createMockSimulationResult()
+	result.Calibration = pricing.CalibrationResult{
+		Period:           "2026-03",
+		Source:           "stripe_export",
+		RevenueDelta:     100,
+		PaymentFeesDelta: 2,
+		FreeUsersDelta:   -20,
+		PaidMonthlyDelta: -5,
+		PaidAnnualDelta:  5,
+	}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	FormatCLIResult(result, false)
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	assert.Contains(t, output, "Calibration:")
+	assert.Contains(t, output, "Period: 2026-03")
+	assert.Contains(t, output, "Source: stripe_export")
+	assert.Contains(t, output, "Revenue delta: $100.00")
+	assert.Contains(t, output, "Payment fee delta: $2.00")
+}
+
+func floatPtr(v float64) *float64 {
+	return &v
+}
+
 func TestFormatCLIResult_MultipleViolations(t *testing.T) {
 	result := createMockSimulationResult()
 	result.Covenants.Passed = false
@@ -352,6 +502,7 @@ func TestPrintCLIResultToFile(t *testing.T) {
 	output := string(data)
 	assert.Contains(t, output, "=== profitctl Simulation Results ===")
 	assert.Contains(t, output, "Scenario: 1000 users")
+	assert.Contains(t, output, "Cost per user: $7.00")
 }
 func TestFormatCLIQuietResult(t *testing.T) {
 	result := createMockSimulationResult()

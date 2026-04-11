@@ -1,0 +1,29 @@
+project:
+  name: Monthly Margin Regression
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  plans:
+    - name: Starter
+      price: 10
+      limits:
+        users: 1000
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 70
+    message: Monthly margin must be at least 70%
+
+simulation:
+  base_users: 50
+  growth_factor: 1.05
+  iterations: 1000
