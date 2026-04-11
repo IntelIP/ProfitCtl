@@ -38,6 +38,7 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	var paymentFeeResult pricing.PaymentFeeResult
 	var calibrationResult pricing.CalibrationResult
 	var marginResult pricing.MarginResult
+	var operatingMarginResult pricing.MarginResult
 
 	if cfg.Pricing != nil {
 		revenueResult = pricing.CalculateRevenue(cfg.Pricing, baseScenario.Users)
@@ -53,6 +54,24 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 		marginResult = pricing.CalculateMargins(
 			revenueResult.Total,
 			adjustedTotalCost,
+			totalCostResult.GrandByLayer,
+			baseScenario.Users,
+		)
+	}
+
+	operatingRevenue := revenueResult.RecurringTotal
+	if operatingRevenue == 0 {
+		operatingRevenue = revenueResult.Total
+	}
+	operatingPaymentFees := paymentFeeResult.OperatingAmount
+	if operatingPaymentFees == 0 {
+		operatingPaymentFees = paymentFeeResult.Total
+	}
+	operatingTotalCost := totalCostResult.GrandTotal + operatingPaymentFees
+	if operatingRevenue > 0 {
+		operatingMarginResult = pricing.CalculateMargins(
+			operatingRevenue,
+			operatingTotalCost,
 			totalCostResult.GrandByLayer,
 			baseScenario.Users,
 		)
@@ -78,18 +97,19 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	covenantValidation := covenant.ValidateCovenants(cfg.Covenants, covenantResults)
 
 	return output.SimulationResult{
-		Users:         baseScenario.Users,
-		Months:        12,
-		GrowthFactor:  scaleConfig.GrowthFactor,
-		FixedCosts:    baseScenario.FixedCosts,
-		VariableCosts: baseScenario.VariableCost,
-		TotalCosts:    totalCostResult,
-		Revenue:       revenueResult,
-		PaymentFees:   paymentFeeResult,
-		Calibration:   calibrationResult,
-		Margin:        marginResult,
-		ScaleResult:   scaleResult,
-		StressResult:  stressResult,
-		Covenants:     covenantValidation,
+		Users:           baseScenario.Users,
+		Months:          12,
+		GrowthFactor:    scaleConfig.GrowthFactor,
+		FixedCosts:      baseScenario.FixedCosts,
+		VariableCosts:   baseScenario.VariableCost,
+		TotalCosts:      totalCostResult,
+		Revenue:         revenueResult,
+		PaymentFees:     paymentFeeResult,
+		Calibration:     calibrationResult,
+		Margin:          marginResult,
+		OperatingMargin: operatingMarginResult,
+		ScaleResult:     scaleResult,
+		StressResult:    stressResult,
+		Covenants:       covenantValidation,
 	}, nil
 }

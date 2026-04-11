@@ -18,6 +18,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - pricing modes: `tiered`, `mix`, and `hybrid`
 - payment-fee modeling with monthly vs annual billing mix
 - calibration deltas for modeled vs actual revenue and fees
+- booked vs operating margin reporting for one-time-heavy contract scenarios
 - Output formats: human CLI, JSON, Markdown
 - CI/CD via Woodpecker (Hostinger VPS + builder pool)
 

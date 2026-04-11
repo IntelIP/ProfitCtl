@@ -18,13 +18,18 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	}
 
 	if result.Margin.GrossMargin != 0 {
-		fmt.Printf("Mean margin: %.2f%%\n", result.Margin.GrossMargin)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked margin: %.2f%%\n", result.Margin.GrossMargin)
+			fmt.Printf("Operating margin: %.2f%%\n", result.OperatingMargin.GrossMargin)
+		} else {
+			fmt.Printf("Mean margin: %.2f%%\n", result.Margin.GrossMargin)
+		}
 	}
 
 	if result.StressResult.MonteCarlo.P95 > 0 && result.Revenue.Total > 0 {
-		p95TotalCost := result.StressResult.P95CostPerUser * float64(result.Users)
-		p95Margin := ((result.Revenue.Total - p95TotalCost) / result.Revenue.Total) * 100
-		fmt.Printf("p95 margin: %.2f%%\n", p95Margin)
+		if !hasOperatingView(result) {
+			fmt.Printf("p95 margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+		}
 	}
 
 	if result.StressResult.P95CostPerUser > 0 {
@@ -41,10 +46,20 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 
 	if result.VariableCosts.Total > 0 && result.Users > 0 {
 		fmt.Printf("Variable COGS: $%.4f/user\n", result.VariableCosts.PerUser)
-		fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked cost per user: $%.2f\n", result.Margin.CostPerUser)
+			fmt.Printf("Operating cost per user: $%.2f\n", result.OperatingMargin.CostPerUser)
+		} else {
+			fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		}
 	} else {
 		fmt.Printf("Variable COGS: $0.00/user\n")
-		fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("Booked cost per user: $%.2f\n", result.Margin.CostPerUser)
+			fmt.Printf("Operating cost per user: $%.2f\n", result.OperatingMargin.CostPerUser)
+		} else {
+			fmt.Printf("Cost per user: $%.2f\n", result.Margin.CostPerUser)
+		}
 	}
 	fmt.Println()
 
@@ -68,6 +83,12 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 		fmt.Printf("  Monthly fees: $%.2f\n", result.PaymentFees.MonthlyAmount)
 		if result.PaymentFees.AnnualAmortizedAmount > 0 {
 			fmt.Printf("  Annual amortized fees: $%.2f\n", result.PaymentFees.AnnualAmortizedAmount)
+		}
+		if result.PaymentFees.OperatingAmount > 0 && result.PaymentFees.OperatingAmount != result.PaymentFees.Total {
+			fmt.Printf("  Operating fees: $%.2f\n", result.PaymentFees.OperatingAmount)
+		}
+		if result.PaymentFees.OneTimeAmount > 0 {
+			fmt.Printf("  One-time fees: $%.2f\n", result.PaymentFees.OneTimeAmount)
 		}
 		fmt.Printf("  Revenue percentage fee: $%.2f\n", result.PaymentFees.PercentageAmount)
 		if result.PaymentFees.FixedAmount > 0 {
@@ -140,6 +161,12 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 		fmt.Printf("  Mean: $%.2f\n", result.StressResult.MeanCostPerUser)
 		fmt.Printf("  P95: $%.2f\n", result.StressResult.P95CostPerUser)
 		fmt.Printf("  P99: $%.2f\n", result.StressResult.P99CostPerUser)
+		if hasOperatingView(result) {
+			fmt.Printf("  P95 booked margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+			fmt.Printf("  P95 operating margin: %.2f%%\n", operatingStressMargin(result, result.StressResult.P95CostPerUser))
+			fmt.Printf("  P99 booked margin: %.2f%%\n", bookedStressMargin(result, result.StressResult.P99CostPerUser))
+			fmt.Printf("  P99 operating margin: %.2f%%\n", operatingStressMargin(result, result.StressResult.P99CostPerUser))
+		}
 		fmt.Printf("  Worst Case Total Cost: $%.2f\n", result.StressResult.WorstCaseTotalCost)
 		fmt.Println()
 	}

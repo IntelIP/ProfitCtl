@@ -147,6 +147,7 @@ func calculateTieredRevenue(pricing *config.PricingConfig, users int, result Rev
 
 	// Round total to 2 decimal places
 	result.Total = math.Round(result.Total*100) / 100
+	result.RecurringTotal = result.Total
 
 	return result
 }
@@ -205,6 +206,7 @@ func calculateMixRevenue(pricing *config.PricingConfig, users int, result Revenu
 	}
 
 	result.Total = math.Round(result.Total*100) / 100
+	result.RecurringTotal = result.Total
 	return result
 }
 

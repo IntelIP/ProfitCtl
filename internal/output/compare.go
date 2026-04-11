@@ -14,28 +14,32 @@ type ComparisonItem struct {
 }
 
 type ComparisonScenario struct {
-	Name             string  `json:"name"`
-	File             string  `json:"file"`
-	PricingMode      string  `json:"pricing_mode,omitempty"`
-	Users            int     `json:"users"`
-	Revenue          float64 `json:"revenue"`
-	RecurringRevenue float64 `json:"recurring_revenue,omitempty"`
-	PaymentFees      float64 `json:"payment_fees,omitempty"`
-	TotalCosts       float64 `json:"total_costs"`
-	Margin           float64 `json:"margin,omitempty"`
-	CostPerUser      float64 `json:"cost_per_user,omitempty"`
-	CovenantsPassed  bool    `json:"covenants_passed"`
-	ViolationCount   int     `json:"violation_count"`
-	RevenueDelta     float64 `json:"revenue_delta_vs_baseline,omitempty"`
-	MarginDelta      float64 `json:"margin_delta_vs_baseline,omitempty"`
-	CostPerUserDelta float64 `json:"cost_per_user_delta_vs_baseline,omitempty"`
+	Name                 string  `json:"name"`
+	File                 string  `json:"file"`
+	PricingMode          string  `json:"pricing_mode,omitempty"`
+	Users                int     `json:"users"`
+	Revenue              float64 `json:"revenue"`
+	RecurringRevenue     float64 `json:"recurring_revenue,omitempty"`
+	OneTimeRevenue       float64 `json:"one_time_revenue,omitempty"`
+	PaymentFees          float64 `json:"payment_fees,omitempty"`
+	OperatingFees        float64 `json:"operating_fees,omitempty"`
+	TotalCosts           float64 `json:"total_costs"`
+	Margin               float64 `json:"margin,omitempty"`
+	OperatingMargin      float64 `json:"operating_margin,omitempty"`
+	CostPerUser          float64 `json:"cost_per_user,omitempty"`
+	CovenantsPassed      bool    `json:"covenants_passed"`
+	ViolationCount       int     `json:"violation_count"`
+	RevenueDelta         float64 `json:"revenue_delta_vs_baseline,omitempty"`
+	MarginDelta          float64 `json:"margin_delta_vs_baseline,omitempty"`
+	OperatingMarginDelta float64 `json:"operating_margin_delta_vs_baseline,omitempty"`
+	CostPerUserDelta     float64 `json:"cost_per_user_delta_vs_baseline,omitempty"`
 }
 
 type ComparisonLeaders struct {
-	HighestRevenue     string `json:"highest_revenue"`
-	HighestMargin      string `json:"highest_margin"`
-	LowestCostPerUser  string `json:"lowest_cost_per_user"`
-	BestCovenantHealth string `json:"best_covenant_health"`
+	HighestRevenue         string `json:"highest_revenue"`
+	HighestOperatingMargin string `json:"highest_operating_margin"`
+	LowestCostPerUser      string `json:"lowest_cost_per_user"`
+	BestCovenantHealth     string `json:"best_covenant_health"`
 }
 
 type ComparisonResult struct {
@@ -56,32 +60,36 @@ func BuildComparisonResult(items []ComparisonItem) ComparisonResult {
 	result.Baseline = baseline.Name
 
 	bestRevenue := baseline.Name
-	bestMargin := baseline.Name
+	bestOperatingMargin := baseline.Name
 	bestCostPerUser := baseline.Name
 	bestCovenant := baseline.Name
 
 	bestRevenueValue := baseline.Result.Revenue.Total
-	bestMarginValue := baseline.Result.Margin.GrossMargin
-	bestCostPerUserValue := baseline.Result.Margin.CostPerUser
+	bestOperatingMarginValue := baseline.Result.OperatingMargin.GrossMargin
+	bestCostPerUserValue := baseline.Result.OperatingMargin.CostPerUser
 	bestCovenantValue := covenantHealthScore(baseline.Result)
 
 	for _, item := range items {
 		scenario := ComparisonScenario{
-			Name:             item.Name,
-			File:             item.File,
-			PricingMode:      item.Result.Revenue.Mode,
-			Users:            item.Result.Users,
-			Revenue:          item.Result.Revenue.Total,
-			RecurringRevenue: item.Result.Revenue.RecurringTotal,
-			PaymentFees:      item.Result.PaymentFees.Total,
-			TotalCosts:       item.Result.TotalCosts.GrandTotal + item.Result.PaymentFees.Total,
-			Margin:           item.Result.Margin.GrossMargin,
-			CostPerUser:      item.Result.Margin.CostPerUser,
-			CovenantsPassed:  item.Result.Covenants.Passed,
-			ViolationCount:   len(item.Result.Covenants.Violations),
-			RevenueDelta:     item.Result.Revenue.Total - baseline.Result.Revenue.Total,
-			MarginDelta:      item.Result.Margin.GrossMargin - baseline.Result.Margin.GrossMargin,
-			CostPerUserDelta: item.Result.Margin.CostPerUser - baseline.Result.Margin.CostPerUser,
+			Name:                 item.Name,
+			File:                 item.File,
+			PricingMode:          item.Result.Revenue.Mode,
+			Users:                item.Result.Users,
+			Revenue:              item.Result.Revenue.Total,
+			RecurringRevenue:     item.Result.Revenue.RecurringTotal,
+			OneTimeRevenue:       item.Result.Revenue.OneTimeTotal,
+			PaymentFees:          item.Result.PaymentFees.Total,
+			OperatingFees:        operatingPaymentFeeAmount(item.Result),
+			TotalCosts:           item.Result.TotalCosts.GrandTotal + item.Result.PaymentFees.Total,
+			Margin:               item.Result.Margin.GrossMargin,
+			OperatingMargin:      item.Result.OperatingMargin.GrossMargin,
+			CostPerUser:          item.Result.OperatingMargin.CostPerUser,
+			CovenantsPassed:      item.Result.Covenants.Passed,
+			ViolationCount:       len(item.Result.Covenants.Violations),
+			RevenueDelta:         item.Result.Revenue.Total - baseline.Result.Revenue.Total,
+			MarginDelta:          item.Result.Margin.GrossMargin - baseline.Result.Margin.GrossMargin,
+			OperatingMarginDelta: item.Result.OperatingMargin.GrossMargin - baseline.Result.OperatingMargin.GrossMargin,
+			CostPerUserDelta:     item.Result.OperatingMargin.CostPerUser - baseline.Result.OperatingMargin.CostPerUser,
 		}
 		result.Scenarios = append(result.Scenarios, scenario)
 
@@ -89,9 +97,9 @@ func BuildComparisonResult(items []ComparisonItem) ComparisonResult {
 			bestRevenueValue = scenario.Revenue
 			bestRevenue = scenario.Name
 		}
-		if scenario.Margin > bestMarginValue {
-			bestMarginValue = scenario.Margin
-			bestMargin = scenario.Name
+		if scenario.OperatingMargin > bestOperatingMarginValue {
+			bestOperatingMarginValue = scenario.OperatingMargin
+			bestOperatingMargin = scenario.Name
 		}
 		if scenario.CostPerUser < bestCostPerUserValue {
 			bestCostPerUserValue = scenario.CostPerUser
@@ -105,10 +113,10 @@ func BuildComparisonResult(items []ComparisonItem) ComparisonResult {
 	}
 
 	result.Leaders = ComparisonLeaders{
-		HighestRevenue:     bestRevenue,
-		HighestMargin:      bestMargin,
-		LowestCostPerUser:  bestCostPerUser,
-		BestCovenantHealth: bestCovenant,
+		HighestRevenue:         bestRevenue,
+		HighestOperatingMargin: bestOperatingMargin,
+		LowestCostPerUser:      bestCostPerUser,
+		BestCovenantHealth:     bestCovenant,
 	}
 
 	return result
@@ -121,20 +129,21 @@ func FormatCLIComparisonResult(result ComparisonResult) string {
 	if result.Baseline != "" {
 		fmt.Fprintf(&b, "Baseline: %s\n\n", result.Baseline)
 	}
-	b.WriteString("Scenario            Mode     Revenue    Fees       Total Cost  Margin   CPU     Covenants\n")
-	b.WriteString("----------------------------------------------------------------------------------------\n")
+	b.WriteString("Scenario            Mode     Revenue    Recurring  Fees       Booked   Op Marg  CPU     Covenants\n")
+	b.WriteString("------------------------------------------------------------------------------------------------\n")
 	for _, scenario := range result.Scenarios {
 		status := "PASS"
 		if !scenario.CovenantsPassed {
 			status = fmt.Sprintf("FAIL(%d)", scenario.ViolationCount)
 		}
-		fmt.Fprintf(&b, "%-18s %-8s $%-9.2f $%-9.2f $%-10.2f %-7.2f $%-7.2f %s\n",
+		fmt.Fprintf(&b, "%-18s %-8s $%-9.2f $%-9.2f $%-9.2f %-8.2f %-8.2f $%-7.2f %s\n",
 			truncateRight(scenario.Name, 18),
 			truncateRight(emptyFallback(scenario.PricingMode, "-"), 8),
 			scenario.Revenue,
+			scenario.RecurringRevenue,
 			scenario.PaymentFees,
-			scenario.TotalCosts,
 			scenario.Margin,
+			scenario.OperatingMargin,
 			scenario.CostPerUser,
 			status,
 		)
@@ -145,13 +154,13 @@ func FormatCLIComparisonResult(result ComparisonResult) string {
 		if scenario.Name == result.Baseline {
 			continue
 		}
-		fmt.Fprintf(&b, "  %s: revenue %+0.2f, margin %+0.2f pts, cost/user %+0.2f\n",
-			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.CostPerUserDelta)
+		fmt.Fprintf(&b, "  %s: revenue %+0.2f, booked %+0.2f pts, operating %+0.2f pts, cost/user %+0.2f\n",
+			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.OperatingMarginDelta, scenario.CostPerUserDelta)
 	}
 
 	b.WriteString("\nLeaders:\n")
 	fmt.Fprintf(&b, "  Highest revenue: %s\n", result.Leaders.HighestRevenue)
-	fmt.Fprintf(&b, "  Highest margin: %s\n", result.Leaders.HighestMargin)
+	fmt.Fprintf(&b, "  Highest operating margin: %s\n", result.Leaders.HighestOperatingMargin)
 	fmt.Fprintf(&b, "  Lowest cost/user: %s\n", result.Leaders.LowestCostPerUser)
 	fmt.Fprintf(&b, "  Best covenant health: %s\n", result.Leaders.BestCovenantHealth)
 
@@ -169,39 +178,40 @@ func FormatMarkdownComparisonResult(result ComparisonResult) string {
 	if result.Baseline != "" {
 		fmt.Fprintf(&b, "Baseline: **%s**\n\n", result.Baseline)
 	}
-	b.WriteString("| Scenario | Mode | Revenue | Payment Fees | Total Cost | Margin | Cost/User | Covenants |\n")
-	b.WriteString("|----------|------|---------|--------------|------------|--------|-----------|-----------|\n")
+	b.WriteString("| Scenario | Mode | Revenue | Recurring Revenue | Payment Fees | Booked Margin | Operating Margin | Cost/User | Covenants |\n")
+	b.WriteString("|----------|------|---------|-------------------|--------------|---------------|------------------|-----------|-----------|\n")
 	for _, scenario := range result.Scenarios {
 		status := "PASS"
 		if !scenario.CovenantsPassed {
 			status = fmt.Sprintf("FAIL (%d)", scenario.ViolationCount)
 		}
-		fmt.Fprintf(&b, "| %s | %s | $%.2f | $%.2f | $%.2f | %.2f%% | $%.2f | %s |\n",
+		fmt.Fprintf(&b, "| %s | %s | $%.2f | $%.2f | $%.2f | %.2f%% | %.2f%% | $%.2f | %s |\n",
 			scenario.Name,
 			emptyFallback(scenario.PricingMode, "-"),
 			scenario.Revenue,
+			scenario.RecurringRevenue,
 			scenario.PaymentFees,
-			scenario.TotalCosts,
 			scenario.Margin,
+			scenario.OperatingMargin,
 			scenario.CostPerUser,
 			status,
 		)
 	}
 
 	b.WriteString("\n### Delta vs Baseline\n\n")
-	b.WriteString("| Scenario | Revenue Delta | Margin Delta | Cost/User Delta |\n")
-	b.WriteString("|----------|---------------|--------------|-----------------|\n")
+	b.WriteString("| Scenario | Revenue Delta | Booked Margin Delta | Operating Margin Delta | Cost/User Delta |\n")
+	b.WriteString("|----------|---------------|---------------------|------------------------|-----------------|\n")
 	for _, scenario := range result.Scenarios {
 		if scenario.Name == result.Baseline {
 			continue
 		}
-		fmt.Fprintf(&b, "| %s | $%+.2f | %+.2f pts | $%+.2f |\n",
-			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.CostPerUserDelta)
+		fmt.Fprintf(&b, "| %s | $%+.2f | %+.2f pts | %+.2f pts | $%+.2f |\n",
+			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.OperatingMarginDelta, scenario.CostPerUserDelta)
 	}
 
 	b.WriteString("\n### Leaders\n\n")
 	b.WriteString(fmt.Sprintf("- Highest revenue: **%s**\n", result.Leaders.HighestRevenue))
-	b.WriteString(fmt.Sprintf("- Highest margin: **%s**\n", result.Leaders.HighestMargin))
+	b.WriteString(fmt.Sprintf("- Highest operating margin: **%s**\n", result.Leaders.HighestOperatingMargin))
 	b.WriteString(fmt.Sprintf("- Lowest cost/user: **%s**\n", result.Leaders.LowestCostPerUser))
 	b.WriteString(fmt.Sprintf("- Best covenant health: **%s**\n", result.Leaders.BestCovenantHealth))
 

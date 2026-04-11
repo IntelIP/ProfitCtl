@@ -42,6 +42,7 @@ profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml -
 ```
 
 The first config acts as the baseline. `compare` exits non-zero if any scenario breaches its covenants, which makes it usable in pricing reviews and CI gates.
+For hybrid and pilot-style contracts, the comparison output separates booked margin from operating margin so one-time setup revenue does not masquerade as steady-state unit economics.
 
 ## 6. Starter config
 

@@ -45,13 +45,23 @@ func createMockSimulationResult() SimulationResult {
 			},
 		},
 		Revenue: pricing.RevenueResult{
-			Mode:  "tiered",
-			Total: 10000,
+			Mode:           "tiered",
+			Total:          10000,
+			RecurringTotal: 10000,
 			ByPlan: []pricing.PlanRevenue{
 				{PlanName: "basic", Price: 10, Users: 1000, Revenue: 10000},
 			},
 		},
 		Margin: pricing.MarginResult{
+			GrossMargin: 30.0,
+			CostPerUser: 7.0,
+			LayerMargins: pricing.LayerMarginBreakdown{
+				Infrastructure: 9400,
+				Application:    9400,
+				Service:        9700,
+			},
+		},
+		OperatingMargin: pricing.MarginResult{
 			GrossMargin: 30.0,
 			CostPerUser: 7.0,
 			LayerMargins: pricing.LayerMarginBreakdown{
@@ -315,6 +325,7 @@ func TestFormatCLIResult_HybridRevenueBreakdown(t *testing.T) {
 			{Name: "pilot_setup_fee", Amount: 5000},
 		},
 	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
 
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
@@ -330,6 +341,10 @@ func TestFormatCLIResult_HybridRevenueBreakdown(t *testing.T) {
 	output := buf.String()
 
 	assert.Contains(t, output, "Pricing mode: hybrid")
+	assert.Contains(t, output, "Booked margin: 30.00%")
+	assert.Contains(t, output, "Operating margin: 68.85%")
+	assert.Contains(t, output, "Booked cost per user: $7.00")
+	assert.Contains(t, output, "Operating cost per user: $12.46")
 	assert.Contains(t, output, "Revenue: $6500.00/month")
 	assert.Contains(t, output, "Recurring: $2000.00")
 	assert.Contains(t, output, "One-time: $5000.00")
@@ -342,6 +357,8 @@ func TestFormatCLIResult_PaymentFees(t *testing.T) {
 	result.PaymentFees = pricing.PaymentFeeResult{
 		MonthlyAmount:         29,
 		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
 		PercentageAmount:      29,
 		FixedAmount:           3,
 		PaidUserAmount:        32,
@@ -364,6 +381,8 @@ func TestFormatCLIResult_PaymentFees(t *testing.T) {
 	assert.Contains(t, output, "Payment Fees: $32.00")
 	assert.Contains(t, output, "Monthly fees: $29.00")
 	assert.Contains(t, output, "Annual amortized fees: $3.00")
+	assert.Contains(t, output, "Operating fees: $20.00")
+	assert.Contains(t, output, "One-time fees: $12.00")
 	assert.Contains(t, output, "Revenue percentage fee: $29.00")
 	assert.Contains(t, output, "Fixed transaction fees: $3.00")
 	assert.Contains(t, output, "Paid user fees: $32.00")
@@ -483,6 +502,7 @@ func TestPrintCLIResultToFile(t *testing.T) {
 	output := string(data)
 	assert.Contains(t, output, "=== profitctl Simulation Results ===")
 	assert.Contains(t, output, "Scenario: 1000 users")
+	assert.Contains(t, output, "Cost per user: $7.00")
 }
 func TestFormatCLIQuietResult(t *testing.T) {
 	result := createMockSimulationResult()

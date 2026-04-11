@@ -25,7 +25,8 @@ type SimulationResult struct {
 	Calibration pricing.CalibrationResult
 
 	// Margins
-	Margin pricing.MarginResult
+	Margin          pricing.MarginResult
+	OperatingMargin pricing.MarginResult
 
 	// Scale simulation
 	ScaleResult simulation.ScaleSimulationResult

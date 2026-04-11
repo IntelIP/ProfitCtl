@@ -225,6 +225,7 @@ func TestFormatJSONResult_HybridModeIncludesBreakdown(t *testing.T) {
 			{Name: "pilot_setup_fee", Amount: 5000},
 		},
 	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
 
 	jsonBytes, err := FormatJSONResult(result)
 	assert.NoError(t, err)
@@ -240,6 +241,8 @@ func TestFormatJSONResult_HybridModeIncludesBreakdown(t *testing.T) {
 	assert.Equal(t, 250.0, jsonResult.Revenue.MinimumUplift)
 	assert.Len(t, jsonResult.Revenue.Components, 2)
 	assert.Equal(t, "base_platform_fee", jsonResult.Revenue.Components[0].Name)
+	assert.Equal(t, 68.85, jsonResult.Margin.OperatingGross)
+	assert.Equal(t, 12.46, jsonResult.Margin.OperatingCostPerUser)
 }
 
 func TestFormatJSONResult_PaymentFees(t *testing.T) {
@@ -249,6 +252,8 @@ func TestFormatJSONResult_PaymentFees(t *testing.T) {
 		Currency:              "usd",
 		MonthlyAmount:         29,
 		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
 		FreeUserAmount:        0,
 		PaidUserAmount:        32,
 		FreeUsers:             700,
@@ -274,6 +279,8 @@ func TestFormatJSONResult_PaymentFees(t *testing.T) {
 	assert.Equal(t, 75.0, jsonResult.PaymentFees.PaidAnnualUsers)
 	assert.Equal(t, 29.0, jsonResult.PaymentFees.PercentageAmount)
 	assert.Equal(t, 3.0, jsonResult.PaymentFees.FixedAmount)
+	assert.Equal(t, 20.0, jsonResult.PaymentFees.OperatingTotal)
+	assert.Equal(t, 12.0, jsonResult.PaymentFees.OneTimeAmount)
 	assert.Equal(t, 32.0, jsonResult.PaymentFees.Total)
 }
 

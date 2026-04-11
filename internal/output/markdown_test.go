@@ -242,9 +242,14 @@ func TestFormatMarkdownResult_HybridRevenueTable(t *testing.T) {
 			{Name: "pilot_setup_fee", Amount: 5000},
 		},
 	}
+	result.OperatingMargin = pricing.MarginResult{GrossMargin: 68.85, CostPerUser: 12.46}
 
 	markdown := FormatMarkdownResult(result)
 
+	assert.Contains(t, markdown, "| Booked Margin | 30.0% |")
+	assert.Contains(t, markdown, "| Operating Margin | 68.8% |")
+	assert.Contains(t, markdown, "| Booked Cost per User | $7.00 |")
+	assert.Contains(t, markdown, "| Operating Cost per User | $12.46 |")
 	assert.Contains(t, markdown, "### Hybrid Revenue")
 	assert.Contains(t, markdown, "| Total Revenue | $6500.00 |")
 	assert.Contains(t, markdown, "| Recurring Revenue | $2000.00 |")
@@ -258,6 +263,8 @@ func TestFormatMarkdownResult_PaymentFees(t *testing.T) {
 	result.PaymentFees = pricing.PaymentFeeResult{
 		MonthlyAmount:         29,
 		AnnualAmortizedAmount: 3,
+		OperatingAmount:       20,
+		OneTimeAmount:         12,
 		PercentageAmount:      29,
 		FixedAmount:           3,
 		PaidUserAmount:        32,
@@ -270,6 +277,8 @@ func TestFormatMarkdownResult_PaymentFees(t *testing.T) {
 	assert.Contains(t, markdown, "| Total Payment Fees | $32.00 |")
 	assert.Contains(t, markdown, "| Monthly Fees | $29.00 |")
 	assert.Contains(t, markdown, "| Annual Amortized Fees | $3.00 |")
+	assert.Contains(t, markdown, "| Operating Fees | $20.00 |")
+	assert.Contains(t, markdown, "| One-Time Fees | $12.00 |")
 	assert.Contains(t, markdown, "| Revenue Percentage Fee | $29.00 |")
 	assert.Contains(t, markdown, "| Fixed Transaction Fees | $3.00 |")
 	assert.Contains(t, markdown, "| Paid User Fees | $32.00 |")

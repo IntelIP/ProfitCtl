@@ -13,21 +13,31 @@ func TestBuildComparisonResult(t *testing.T) {
 	baseline := createMockSimulationResult()
 	baseline.Revenue.Mode = "tiered"
 	baseline.Revenue.Total = 10000
+	baseline.Revenue.RecurringTotal = 10000
 	baseline.Margin.GrossMargin = 30
+	baseline.OperatingMargin.GrossMargin = 30
 	baseline.Margin.CostPerUser = 7
+	baseline.OperatingMargin.CostPerUser = 7
 
 	mix := createMockSimulationResult()
 	mix.Revenue.Mode = "mix"
 	mix.Revenue.Total = 12500
+	mix.Revenue.RecurringTotal = 12500
 	mix.Margin.GrossMargin = 42
+	mix.OperatingMargin.GrossMargin = 42
 	mix.Margin.CostPerUser = 5
+	mix.OperatingMargin.CostPerUser = 5
 	mix.Covenants.Passed = true
 
 	hybrid := createMockSimulationResult()
 	hybrid.Revenue.Mode = "hybrid"
 	hybrid.Revenue.Total = 9000
+	hybrid.Revenue.RecurringTotal = 3000
+	hybrid.Revenue.OneTimeTotal = 6000
 	hybrid.Margin.GrossMargin = 18
+	hybrid.OperatingMargin.GrossMargin = 8
 	hybrid.Margin.CostPerUser = 9
+	hybrid.OperatingMargin.CostPerUser = 9
 	hybrid.Covenants.Passed = false
 	hybrid.Covenants.Violations = []covenant.Violation{{Message: "margin breach"}}
 
@@ -41,9 +51,10 @@ func TestBuildComparisonResult(t *testing.T) {
 	require.Len(t, result.Scenarios, 3)
 	assert.Equal(t, 2500.0, result.Scenarios[1].RevenueDelta)
 	assert.Equal(t, 12.0, result.Scenarios[1].MarginDelta)
+	assert.Equal(t, 12.0, result.Scenarios[1].OperatingMarginDelta)
 	assert.Equal(t, -2.0, result.Scenarios[1].CostPerUserDelta)
 	assert.Equal(t, "mix", result.Leaders.HighestRevenue)
-	assert.Equal(t, "mix", result.Leaders.HighestMargin)
+	assert.Equal(t, "mix", result.Leaders.HighestOperatingMargin)
 	assert.Equal(t, "mix", result.Leaders.LowestCostPerUser)
 	assert.Equal(t, "mix", result.Leaders.BestCovenantHealth)
 }
@@ -69,7 +80,7 @@ func TestFormatMarkdownComparisonResult(t *testing.T) {
 
 	output := FormatMarkdownComparisonResult(result)
 	assert.Contains(t, output, "## profitctl Scenario Comparison")
-	assert.Contains(t, output, "| Scenario | Mode | Revenue | Payment Fees | Total Cost | Margin | Cost/User | Covenants |")
+	assert.Contains(t, output, "| Scenario | Mode | Revenue | Recurring Revenue | Payment Fees | Booked Margin | Operating Margin | Cost/User | Covenants |")
 	assert.Contains(t, output, "### Delta vs Baseline")
 	assert.Contains(t, output, "### Leaders")
 }

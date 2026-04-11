@@ -21,18 +21,28 @@ func FormatMarkdownResult(result SimulationResult) string {
 	}
 
 	if result.Margin.GrossMargin != 0 {
-		markdown += fmt.Sprintf("| Margin | %.1f%% |\n", result.Margin.GrossMargin)
+		if hasOperatingView(result) {
+			markdown += fmt.Sprintf("| Booked Margin | %.1f%% |\n", result.Margin.GrossMargin)
+			markdown += fmt.Sprintf("| Operating Margin | %.1f%% |\n", result.OperatingMargin.GrossMargin)
+		} else {
+			markdown += fmt.Sprintf("| Margin | %.1f%% |\n", result.Margin.GrossMargin)
+		}
 	}
 
 	// Stress test margins (if available)
 	if result.StressResult.P95CostPerUser > 0 && result.Revenue.Total > 0 {
-		p95TotalCost := result.StressResult.P95CostPerUser * float64(result.Users)
-		p95Margin := ((result.Revenue.Total - p95TotalCost) / result.Revenue.Total) * 100
-		markdown += fmt.Sprintf("| p95 Margin | %.1f%% |\n", p95Margin)
+		if !hasOperatingView(result) {
+			markdown += fmt.Sprintf("| p95 Margin | %.1f%% |\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+		}
 	}
 
 	if result.Margin.CostPerUser > 0 {
-		markdown += fmt.Sprintf("| Cost per User | $%.2f |\n", result.Margin.CostPerUser)
+		if hasOperatingView(result) {
+			markdown += fmt.Sprintf("| Booked Cost per User | $%.2f |\n", result.Margin.CostPerUser)
+			markdown += fmt.Sprintf("| Operating Cost per User | $%.2f |\n", result.OperatingMargin.CostPerUser)
+		} else {
+			markdown += fmt.Sprintf("| Cost per User | $%.2f |\n", result.Margin.CostPerUser)
+		}
 	}
 
 	// Covenant status
@@ -84,6 +94,12 @@ func FormatMarkdownResult(result SimulationResult) string {
 		markdown += fmt.Sprintf("| Monthly Fees | $%.2f |\n", result.PaymentFees.MonthlyAmount)
 		if result.PaymentFees.AnnualAmortizedAmount > 0 {
 			markdown += fmt.Sprintf("| Annual Amortized Fees | $%.2f |\n", result.PaymentFees.AnnualAmortizedAmount)
+		}
+		if result.PaymentFees.OperatingAmount > 0 && result.PaymentFees.OperatingAmount != result.PaymentFees.Total {
+			markdown += fmt.Sprintf("| Operating Fees | $%.2f |\n", result.PaymentFees.OperatingAmount)
+		}
+		if result.PaymentFees.OneTimeAmount > 0 {
+			markdown += fmt.Sprintf("| One-Time Fees | $%.2f |\n", result.PaymentFees.OneTimeAmount)
 		}
 		markdown += fmt.Sprintf("| Revenue Percentage Fee | $%.2f |\n", result.PaymentFees.PercentageAmount)
 		if result.PaymentFees.FixedAmount > 0 {
@@ -152,6 +168,12 @@ func FormatMarkdownResult(result SimulationResult) string {
 		markdown += fmt.Sprintf("| Mean Cost per User | $%.2f |\n", result.StressResult.MeanCostPerUser)
 		markdown += fmt.Sprintf("| P95 Cost per User | $%.2f |\n", result.StressResult.P95CostPerUser)
 		markdown += fmt.Sprintf("| P99 Cost per User | $%.2f |\n", result.StressResult.P99CostPerUser)
+		if hasOperatingView(result) {
+			markdown += fmt.Sprintf("| P95 Booked Margin | %.2f%% |\n", bookedStressMargin(result, result.StressResult.P95CostPerUser))
+			markdown += fmt.Sprintf("| P95 Operating Margin | %.2f%% |\n", operatingStressMargin(result, result.StressResult.P95CostPerUser))
+			markdown += fmt.Sprintf("| P99 Booked Margin | %.2f%% |\n", bookedStressMargin(result, result.StressResult.P99CostPerUser))
+			markdown += fmt.Sprintf("| P99 Operating Margin | %.2f%% |\n", operatingStressMargin(result, result.StressResult.P99CostPerUser))
+		}
 		markdown += fmt.Sprintf("| Worst Case Total Cost | $%.2f |\n", result.StressResult.WorstCaseTotalCost)
 		markdown += "\n"
 	}

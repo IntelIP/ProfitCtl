@@ -107,6 +107,8 @@ func TestCalculatePaymentFees_HybridUsesPaidProfile(t *testing.T) {
 
 	assert.Equal(t, 25.0, result.PaidMonthlyUsers)
 	assert.Equal(t, 25.0, result.PaidAnnualUsers)
+	assert.Greater(t, result.OneTimeAmount, 0.0)
+	assert.Less(t, result.OperatingAmount, result.Total)
 	assert.Greater(t, result.Total, 0.0)
 }
 

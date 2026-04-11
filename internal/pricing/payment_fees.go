@@ -11,6 +11,8 @@ type PaymentFeeResult struct {
 	Currency              string
 	MonthlyAmount         float64
 	AnnualAmortizedAmount float64
+	OperatingAmount       float64
+	OneTimeAmount         float64
 	FreeUserAmount        float64
 	PaidUserAmount        float64
 	FreeUsers             float64
@@ -106,6 +108,7 @@ func CalculatePaymentFees(fees *config.PaymentFeesConfig, pricingCfg *config.Pri
 		} else {
 			result.PaidUserAmount += monthlyFee + annualAmortizedFee
 		}
+		result.OperatingAmount += monthlyFee + annualAmortizedFee
 	}
 
 	return finalizePaymentFeeResult(result)
@@ -119,6 +122,7 @@ func calculateLegacyPaymentFees(fees *config.PaymentFeesConfig, revenue RevenueR
 		PercentageAmount: percentageAmount,
 		FixedAmount:      fixedAmount,
 		MonthlyAmount:    roundCurrency(percentageAmount + fixedAmount),
+		OperatingAmount:  roundCurrency(percentageAmount + fixedAmount),
 		Total:            roundCurrency(percentageAmount + fixedAmount),
 	}
 }
@@ -135,6 +139,7 @@ func applyHybridPaymentFees(result *PaymentFeeResult, fees *config.PaymentFeesCo
 	result.PaidAnnualUsers = annualUsers
 
 	monthlyRevenue := revenue.Total * monthlyShare
+	operatingMonthlyRevenue := revenue.RecurringTotal * monthlyShare
 	annualRevenueEquivalent := revenue.RecurringTotal
 	if annualRevenueEquivalent == 0 {
 		annualRevenueEquivalent = revenue.Total
@@ -142,6 +147,7 @@ func applyHybridPaymentFees(result *PaymentFeeResult, fees *config.PaymentFeesCo
 	annualCashCollected := annualRevenueEquivalent * annualShare * float64(annualPrepaidMonths) * (1 - annualDiscount/100)
 
 	monthlyFee := monthlyRevenue*paidProfile.MonthlyPercent/100 + monthlyUsers*paidProfile.PerTransaction
+	operatingMonthlyFee := operatingMonthlyRevenue*paidProfile.MonthlyPercent/100 + monthlyUsers*paidProfile.PerTransaction
 	annualPercent := paidProfile.AnnualPercent
 	if annualPercent == 0 {
 		annualPercent = paidProfile.MonthlyPercent
@@ -154,6 +160,8 @@ func applyHybridPaymentFees(result *PaymentFeeResult, fees *config.PaymentFeesCo
 
 	result.MonthlyAmount = roundCurrency(monthlyFee)
 	result.AnnualAmortizedAmount = roundCurrency(annualAmortizedFee)
+	result.OperatingAmount = roundCurrency(operatingMonthlyFee + annualAmortizedFee)
+	result.OneTimeAmount = roundCurrency(result.MonthlyAmount - roundCurrency(operatingMonthlyFee))
 	result.PaidUserAmount = roundCurrency(result.MonthlyAmount + result.AnnualAmortizedAmount)
 	result.PercentageAmount = roundCurrency(monthlyRevenue*paidProfile.MonthlyPercent/100 + annualCashCollected*annualPercent/100/float64(maxInt(annualPrepaidMonths, 1)))
 	result.FixedAmount = roundCurrency(monthlyUsers*paidProfile.PerTransaction + annualUsers*paidProfile.PerTransaction/float64(maxInt(annualPrepaidMonths, 1)))
@@ -162,11 +170,16 @@ func applyHybridPaymentFees(result *PaymentFeeResult, fees *config.PaymentFeesCo
 func finalizePaymentFeeResult(result PaymentFeeResult) PaymentFeeResult {
 	result.MonthlyAmount = roundCurrency(result.MonthlyAmount)
 	result.AnnualAmortizedAmount = roundCurrency(result.AnnualAmortizedAmount)
+	result.OperatingAmount = roundCurrency(result.OperatingAmount)
+	result.OneTimeAmount = roundCurrency(result.OneTimeAmount)
 	result.FreeUserAmount = roundCurrency(result.FreeUserAmount)
 	result.PaidUserAmount = roundCurrency(result.PaidUserAmount)
 	result.PercentageAmount = roundCurrency(result.PercentageAmount)
 	result.FixedAmount = roundCurrency(result.FixedAmount)
 	result.Total = roundCurrency(result.MonthlyAmount + result.AnnualAmortizedAmount)
+	if result.OperatingAmount == 0 && result.Total > 0 {
+		result.OperatingAmount = result.Total
+	}
 	return result
 }
 
