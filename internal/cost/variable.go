@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math"
 	"math/rand"
-	"time"
 
 	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
@@ -116,8 +115,6 @@ func CalculateVariableCosts(variableCosts []types.VariableCost, users int) Varia
 }
 
 func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, users int) VariableCostResult {
-	rand.Seed(time.Now().UnixNano())
-
 	result := VariableCostResult{
 		ByLayer: types.CostLayerBreakdown{
 			Infrastructure: 0,
@@ -151,7 +148,7 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 
 		totalUnits := 0.0
 		for i := 0; i < users; i++ {
-			units := vc.UnitsPerUser * generator()
+			units := generator()
 			if units < 0 {
 				units = 0
 			}

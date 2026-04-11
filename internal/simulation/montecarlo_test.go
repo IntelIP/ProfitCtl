@@ -266,8 +266,8 @@ func TestRunStressTest(t *testing.T) {
 	assert.Equal(t, months, result.Months)
 	assert.Equal(t, iterations, result.MonteCarlo.Iterations)
 	assert.Greater(t, result.MeanCostPerUser, 0.0, "Mean cost per user should be positive")
-	assert.Greater(t, result.P95CostPerUser, result.MeanCostPerUser, "P95 cost per user should be >= mean")
-	assert.Greater(t, result.P99CostPerUser, result.P95CostPerUser, "P99 cost per user should be >= P95")
+	assert.GreaterOrEqual(t, result.P95CostPerUser, result.MeanCostPerUser, "P95 cost per user should be >= mean")
+	assert.GreaterOrEqual(t, result.P99CostPerUser, result.P95CostPerUser, "P99 cost per user should be >= P95")
 	assert.Greater(t, result.WorstCaseTotalCost, 0.0, "Worst case total cost should be positive")
 }
 
@@ -309,6 +309,27 @@ func TestRunStressTestPerUserMetrics(t *testing.T) {
 	assert.InDelta(t, expectedP95PerUser, result.P95CostPerUser, 0.01, "P95 cost per user")
 	assert.InDelta(t, expectedP99PerUser, result.P99CostPerUser, 0.01, "P99 cost per user")
 	assert.InDelta(t, result.MonteCarlo.P99, result.WorstCaseTotalCost, 0.01, "Worst case total cost")
+}
+
+func TestRunStressTest_ExampleStyleInputsStayWithinReasonableRange(t *testing.T) {
+	mean := 10000.0
+	stddev := 2000.0
+	variableCosts := []types.VariableCost{
+		{
+			Name:         "API Calls",
+			CostPerUnit:  0.0001,
+			UnitsPerUser: 10000,
+			Distribution: types.DistNormal,
+			Mean:         &mean,
+			StdDev:       &stddev,
+			Layer:        types.LayerApplication,
+		},
+	}
+
+	result := RunStressTest(nil, variableCosts, 50, 1, 1000)
+
+	assert.InDelta(t, 1.0, result.MeanCostPerUser, 0.3, "mean cost per user should reflect sampled API call volume without compounding units_per_user twice")
+	assert.Less(t, result.P95CostPerUser, 2.5, "p95 cost per user should remain in a plausible range for the example config")
 }
 
 func TestRoundToPrecision(t *testing.T) {
