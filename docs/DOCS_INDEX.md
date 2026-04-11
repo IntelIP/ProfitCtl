@@ -6,6 +6,7 @@
 - [Quick Start](QUICK_START.md)
 - [How It Works](HOW_IT_WORKS.md)
 - [Architecture](ARCHITECTURE.md)
+- [Benchmark Scenarios](../benchmark_scenarios/README.md)
 
 ## Deployment and CI/CD
 

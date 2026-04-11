@@ -1,14 +1,5 @@
-package cmd
-
-import (
-	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
-)
-
-const defaultConfigTemplate = `project:
-  name: Example SaaS Product
+project:
+  name: Mix Mode Example
 
 fixed_costs:
   - name: Base Infrastructure
@@ -69,36 +60,3 @@ simulation:
   base_users: 100
   growth_factor: 1.5
   iterations: 10000
-`
-
-var initForce bool
-
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Create a starter profit.yml configuration",
-	RunE:  runInit,
-}
-
-func init() {
-	initCmd.Flags().BoolVar(&initForce, "force", false, "Overwrite existing file")
-}
-
-func runInit(cmd *cobra.Command, args []string) error {
-	cfgFile, _ := cmd.Flags().GetString("file")
-	if cfgFile == "" {
-		cfgFile = "profit.yml"
-	}
-
-	if !initForce {
-		if _, err := os.Stat(cfgFile); err == nil {
-			return wrapExit(2, fmt.Errorf("config file already exists: %s (use --force to overwrite)", cfgFile))
-		}
-	}
-
-	if err := os.WriteFile(cfgFile, []byte(defaultConfigTemplate), 0644); err != nil {
-		return wrapExit(3, fmt.Errorf("failed to write starter config: %w", err))
-	}
-
-	fmt.Printf("Created %s\n", cfgFile)
-	return nil
-}
