@@ -13,6 +13,10 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	fmt.Printf("Scenario: %d users\n", result.Users)
 	fmt.Println("───────────────────────────────")
 
+	if result.Revenue.Mode != "" {
+		fmt.Printf("Pricing mode: %s\n", result.Revenue.Mode)
+	}
+
 	if result.Margin.GrossMargin != 0 {
 		fmt.Printf("Mean margin: %.2f%%\n", result.Margin.GrossMargin)
 	}
@@ -44,6 +48,56 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	}
 	fmt.Println()
 
+	if result.Revenue.Mode == "hybrid" && result.Revenue.Total > 0 {
+		fmt.Printf("Revenue: $%.2f/month\n", result.Revenue.Total)
+		fmt.Printf("  Recurring: $%.2f\n", result.Revenue.RecurringTotal)
+		if result.Revenue.OneTimeTotal > 0 {
+			fmt.Printf("  One-time: $%.2f\n", result.Revenue.OneTimeTotal)
+		}
+		if result.Revenue.MinimumUplift > 0 {
+			fmt.Printf("  Minimum uplift: $%.2f\n", result.Revenue.MinimumUplift)
+		}
+		for _, component := range result.Revenue.Components {
+			fmt.Printf("  %s: $%.2f\n", component.Name, component.Amount)
+		}
+		fmt.Println()
+	}
+
+	if result.PaymentFees.Total > 0 {
+		fmt.Printf("Payment Fees: $%.2f\n", result.PaymentFees.Total)
+		fmt.Printf("  Monthly fees: $%.2f\n", result.PaymentFees.MonthlyAmount)
+		if result.PaymentFees.AnnualAmortizedAmount > 0 {
+			fmt.Printf("  Annual amortized fees: $%.2f\n", result.PaymentFees.AnnualAmortizedAmount)
+		}
+		fmt.Printf("  Revenue percentage fee: $%.2f\n", result.PaymentFees.PercentageAmount)
+		if result.PaymentFees.FixedAmount > 0 {
+			fmt.Printf("  Fixed transaction fees: $%.2f\n", result.PaymentFees.FixedAmount)
+		}
+		if result.PaymentFees.FreeUserAmount > 0 {
+			fmt.Printf("  Free user fees: $%.2f\n", result.PaymentFees.FreeUserAmount)
+		}
+		if result.PaymentFees.PaidUserAmount > 0 {
+			fmt.Printf("  Paid user fees: $%.2f\n", result.PaymentFees.PaidUserAmount)
+		}
+		fmt.Println()
+	}
+
+	if result.Calibration.Period != "" || result.Calibration.Source != "" {
+		fmt.Println("Calibration:")
+		if result.Calibration.Period != "" {
+			fmt.Printf("  Period: %s\n", result.Calibration.Period)
+		}
+		if result.Calibration.Source != "" {
+			fmt.Printf("  Source: %s\n", result.Calibration.Source)
+		}
+		fmt.Printf("  Revenue delta: $%.2f\n", result.Calibration.RevenueDelta)
+		fmt.Printf("  Payment fee delta: $%.2f\n", result.Calibration.PaymentFeesDelta)
+		fmt.Printf("  Free user delta: %.2f\n", result.Calibration.FreeUsersDelta)
+		fmt.Printf("  Paid monthly delta: %.2f\n", result.Calibration.PaidMonthlyDelta)
+		fmt.Printf("  Paid annual delta: %.2f\n", result.Calibration.PaidAnnualDelta)
+		fmt.Println()
+	}
+
 	covenantStatus := "✅ PASSED"
 	if !result.Covenants.Passed {
 		covenantStatus = "❌ FAILED"
@@ -62,6 +116,17 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	fmt.Println()
 
 	if verbose && len(result.ScaleResult.Scenarios) > 0 {
+		if result.Revenue.Mode == "mix" && len(result.Revenue.ByPlan) > 0 {
+			fmt.Println("Revenue Mix:")
+			for _, plan := range result.Revenue.ByPlan {
+				if plan.Share != nil {
+					fmt.Printf("  %s: %.1f%% -> %d users -> $%.2f\n",
+						plan.PlanName, *plan.Share*100, plan.Users, plan.Revenue)
+				}
+			}
+			fmt.Println()
+		}
+
 		fmt.Println("Scale Simulation:")
 		for _, scenario := range result.ScaleResult.Scenarios {
 			fmt.Printf("  Step %d: %d users - Total Cost: $%.2f\n",

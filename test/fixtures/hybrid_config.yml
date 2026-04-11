@@ -1,0 +1,30 @@
+project:
+  name: Hybrid Contract Test
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 500
+    per_seat_fee: 25
+    workspace_minimum: 2000
+    included_seats: 10
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 0
+    message: Margin should be non-negative
+
+simulation:
+  base_users: 50
+  growth_factor: 1.05
+  iterations: 500

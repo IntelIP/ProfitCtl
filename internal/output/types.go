@@ -20,7 +20,9 @@ type SimulationResult struct {
 	TotalCosts    cost.TotalCostResult
 
 	// Revenue and Pricing
-	Revenue pricing.RevenueResult
+	Revenue     pricing.RevenueResult
+	PaymentFees pricing.PaymentFeeResult
+	Calibration pricing.CalibrationResult
 
 	// Margins
 	Margin pricing.MarginResult

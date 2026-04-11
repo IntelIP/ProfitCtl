@@ -1,0 +1,32 @@
+project:
+  name: Mix Mode Test
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 10
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: mix
+  plans:
+    - name: free
+      price: 0
+      share: 0.7
+    - name: pro
+      price: 29
+      share: 0.3
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 0
+    message: Margin should be non-negative
+
+simulation:
+  base_users: 10
+  growth_factor: 1.05
+  iterations: 500

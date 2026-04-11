@@ -57,26 +57,34 @@ func runSimulate(cmd *cobra.Command, args []string) error {
 
 	scaleConfig := simulation.NewScaleConfig(cfg.Simulation)
 	scaleResult := simulation.RunScaleSimulation(cfg.FixedCosts, cfg.VariableCosts, scaleConfig, 12)
+	const summaryMonths = 1
 
 	baseUsers := cfg.Simulation.BaseUsers
 	if len(scaleResult.Scenarios) > 0 {
 		baseUsers = scaleResult.Scenarios[0].Users
 	}
-	stressResult := simulation.RunStressTest(cfg.FixedCosts, cfg.VariableCosts, baseUsers, 12, cfg.Simulation.Iterations)
+	stressResult := simulation.RunStressTest(cfg.FixedCosts, cfg.VariableCosts, baseUsers, summaryMonths, cfg.Simulation.Iterations)
 
 	baseScenario := scaleResult.Scenarios[0]
 	var revenueResult pricing.RevenueResult
+	var paymentFeeResult pricing.PaymentFeeResult
+	var calibrationResult pricing.CalibrationResult
 	var marginResult pricing.MarginResult
 
 	if cfg.Pricing != nil {
 		revenueResult = pricing.CalculateRevenue(cfg.Pricing, baseScenario.Users)
 	}
+	if cfg.PaymentFees != nil && revenueResult.Total > 0 {
+		paymentFeeResult = pricing.CalculatePaymentFees(cfg.PaymentFees, cfg.Pricing, revenueResult, baseScenario.Users)
+	}
+	calibrationResult = pricing.CalculateCalibration(cfg.Calibration, revenueResult, paymentFeeResult)
 
-	totalCostResult := costEngine.CalculateTotalCosts(baseScenario.Users, 12)
+	totalCostResult := costEngine.CalculateTotalCosts(baseScenario.Users, summaryMonths)
+	adjustedTotalCost := totalCostResult.GrandTotal + paymentFeeResult.Total
 	if revenueResult.Total > 0 {
 		marginResult = pricing.CalculateMargins(
 			revenueResult.Total,
-			totalCostResult.GrandTotal,
+			adjustedTotalCost,
 			totalCostResult.GrandByLayer,
 			baseScenario.Users,
 		)
@@ -84,10 +92,10 @@ func runSimulate(cmd *cobra.Command, args []string) error {
 
 	var p95Margin, p99Margin float64
 	if revenueResult.Total > 0 {
-		p95TotalCost := stressResult.P95CostPerUser * float64(baseScenario.Users)
+		p95TotalCost := stressResult.P95CostPerUser*float64(baseScenario.Users) + paymentFeeResult.Total
 		p95Margin = ((revenueResult.Total - p95TotalCost) / revenueResult.Total) * 100
 
-		p99TotalCost := stressResult.P99CostPerUser * float64(baseScenario.Users)
+		p99TotalCost := stressResult.P99CostPerUser*float64(baseScenario.Users) + paymentFeeResult.Total
 		p99Margin = ((revenueResult.Total - p99TotalCost) / revenueResult.Total) * 100
 	}
 
@@ -109,6 +117,8 @@ func runSimulate(cmd *cobra.Command, args []string) error {
 		VariableCosts: baseScenario.VariableCost,
 		TotalCosts:    totalCostResult,
 		Revenue:       revenueResult,
+		PaymentFees:   paymentFeeResult,
+		Calibration:   calibrationResult,
 		Margin:        marginResult,
 		ScaleResult:   scaleResult,
 		StressResult:  stressResult,

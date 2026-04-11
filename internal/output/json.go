@@ -35,14 +35,57 @@ type JSONResult struct {
 		Total float64 `json:"total"`
 	} `json:"costs"`
 	Revenue struct {
-		Total  float64 `json:"total"`
+		Mode           string  `json:"mode,omitempty"`
+		Total          float64 `json:"total"`
+		RecurringTotal float64 `json:"recurring_total,omitempty"`
+		OneTimeTotal   float64 `json:"one_time_total,omitempty"`
+		MinimumUplift  float64 `json:"minimum_uplift,omitempty"`
+		Components     []struct {
+			Name   string  `json:"name"`
+			Amount float64 `json:"amount"`
+		} `json:"components,omitempty"`
 		ByPlan []struct {
-			PlanName string  `json:"plan_name"`
-			Price    float64 `json:"price"`
-			Users    int     `json:"users"`
-			Revenue  float64 `json:"revenue"`
+			PlanName string   `json:"plan_name"`
+			Price    float64  `json:"price"`
+			Share    *float64 `json:"share,omitempty"`
+			Users    int      `json:"users"`
+			Revenue  float64  `json:"revenue"`
 		} `json:"by_plan,omitempty"`
 	} `json:"revenue,omitempty"`
+	PaymentFees struct {
+		Processor        string  `json:"processor,omitempty"`
+		Currency         string  `json:"currency,omitempty"`
+		Monthly          float64 `json:"monthly,omitempty"`
+		AnnualAmortized  float64 `json:"annual_amortized,omitempty"`
+		FreeUserAmount   float64 `json:"free_user_amount,omitempty"`
+		PaidUserAmount   float64 `json:"paid_user_amount,omitempty"`
+		FreeUsers        float64 `json:"free_users,omitempty"`
+		PaidMonthlyUsers float64 `json:"paid_monthly_users,omitempty"`
+		PaidAnnualUsers  float64 `json:"paid_annual_users,omitempty"`
+		PercentageAmount float64 `json:"percentage_amount,omitempty"`
+		FixedAmount      float64 `json:"fixed_amount,omitempty"`
+		Total            float64 `json:"total,omitempty"`
+	} `json:"payment_fees,omitempty"`
+	Calibration struct {
+		Period             string             `json:"period,omitempty"`
+		Source             string             `json:"source,omitempty"`
+		RevenueActual      float64            `json:"revenue_actual,omitempty"`
+		RevenueModeled     float64            `json:"revenue_modeled,omitempty"`
+		RevenueDelta       float64            `json:"revenue_delta,omitempty"`
+		PaymentFeesActual  float64            `json:"payment_fees_actual,omitempty"`
+		PaymentFeesModeled float64            `json:"payment_fees_modeled,omitempty"`
+		PaymentFeesDelta   float64            `json:"payment_fees_delta,omitempty"`
+		FreeUsersActual    int                `json:"free_users_actual,omitempty"`
+		FreeUsersModeled   float64            `json:"free_users_modeled,omitempty"`
+		FreeUsersDelta     float64            `json:"free_users_delta,omitempty"`
+		PaidMonthlyActual  int                `json:"paid_monthly_actual,omitempty"`
+		PaidMonthlyModeled float64            `json:"paid_monthly_modeled,omitempty"`
+		PaidMonthlyDelta   float64            `json:"paid_monthly_delta,omitempty"`
+		PaidAnnualActual   int                `json:"paid_annual_actual,omitempty"`
+		PaidAnnualModeled  float64            `json:"paid_annual_modeled,omitempty"`
+		PaidAnnualDelta    float64            `json:"paid_annual_delta,omitempty"`
+		PlanMixDeltas      map[string]float64 `json:"plan_mix_deltas,omitempty"`
+	} `json:"calibration,omitempty"`
 	Margin struct {
 		Gross       float64 `json:"gross"`
 		CostPerUser float64 `json:"cost_per_user"`
@@ -104,20 +147,70 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 
 	// Revenue
 	if result.Revenue.Total > 0 {
+		jsonResult.Revenue.Mode = result.Revenue.Mode
 		jsonResult.Revenue.Total = result.Revenue.Total
+		jsonResult.Revenue.RecurringTotal = result.Revenue.RecurringTotal
+		jsonResult.Revenue.OneTimeTotal = result.Revenue.OneTimeTotal
+		jsonResult.Revenue.MinimumUplift = result.Revenue.MinimumUplift
+		jsonResult.Revenue.Components = make([]struct {
+			Name   string  `json:"name"`
+			Amount float64 `json:"amount"`
+		}, len(result.Revenue.Components))
+		for i, component := range result.Revenue.Components {
+			jsonResult.Revenue.Components[i].Name = component.Name
+			jsonResult.Revenue.Components[i].Amount = component.Amount
+		}
 		jsonResult.Revenue.ByPlan = make([]struct {
-			PlanName string  `json:"plan_name"`
-			Price    float64 `json:"price"`
-			Users    int     `json:"users"`
-			Revenue  float64 `json:"revenue"`
+			PlanName string   `json:"plan_name"`
+			Price    float64  `json:"price"`
+			Share    *float64 `json:"share,omitempty"`
+			Users    int      `json:"users"`
+			Revenue  float64  `json:"revenue"`
 		}, len(result.Revenue.ByPlan))
 
 		for i, plan := range result.Revenue.ByPlan {
 			jsonResult.Revenue.ByPlan[i].PlanName = plan.PlanName
 			jsonResult.Revenue.ByPlan[i].Price = plan.Price
+			jsonResult.Revenue.ByPlan[i].Share = plan.Share
 			jsonResult.Revenue.ByPlan[i].Users = plan.Users
 			jsonResult.Revenue.ByPlan[i].Revenue = plan.Revenue
 		}
+	}
+
+	if result.PaymentFees.Total > 0 {
+		jsonResult.PaymentFees.Processor = result.PaymentFees.Processor
+		jsonResult.PaymentFees.Currency = result.PaymentFees.Currency
+		jsonResult.PaymentFees.Monthly = result.PaymentFees.MonthlyAmount
+		jsonResult.PaymentFees.AnnualAmortized = result.PaymentFees.AnnualAmortizedAmount
+		jsonResult.PaymentFees.FreeUserAmount = result.PaymentFees.FreeUserAmount
+		jsonResult.PaymentFees.PaidUserAmount = result.PaymentFees.PaidUserAmount
+		jsonResult.PaymentFees.FreeUsers = result.PaymentFees.FreeUsers
+		jsonResult.PaymentFees.PaidMonthlyUsers = result.PaymentFees.PaidMonthlyUsers
+		jsonResult.PaymentFees.PaidAnnualUsers = result.PaymentFees.PaidAnnualUsers
+		jsonResult.PaymentFees.PercentageAmount = result.PaymentFees.PercentageAmount
+		jsonResult.PaymentFees.FixedAmount = result.PaymentFees.FixedAmount
+		jsonResult.PaymentFees.Total = result.PaymentFees.Total
+	}
+
+	if result.Calibration.Period != "" || result.Calibration.Source != "" || result.Calibration.RevenueActual != 0 || result.Calibration.PaymentFeesActual != 0 {
+		jsonResult.Calibration.Period = result.Calibration.Period
+		jsonResult.Calibration.Source = result.Calibration.Source
+		jsonResult.Calibration.RevenueActual = result.Calibration.RevenueActual
+		jsonResult.Calibration.RevenueModeled = result.Calibration.RevenueModeled
+		jsonResult.Calibration.RevenueDelta = result.Calibration.RevenueDelta
+		jsonResult.Calibration.PaymentFeesActual = result.Calibration.PaymentFeesActual
+		jsonResult.Calibration.PaymentFeesModeled = result.Calibration.PaymentFeesModeled
+		jsonResult.Calibration.PaymentFeesDelta = result.Calibration.PaymentFeesDelta
+		jsonResult.Calibration.FreeUsersActual = result.Calibration.FreeUsersActual
+		jsonResult.Calibration.FreeUsersModeled = result.Calibration.FreeUsersModeled
+		jsonResult.Calibration.FreeUsersDelta = result.Calibration.FreeUsersDelta
+		jsonResult.Calibration.PaidMonthlyActual = result.Calibration.PaidMonthlyActual
+		jsonResult.Calibration.PaidMonthlyModeled = result.Calibration.PaidMonthlyModeled
+		jsonResult.Calibration.PaidMonthlyDelta = result.Calibration.PaidMonthlyDelta
+		jsonResult.Calibration.PaidAnnualActual = result.Calibration.PaidAnnualActual
+		jsonResult.Calibration.PaidAnnualModeled = result.Calibration.PaidAnnualModeled
+		jsonResult.Calibration.PaidAnnualDelta = result.Calibration.PaidAnnualDelta
+		jsonResult.Calibration.PlanMixDeltas = result.Calibration.PlanMixDeltas
 	}
 
 	// Margin
