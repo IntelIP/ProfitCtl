@@ -268,6 +268,31 @@ func TestSimulate_HybridPilotJSONOutput(t *testing.T) {
 	assert.Equal(t, 5000.0, revenue["one_time_total"])
 }
 
+func TestCompare_JSONOutput(t *testing.T) {
+	binaryPath := getBinaryPath(t)
+	baselinePath := getFixturePath("hybrid_config.yml")
+	mixPath := getFixturePath("hybrid_pilot_config.yml")
+
+	cmd := exec.Command(binaryPath, "compare", baselinePath, mixPath, "--json")
+	output, err := cmd.CombinedOutput()
+
+	require.NoError(t, err)
+
+	var jsonResult map[string]interface{}
+	err = json.Unmarshal(output, &jsonResult)
+	require.NoError(t, err, "compare output should be valid JSON")
+
+	assert.Equal(t, "hybrid_config", jsonResult["baseline"])
+
+	scenarios, ok := jsonResult["scenarios"].([]interface{})
+	require.True(t, ok, "Should have scenarios field")
+	require.Len(t, scenarios, 2)
+
+	leaders, ok := jsonResult["leaders"].(map[string]interface{})
+	require.True(t, ok, "Should have leaders field")
+	assert.NotEmpty(t, leaders["highest_revenue"])
+}
+
 func TestSimulate_PaymentFeesJSONOutput(t *testing.T) {
 	binaryPath := getBinaryPath(t)
 	fixturePath := getFixturePath("payment_fees_config.yml")

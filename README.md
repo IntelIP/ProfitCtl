@@ -12,6 +12,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 ## Features
 
 - `simulate`: run 12-month scale + Monte Carlo stress simulations
+- `compare`: evaluate multiple pricing scenarios side by side
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
 - pricing modes: `tiered`, `mix`, and `hybrid`
@@ -48,6 +49,9 @@ profitctl simulate -f examples/mix_profit.yml
 
 # hybrid contract pricing with pilot
 profitctl simulate -f examples/hybrid_profit.yml --json
+
+# compare steady-state vs pilot hybrid contracts
+profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
 
 # strict config validation
 profitctl validate -f examples/valid_profit.yml
