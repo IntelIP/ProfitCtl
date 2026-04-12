@@ -22,6 +22,7 @@ This folder holds the minimum set of docs needed to turn ProfitCtl into somethin
 16. Follow [Source-Of-Truth Guidance](source-of-truth-guidance.md) before updating any tracker.
 17. Run the weekly motion from [Design-Partner Operating System](design-partner-operating-system.md).
 18. Capture each serious evaluator with [Design-Partner Evaluation Template](design-partner-evaluation-template.md).
+19. Use `bash scripts/growth/scaffold-weekly-review.sh --owner "<name>"` to generate the weekly review shell and dashboard row.
 
 ## What These Docs Are For
 

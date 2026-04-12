@@ -40,6 +40,14 @@ Use one row per week.
 
 Update the dashboard every Friday after the weekly evaluator review.
 
+Fastest path:
+
+```bash
+bash scripts/growth/scaffold-weekly-review.sh --owner "<name>"
+```
+
+That script scaffolds the weekly review markdown and prints a dashboard row with the current release version and GitHub release download count when `gh` is available.
+
 1. Pull the current release version and download trend from GitHub Releases.
 2. Check the Linear issues for the active design-partner pipeline.
 3. Count completed installs, activations, calibrations, and commitments from evaluator notes.
