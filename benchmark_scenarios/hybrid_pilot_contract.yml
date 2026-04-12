@@ -1,20 +1,13 @@
 project:
-  name: Hybrid Contract Example
+  name: Hybrid Pilot Contract Benchmark
 
 fixed_costs:
-  - name: Base Infrastructure
-    amount: 500
+  - name: Platform baseline
+    amount: 100
     period: monthly
     layer: infrastructure
 
-variable_costs:
-  - name: API Calls
-    cost_per_unit: 0.0001
-    units_per_user: 10000
-    distribution: normal
-    mean: 10000
-    stddev: 2000
-    layer: application
+variable_costs: []
 
 pricing:
   mode: hybrid
@@ -41,8 +34,6 @@ payment_fees:
   assumptions:
     annual_prepaid_months: 12
 
-calibration_file: calibration_exports/hybrid_profit_calibration.csv
-
 covenants:
   - type: threshold
     field: operating_margin
@@ -53,5 +44,5 @@ covenants:
 simulation:
   base_users: 50
   billable_users: 40
-  growth_factor: 1.2
-  iterations: 10000
+  growth_factor: 1.05
+  iterations: 500

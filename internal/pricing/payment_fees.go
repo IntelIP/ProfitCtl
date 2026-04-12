@@ -24,6 +24,10 @@ type PaymentFeeResult struct {
 }
 
 func CalculatePaymentFees(fees *config.PaymentFeesConfig, pricingCfg *config.PricingConfig, revenue RevenueResult, totalUsers int) PaymentFeeResult {
+	return CalculatePaymentFeesWithSeats(fees, pricingCfg, revenue, totalUsers, nil)
+}
+
+func CalculatePaymentFeesWithSeats(fees *config.PaymentFeesConfig, pricingCfg *config.PricingConfig, revenue RevenueResult, totalUsers int, billableUsers *int) PaymentFeeResult {
 	if fees == nil || revenue.Total <= 0 {
 		return PaymentFeeResult{}
 	}
@@ -52,7 +56,11 @@ func CalculatePaymentFees(fees *config.PaymentFeesConfig, pricingCfg *config.Pri
 	}
 
 	if revenue.Mode == "hybrid" {
-		applyHybridPaymentFees(&result, fees, revenue, totalUsers, monthlyShare, annualShare, annualDiscount, annualPrepaidMonths)
+		hybridSeats := totalUsers
+		if billableUsers != nil {
+			hybridSeats = *billableUsers
+		}
+		applyHybridPaymentFees(&result, fees, revenue, hybridSeats, monthlyShare, annualShare, annualDiscount, annualPrepaidMonths)
 		return finalizePaymentFeeResult(result)
 	}
 

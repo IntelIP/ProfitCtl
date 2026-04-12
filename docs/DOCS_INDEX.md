@@ -7,6 +7,7 @@
 - [How It Works](HOW_IT_WORKS.md)
 - [Architecture](ARCHITECTURE.md)
 - [Benchmark Scenarios](../benchmark_scenarios/README.md)
+- [MVP Pricing Release Guide](release/MVP_PRICING_RELEASE.md)
 
 ## Deployment and CI/CD
 

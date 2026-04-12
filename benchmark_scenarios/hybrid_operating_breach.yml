@@ -1,0 +1,30 @@
+project:
+  name: Hybrid Operating Breach Benchmark
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 500
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 200
+    per_seat_fee: 5
+    included_seats: 10
+
+covenants:
+  - type: threshold
+    field: operating_margin
+    operator: gte
+    value: 30
+    message: Operating margin must be >= 30%
+
+simulation:
+  base_users: 50
+  billable_users: 20
+  growth_factor: 1.05
+  iterations: 500

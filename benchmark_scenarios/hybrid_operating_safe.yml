@@ -1,0 +1,31 @@
+project:
+  name: Hybrid Operating Safe Benchmark
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: hybrid
+  contract:
+    base_platform_fee: 500
+    per_seat_fee: 25
+    workspace_minimum: 2000
+    included_seats: 10
+
+covenants:
+  - type: threshold
+    field: operating_margin
+    operator: gte
+    value: 80
+    message: Operating margin must be >= 80%
+
+simulation:
+  base_users: 50
+  billable_users: 40
+  growth_factor: 1.05
+  iterations: 500

@@ -14,6 +14,29 @@ Pricing-model fixtures currently live under `test/fixtures/` for automated regre
 - `payment_fees_calibrated_config.yml`
 - `monthly_margin_regression.yml`
 
+Decision-ready benchmark scenarios now also live in this directory:
+
+- `open_core_tiered.yml`
+- `open_core_mix.yml`
+- `hybrid_steady_contract.yml`
+- `hybrid_pilot_contract.yml`
+- `hybrid_operating_safe.yml`
+- `hybrid_operating_breach.yml`
+
+Use them with `profitctl compare` for pricing review:
+
+```bash
+./profitctl compare benchmark_scenarios/open_core_tiered.yml benchmark_scenarios/open_core_mix.yml
+./profitctl compare benchmark_scenarios/hybrid_steady_contract.yml benchmark_scenarios/hybrid_pilot_contract.yml
+./profitctl compare benchmark_scenarios/hybrid_operating_safe.yml benchmark_scenarios/hybrid_operating_breach.yml
+```
+
+These scenarios are curated to answer three product questions:
+
+- should we ship open-core pricing as tiered bands or explicit plan mix?
+- does a pilot contract look healthy once one-time revenue is separated from operating economics?
+- which contract shapes are covenant-safe on recurring margin rather than booked margin?
+
 # Benchmark Scenarios: Astro VPS vs Next.js on Vercel
 
 This folder contains ProfitCtl configs to compare a simple Astro deployment on a VPS against a Next.js deployment on Vercel Pro.

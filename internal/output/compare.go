@@ -18,6 +18,7 @@ type ComparisonScenario struct {
 	File                 string  `json:"file"`
 	PricingMode          string  `json:"pricing_mode,omitempty"`
 	Users                int     `json:"users"`
+	BillableUsers        int     `json:"billable_users,omitempty"`
 	Revenue              float64 `json:"revenue"`
 	RecurringRevenue     float64 `json:"recurring_revenue,omitempty"`
 	OneTimeRevenue       float64 `json:"one_time_revenue,omitempty"`
@@ -29,6 +30,7 @@ type ComparisonScenario struct {
 	CostPerUser          float64 `json:"cost_per_user,omitempty"`
 	CovenantsPassed      bool    `json:"covenants_passed"`
 	ViolationCount       int     `json:"violation_count"`
+	ViolationSummary     string  `json:"violation_summary,omitempty"`
 	RevenueDelta         float64 `json:"revenue_delta_vs_baseline,omitempty"`
 	MarginDelta          float64 `json:"margin_delta_vs_baseline,omitempty"`
 	OperatingMarginDelta float64 `json:"operating_margin_delta_vs_baseline,omitempty"`
@@ -75,6 +77,7 @@ func BuildComparisonResult(items []ComparisonItem) ComparisonResult {
 			File:                 item.File,
 			PricingMode:          item.Result.Revenue.Mode,
 			Users:                item.Result.Users,
+			BillableUsers:        item.Result.BillableUsers,
 			Revenue:              item.Result.Revenue.Total,
 			RecurringRevenue:     item.Result.Revenue.RecurringTotal,
 			OneTimeRevenue:       item.Result.Revenue.OneTimeTotal,
@@ -86,6 +89,7 @@ func BuildComparisonResult(items []ComparisonItem) ComparisonResult {
 			CostPerUser:          item.Result.OperatingMargin.CostPerUser,
 			CovenantsPassed:      item.Result.Covenants.Passed,
 			ViolationCount:       len(item.Result.Covenants.Violations),
+			ViolationSummary:     firstViolationSummary(item.Result),
 			RevenueDelta:         item.Result.Revenue.Total - baseline.Result.Revenue.Total,
 			MarginDelta:          item.Result.Margin.GrossMargin - baseline.Result.Margin.GrossMargin,
 			OperatingMarginDelta: item.Result.OperatingMargin.GrossMargin - baseline.Result.OperatingMargin.GrossMargin,
@@ -156,6 +160,9 @@ func FormatCLIComparisonResult(result ComparisonResult) string {
 		}
 		fmt.Fprintf(&b, "  %s: revenue %+0.2f, booked %+0.2f pts, operating %+0.2f pts, cost/user %+0.2f\n",
 			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.OperatingMarginDelta, scenario.CostPerUserDelta)
+		if scenario.ViolationSummary != "" {
+			fmt.Fprintf(&b, "    first violation: %s\n", scenario.ViolationSummary)
+		}
 	}
 
 	b.WriteString("\nLeaders:\n")
@@ -207,6 +214,23 @@ func FormatMarkdownComparisonResult(result ComparisonResult) string {
 		}
 		fmt.Fprintf(&b, "| %s | $%+.2f | %+.2f pts | %+.2f pts | $%+.2f |\n",
 			scenario.Name, scenario.RevenueDelta, scenario.MarginDelta, scenario.OperatingMarginDelta, scenario.CostPerUserDelta)
+	}
+
+	hasViolationSummary := false
+	for _, scenario := range result.Scenarios {
+		if scenario.ViolationSummary != "" {
+			hasViolationSummary = true
+			break
+		}
+	}
+	if hasViolationSummary {
+		b.WriteString("\n### Failing Scenarios\n\n")
+		for _, scenario := range result.Scenarios {
+			if scenario.ViolationSummary == "" {
+				continue
+			}
+			fmt.Fprintf(&b, "- **%s**: %s\n", scenario.Name, scenario.ViolationSummary)
+		}
 	}
 
 	b.WriteString("\n### Leaders\n\n")
@@ -270,4 +294,11 @@ func emptyFallback(v, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func firstViolationSummary(result SimulationResult) string {
+	if len(result.Covenants.Violations) == 0 {
+		return ""
+	}
+	return result.Covenants.Violations[0].Message
 }

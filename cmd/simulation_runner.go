@@ -39,12 +39,13 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	var calibrationResult pricing.CalibrationResult
 	var marginResult pricing.MarginResult
 	var operatingMarginResult pricing.MarginResult
+	billableUsers := resolveBillableUsers(cfg.Simulation, baseScenario.Users)
 
 	if cfg.Pricing != nil {
-		revenueResult = pricing.CalculateRevenue(cfg.Pricing, baseScenario.Users)
+		revenueResult = pricing.CalculateRevenueWithSeats(cfg.Pricing, baseScenario.Users, billableUsers)
 	}
 	if cfg.PaymentFees != nil && revenueResult.Total > 0 {
-		paymentFeeResult = pricing.CalculatePaymentFees(cfg.PaymentFees, cfg.Pricing, revenueResult, baseScenario.Users)
+		paymentFeeResult = pricing.CalculatePaymentFeesWithSeats(cfg.PaymentFees, cfg.Pricing, revenueResult, baseScenario.Users, billableUsers)
 	}
 	calibrationResult = pricing.CalculateCalibration(cfg.Calibration, revenueResult, paymentFeeResult)
 
@@ -78,6 +79,7 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	}
 
 	var p95Margin, p99Margin float64
+	var p95OperatingMargin, p99OperatingMargin float64
 	if revenueResult.Total > 0 {
 		p95TotalCost := stressResult.P95CostPerUser*float64(baseScenario.Users) + paymentFeeResult.Total
 		p95Margin = ((revenueResult.Total - p95TotalCost) / revenueResult.Total) * 100
@@ -85,19 +87,31 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 		p99TotalCost := stressResult.P99CostPerUser*float64(baseScenario.Users) + paymentFeeResult.Total
 		p99Margin = ((revenueResult.Total - p99TotalCost) / revenueResult.Total) * 100
 	}
+	if operatingRevenue > 0 {
+		p95OperatingTotalCost := stressResult.P95CostPerUser*float64(baseScenario.Users) + operatingPaymentFees
+		p95OperatingMargin = ((operatingRevenue - p95OperatingTotalCost) / operatingRevenue) * 100
+
+		p99OperatingTotalCost := stressResult.P99CostPerUser*float64(baseScenario.Users) + operatingPaymentFees
+		p99OperatingMargin = ((operatingRevenue - p99OperatingTotalCost) / operatingRevenue) * 100
+	}
 
 	covenantResults := covenant.SimulationResults{
-		Margin:         marginResult.GrossMargin,
-		CostPerUser:    marginResult.CostPerUser,
-		P95Margin:      p95Margin,
-		P95CostPerUser: stressResult.P95CostPerUser,
-		P99Margin:      p99Margin,
-		P99CostPerUser: stressResult.P99CostPerUser,
+		Margin:               marginResult.GrossMargin,
+		OperatingMargin:      operatingMarginResult.GrossMargin,
+		CostPerUser:          marginResult.CostPerUser,
+		OperatingCostPerUser: operatingMarginResult.CostPerUser,
+		P95Margin:            p95Margin,
+		P95OperatingMargin:   p95OperatingMargin,
+		P95CostPerUser:       stressResult.P95CostPerUser,
+		P99Margin:            p99Margin,
+		P99OperatingMargin:   p99OperatingMargin,
+		P99CostPerUser:       stressResult.P99CostPerUser,
 	}
 	covenantValidation := covenant.ValidateCovenants(cfg.Covenants, covenantResults)
 
 	return output.SimulationResult{
 		Users:           baseScenario.Users,
+		BillableUsers:   derefUsers(billableUsers, baseScenario.Users),
 		Months:          12,
 		GrowthFactor:    scaleConfig.GrowthFactor,
 		FixedCosts:      baseScenario.FixedCosts,
@@ -112,4 +126,26 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 		StressResult:    stressResult,
 		Covenants:       covenantValidation,
 	}, nil
+}
+
+func resolveBillableUsers(cfg *config.SimulationConfig, scenarioUsers int) *int {
+	if cfg == nil || cfg.BillableUsers == nil {
+		return nil
+	}
+
+	billableUsers := *cfg.BillableUsers
+	if billableUsers < 0 {
+		billableUsers = 0
+	}
+	if billableUsers > scenarioUsers {
+		billableUsers = scenarioUsers
+	}
+	return &billableUsers
+}
+
+func derefUsers(value *int, fallback int) int {
+	if value == nil {
+		return fallback
+	}
+	return *value
 }

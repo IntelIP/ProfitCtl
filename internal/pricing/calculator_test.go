@@ -363,6 +363,23 @@ func TestCalculateRevenue_HybridAllowsZeroUsersWithBaseFee(t *testing.T) {
 	assert.Equal(t, 250.0, result.RecurringTotal)
 }
 
+func TestCalculateRevenueWithSeats_HybridUsesBillableSeatOverride(t *testing.T) {
+	pricing := &config.PricingConfig{
+		Mode: "hybrid",
+		Contract: &config.HybridContract{
+			BasePlatformFee: 500,
+			PerSeatFee:      25,
+		},
+	}
+
+	billableUsers := 12
+	result := CalculateRevenueWithSeats(pricing, 100, &billableUsers)
+
+	assert.Equal(t, "hybrid", result.Mode)
+	assert.Equal(t, 800.0, result.Total)
+	assert.Equal(t, 800.0, result.RecurringTotal)
+}
+
 func TestCalculateRevenue_InvalidTierOrder(t *testing.T) {
 	// Test case where tier limits are not in ascending order
 	// This should still work but may produce unexpected results

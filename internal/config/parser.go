@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/IntelIP/ProfitCtl/pkg/types"
@@ -17,6 +18,7 @@ type Config struct {
 	Pricing       *PricingConfig       `yaml:"pricing"`
 	PaymentFees   *PaymentFeesConfig   `yaml:"payment_fees"`
 	Calibration   *CalibrationConfig   `yaml:"calibration"`
+	CalibrationFile string             `yaml:"calibration_file"`
 	Covenants     []Covenant           `yaml:"covenants"`
 	Simulation    *SimulationConfig    `yaml:"simulation"`
 }
@@ -117,9 +119,10 @@ type Covenant struct {
 }
 
 type SimulationConfig struct {
-	BaseUsers    int     `yaml:"base_users" validate:"required,min=1"`
-	GrowthFactor float64 `yaml:"growth_factor" validate:"required,min=1.0"`
-	Iterations   int     `yaml:"iterations" validate:"required,min=1"`
+	BaseUsers     int     `yaml:"base_users" validate:"required,min=1"`
+	BillableUsers *int    `yaml:"billable_users" validate:"omitempty,min=0"`
+	GrowthFactor  float64 `yaml:"growth_factor" validate:"required,min=1.0"`
+	Iterations    int     `yaml:"iterations" validate:"required,min=1"`
 }
 
 // ParseConfig reads and validates a profit.yml configuration file.
@@ -135,6 +138,23 @@ func ParseConfig(filename string) (*Config, error) {
 	}
 
 	normalizeConfig(&cfg)
+
+	if cfg.Calibration != nil && strings.TrimSpace(cfg.CalibrationFile) != "" {
+		return nil, fmt.Errorf("failed to validate config: calibration and calibration_file are mutually exclusive")
+	}
+
+	if strings.TrimSpace(cfg.CalibrationFile) != "" {
+		calibrationPath := cfg.CalibrationFile
+		if !filepath.IsAbs(calibrationPath) {
+			calibrationPath = filepath.Join(filepath.Dir(filename), calibrationPath)
+		}
+
+		calibration, err := LoadCalibrationFile(calibrationPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load calibration file: %w", err)
+		}
+		cfg.Calibration = calibration
+	}
 
 	if err := ValidateConfig(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w", err)

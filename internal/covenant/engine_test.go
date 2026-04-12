@@ -224,6 +224,35 @@ func TestValidateCovenants_P99Fields(t *testing.T) {
 	assert.Empty(t, validation.Violations, "No violations")
 }
 
+func TestValidateCovenants_OperatingFields(t *testing.T) {
+	covenants := []config.Covenant{
+		{
+			Type:     "threshold",
+			Field:    "operating_margin",
+			Operator: "gte",
+			Value:    15,
+			Message:  "operating margin must be >= 15%",
+		},
+		{
+			Type:     "threshold",
+			Field:    "p95_operating_margin",
+			Operator: "gte",
+			Value:    10,
+			Message:  "p95 operating margin must be >= 10%",
+		},
+	}
+
+	results := SimulationResults{
+		OperatingMargin:    18.0,
+		P95OperatingMargin: 12.0,
+	}
+
+	validation := ValidateCovenants(covenants, results)
+
+	assert.True(t, validation.Passed, "Validation should pass")
+	assert.Empty(t, validation.Violations, "No violations")
+}
+
 func TestValidateCovenants_UnknownField(t *testing.T) {
 	covenants := []config.Covenant{
 		{

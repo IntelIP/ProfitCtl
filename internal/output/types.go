@@ -10,9 +10,10 @@ import (
 // SimulationResult contains all results from a simulation run
 type SimulationResult struct {
 	// Scenario information
-	Users        int
-	Months       int
-	GrowthFactor float64
+	Users         int
+	BillableUsers int
+	Months        int
+	GrowthFactor  float64
 
 	// Costs
 	FixedCosts    cost.FixedCostResult
