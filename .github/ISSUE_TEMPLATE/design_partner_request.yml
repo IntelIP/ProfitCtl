@@ -1,0 +1,93 @@
+name: Design-partner request
+description: Request a design-partner evaluation loop for a real pricing or contract decision.
+title: "[design-partner] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form if you want to evaluate `ProfitCtl` against a real pricing, packaging, or contract question.
+
+        Before opening this request, install the CLI and run one matching benchmark pair if possible:
+        - `profitctl compare benchmark_scenarios/open_core_tiered.yml benchmark_scenarios/open_core_mix.yml`
+        - `profitctl compare benchmark_scenarios/hybrid_steady_contract.yml benchmark_scenarios/hybrid_pilot_contract.yml`
+        - `profitctl compare benchmark_scenarios/hybrid_operating_safe.yml benchmark_scenarios/hybrid_operating_breach.yml`
+  - type: input
+    id: company
+    attributes:
+      label: Company
+      description: What company or team is evaluating ProfitCtl?
+      placeholder: Acme SaaS
+    validations:
+      required: true
+  - type: input
+    id: role
+    attributes:
+      label: Your role
+      description: Founder, product, finance, RevOps, sales, CS, or similar.
+      placeholder: Founder
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Pricing or contract decision
+      description: What real decision are you trying to make right now?
+      placeholder: We are deciding whether to keep a pilot-heavy hybrid enterprise contract or move to a steadier recurring structure.
+    validations:
+      required: true
+  - type: dropdown
+    id: revenue_shape
+    attributes:
+      label: Revenue shape
+      options:
+        - Mostly recurring
+        - Mostly one-time
+        - Mixed
+    validations:
+      required: true
+  - type: dropdown
+    id: benchmark_pair
+    attributes:
+      label: Closest benchmark pair
+      description: Pick the starting point that matches your question best.
+      options:
+        - open_core_tiered vs open_core_mix
+        - hybrid_steady_contract vs hybrid_pilot_contract
+        - hybrid_operating_safe vs hybrid_operating_breach
+        - Not sure yet
+    validations:
+      required: true
+  - type: dropdown
+    id: install_path
+    attributes:
+      label: Install status
+      options:
+        - Installed via install script
+        - Installed via Homebrew
+        - Not installed yet
+        - Need help installing
+    validations:
+      required: true
+  - type: textarea
+    id: real_inputs
+    attributes:
+      label: Inputs you can share
+      description: Keep this high level if needed. What real inputs could you provide for calibration?
+      placeholder: Current pricing shape, free vs paid monthly vs paid annual mix, one recurring-cost assumption, and the target contract shape.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criterion
+      description: What would make this evaluation useful enough to continue?
+      placeholder: We want to know whether the recurring margin still holds up before we commit to the contract.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional links, notes, or output snippets.
+    validations:
+      required: false

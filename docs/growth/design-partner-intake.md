@@ -10,6 +10,8 @@ Turn one useful benchmark run into one of three outcomes:
 - a calibration request
 - a design-partner pilot
 
+For inbound evaluators from the public repo, use the GitHub `Design-partner request` issue template as the intake entry point, then move serious conversations into the private operating tracker.
+
 ## 15-Minute Evaluation Path
 
 1. Send the benchmark comparison that matches their problem.

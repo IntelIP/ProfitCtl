@@ -117,6 +117,8 @@ The paid layer should sit on top of that core through hosted workflows, collabor
 - [Benchmark Outreach Pack](docs/growth/benchmark-outreach-pack.md)
 - [Value Proposition](docs/growth/value-proposition.md)
 - [Design-Partner Offer](docs/growth/design-partner-offer.md)
+- [Outreach Message Templates](docs/growth/outreach-message-templates.md)
+- [Evaluator Session Template](docs/growth/evaluator-session-template.md)
 - [Adoption Dashboard](docs/growth/adoption-dashboard.md)
 - [Design-Partner Operating System](docs/growth/design-partner-operating-system.md)
 - [MVP Pricing Release Guide](docs/release/MVP_PRICING_RELEASE.md)
