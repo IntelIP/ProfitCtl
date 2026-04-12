@@ -3,6 +3,9 @@ contact_links:
   - name: ProfitCtl documentation
     url: https://github.com/IntelIP/ProfitCtl/tree/main/docs
     about: Read the install, quick start, and release guidance before opening a new issue.
+  - name: Design-partner intake
+    url: https://github.com/IntelIP/ProfitCtl/tree/main/docs/growth/design-partner-intake.md
+    about: Use the design-partner guide if you want to evaluate ProfitCtl for pricing or contract review workflows.
   - name: Security report
     url: https://github.com/IntelIP/ProfitCtl/security/policy
     about: Report security issues through the documented security policy instead of opening a public issue.
