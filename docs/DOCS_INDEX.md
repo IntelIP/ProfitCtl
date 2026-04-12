@@ -10,6 +10,7 @@
 - [Open-Core Roadmap](OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](../benchmark_scenarios/README.md)
 - [Growth Assets](growth/README.md)
+- [Design-Partner Operating System](growth/design-partner-operating-system.md)
 - [MVP Pricing Release Guide](release/MVP_PRICING_RELEASE.md)
 
 ## Deployment and CI/CD
