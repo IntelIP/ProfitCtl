@@ -37,6 +37,11 @@ type RevenueComponent struct {
 // CalculateRevenue calculates total revenue from pricing plans for a given number of users
 // Uses tiered pricing where each plan applies to a range of users
 func CalculateRevenue(pricing *config.PricingConfig, users int) RevenueResult {
+	return CalculateRevenueWithSeats(pricing, users, nil)
+}
+
+// CalculateRevenueWithSeats calculates revenue with an optional billable-seat override.
+func CalculateRevenueWithSeats(pricing *config.PricingConfig, users int, billableUsers *int) RevenueResult {
 	if pricing == nil {
 		return RevenueResult{
 			Mode:       "tiered",
@@ -75,7 +80,11 @@ func CalculateRevenue(pricing *config.PricingConfig, users int) RevenueResult {
 	case "mix":
 		return calculateMixRevenue(pricing, users, result)
 	case "hybrid":
-		return calculateHybridRevenue(pricing, users, result)
+		hybridSeats := users
+		if billableUsers != nil {
+			hybridSeats = *billableUsers
+		}
+		return calculateHybridRevenue(pricing, hybridSeats, result)
 	default:
 		return calculateTieredRevenue(pricing, users, result)
 	}

@@ -112,6 +112,28 @@ func TestCalculatePaymentFees_HybridUsesPaidProfile(t *testing.T) {
 	assert.Greater(t, result.Total, 0.0)
 }
 
+func TestCalculatePaymentFeesWithSeats_HybridUsesBillableSeatOverride(t *testing.T) {
+	fees := &config.PaymentFeesConfig{
+		PaidUserFee: &config.PaymentFeeProfile{
+			MonthlyPercent: 3,
+			PerTransaction: 0.25,
+		},
+	}
+
+	revenue := RevenueResult{
+		Mode:           "hybrid",
+		Total:          800,
+		RecurringTotal: 800,
+	}
+
+	billableUsers := 12
+	result := CalculatePaymentFeesWithSeats(fees, &config.PricingConfig{Mode: "hybrid"}, revenue, 100, &billableUsers)
+
+	assert.Equal(t, 12.0, result.PaidMonthlyUsers)
+	assert.Equal(t, 0.0, result.PaidAnnualUsers)
+	assert.Equal(t, 27.0, result.Total)
+}
+
 func TestCalculatePaymentFees_NoRevenue(t *testing.T) {
 	fees := &config.PaymentFeesConfig{PercentOfRevenue: 2.9}
 	result := CalculatePaymentFees(fees, nil, RevenueResult{}, 0)

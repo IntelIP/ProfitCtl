@@ -1,5 +1,5 @@
 project:
-  name: Hybrid Contract Example
+  name: Open Core Mix Benchmark
 
 fixed_costs:
   - name: Base Infrastructure
@@ -17,41 +17,46 @@ variable_costs:
     layer: application
 
 pricing:
-  mode: hybrid
-  contract:
-    base_platform_fee: 500
-    per_seat_fee: 25
-    workspace_minimum: 2000
-    included_seats: 10
-    pilot:
-      setup_fee: 5000
-      monthly_fee: 1500
-      duration_months: 3
+  mode: mix
+  plans:
+    - name: free
+      price: 0
+      share: 0.50
+      cohort: free
+    - name: starter
+      price: 10
+      share: 0.30
+      cohort: paid
+    - name: pro
+      price: 29
+      share: 0.20
+      cohort: paid
 
 payment_fees:
   processor: stripe
   currency: usd
+  free_user_fee:
+    monthly_percent: 0
+    per_transaction: 0
   paid_user_fee:
     monthly_percent: 2.9
     annual_percent: 2.0
     per_transaction: 0.30
   billing_mix:
-    monthly_share: 1.0
-    annual_share: 0.0
+    monthly_share: 0.80
+    annual_share: 0.20
   assumptions:
+    annual_discount_percent: 15
     annual_prepaid_months: 12
-
-calibration_file: calibration_exports/hybrid_profit_calibration.csv
 
 covenants:
   - type: threshold
-    field: operating_margin
+    field: margin
     operator: gte
     value: 20
-    message: Operating margin must be >= 20%
+    message: Booked margin must be >= 20%
 
 simulation:
-  base_users: 50
-  billable_users: 40
-  growth_factor: 1.2
-  iterations: 10000
+  base_users: 100
+  growth_factor: 1.25
+  iterations: 5000

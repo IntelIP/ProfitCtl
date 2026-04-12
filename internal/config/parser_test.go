@@ -391,6 +391,78 @@ variable_costs: []
 	assert.Equal(t, 0.65, cfg.Calibration.PlanMix["starter"])
 }
 
+func TestParseConfig_CalibrationFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	calibrationFile := filepath.Join(tmpDir, "calibration.yml")
+	err := os.WriteFile(calibrationFile, []byte(`
+period: 2026-03
+source: stripe_export
+gross_revenue: 125000
+payment_fees: 4380
+free_users: 12000
+paid_users:
+  monthly: 1800
+  annual: 400
+plan_mix:
+  starter: 0.65
+  pro: 0.35
+`), 0644)
+	assert.NoError(t, err)
+
+	configFile := filepath.Join(tmpDir, "profit.yml")
+	err = os.WriteFile(configFile, []byte(`
+simulation:
+  base_users: 100
+  billable_users: 25
+  growth_factor: 1.5
+  iterations: 10000
+
+calibration_file: calibration.yml
+
+fixed_costs: []
+variable_costs: []
+`), 0644)
+	assert.NoError(t, err)
+
+	cfg, err := ParseConfig(configFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Calibration)
+	assert.Equal(t, "2026-03", cfg.Calibration.Period)
+	assert.NotNil(t, cfg.Simulation.BillableUsers)
+	assert.Equal(t, 25, *cfg.Simulation.BillableUsers)
+}
+
+func TestParseConfig_CalibrationAndCalibrationFileConflict(t *testing.T) {
+	tmpDir := t.TempDir()
+	calibrationFile := filepath.Join(tmpDir, "calibration.yml")
+	err := os.WriteFile(calibrationFile, []byte("period: 2026-03\n"), 0644)
+	assert.NoError(t, err)
+
+	configFile := filepath.Join(tmpDir, "profit.yml")
+	err = os.WriteFile(configFile, []byte(`
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+calibration:
+  period: 2026-03
+
+calibration_file: calibration.yml
+
+fixed_costs: []
+variable_costs: []
+`), 0644)
+	assert.NoError(t, err)
+
+	_, err = ParseConfig(configFile)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mutually exclusive")
+}
+
 func TestParseConfig_MultipleCovenants(t *testing.T) {
 	configYAML := `
 simulation:

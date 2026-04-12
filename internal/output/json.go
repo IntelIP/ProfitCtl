@@ -9,9 +9,10 @@ import (
 // JSONResult represents the structured JSON output format
 type JSONResult struct {
 	Scenario struct {
-		Users        int     `json:"users"`
-		Months       int     `json:"months"`
-		GrowthFactor float64 `json:"growth_factor,omitempty"`
+		Users         int     `json:"users"`
+		BillableUsers int     `json:"billable_users,omitempty"`
+		Months        int     `json:"months"`
+		GrowthFactor  float64 `json:"growth_factor,omitempty"`
 	} `json:"scenario"`
 	Costs struct {
 		Fixed struct {
@@ -133,6 +134,9 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 
 	// Scenario
 	jsonResult.Scenario.Users = result.Users
+	if result.BillableUsers > 0 && result.BillableUsers != result.Users {
+		jsonResult.Scenario.BillableUsers = result.BillableUsers
+	}
 	jsonResult.Scenario.Months = result.Months
 	jsonResult.Scenario.GrowthFactor = result.GrowthFactor
 

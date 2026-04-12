@@ -1,0 +1,39 @@
+project:
+  name: Open Core Tiered Benchmark
+
+fixed_costs:
+  - name: Base Infrastructure
+    amount: 500
+    period: monthly
+    layer: infrastructure
+
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
+
+pricing:
+  mode: tiered
+  plans:
+    - name: starter
+      price: 10
+      limits:
+        users: 25
+    - name: pro
+      price: 29
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 20
+    message: Booked margin must be >= 20%
+
+simulation:
+  base_users: 100
+  growth_factor: 1.25
+  iterations: 5000

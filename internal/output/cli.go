@@ -11,6 +11,9 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 	fmt.Println()
 
 	fmt.Printf("Scenario: %d users\n", result.Users)
+	if result.BillableUsers > 0 && result.BillableUsers != result.Users {
+		fmt.Printf("Billable seats: %d\n", result.BillableUsers)
+	}
 	fmt.Println("───────────────────────────────")
 
 	if result.Revenue.Mode != "" {

@@ -1,0 +1,9 @@
+field,value
+period,2026-03
+source,crm_export
+gross_revenue,6500
+payment_fees,200
+free_users,10
+paid_users.monthly,40
+paid_users.annual,0
+plan_mix.contract,1.0

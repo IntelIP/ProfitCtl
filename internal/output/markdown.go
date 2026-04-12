@@ -16,6 +16,9 @@ func FormatMarkdownResult(result SimulationResult) string {
 	markdown += "| Metric | Value |\n"
 	markdown += "|--------|-------|\n"
 	markdown += fmt.Sprintf("| Users | %d |\n", result.Users)
+	if result.BillableUsers > 0 && result.BillableUsers != result.Users {
+		markdown += fmt.Sprintf("| Billable Seats | %d |\n", result.BillableUsers)
+	}
 	if result.Revenue.Mode != "" {
 		markdown += fmt.Sprintf("| Pricing Mode | %s |\n", result.Revenue.Mode)
 	}
