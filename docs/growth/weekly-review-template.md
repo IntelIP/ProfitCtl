@@ -2,6 +2,14 @@
 
 Use this template every Friday after the design-partner and adoption dashboard review.
 
+To scaffold a fresh private copy with the latest release metadata:
+
+```bash
+bash scripts/growth/scaffold-weekly-review.sh --owner "<name>"
+```
+
+Keep the generated review file in a private operating system. Do not commit live evaluator notes to the public repository.
+
 ## Week Summary
 
 - Week of:
