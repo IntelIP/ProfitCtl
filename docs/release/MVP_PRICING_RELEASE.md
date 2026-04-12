@@ -33,11 +33,13 @@ Use `GOCACHE` and `GOTMPDIR` overrides in restricted environments.
 4. Review benchmark scenario outputs in `benchmark_scenarios/README.md`.
 5. Tag the release and publish binaries.
 6. Run the published-artifact smoke path:
-   - `bash scripts/release/smoke-published-release.sh v0.1.0`
+   - `bash scripts/release/smoke-published-release.sh <tag>`
 7. Point downstream docs or GTM collateral to:
    - `compare` for pricing review
    - `calibrate` plus `calibration_file` for assumption grounding
    - `operating_margin` covenants for contract safety checks
+8. Verify the exact public install path from the README against the new tag:
+   - `curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | env -u PROFITCTL_DOWNLOAD_BASE_URL PROFITCTL_VERSION=<tag> bash`
 
 ## Suggested Release Notes
 

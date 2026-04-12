@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `profitctl detect` command for scanner/LLM analysis output.
 - OSS baseline docs and governance files.
 - Published-asset release smoke verification.
+- Design-partner issue routing and maintainer workflow guidance.
 
 ### Changed
 - Canonical module/repository identity aligned to `IntelIP/ProfitCtl`.
@@ -16,3 +17,4 @@ All notable changes to this project will be documented in this file.
 - Installer checksum matching is more robust across common checksum formats.
 - Simulation benchmarks are now discoverable through `go test -bench`.
 - Public installer defaults now use GitHub Releases as the canonical source, with the Hostinger mirror available as an explicit override.
+- Open-core packaging docs now define who the product is for, what stays free, and what the first paid layer should cover.

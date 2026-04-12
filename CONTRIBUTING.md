@@ -28,6 +28,14 @@ go test ./...
 - If the change affects `simulate`, `compare`, `calibrate`, install, or release publishing, call that out explicitly and add a regression test or fixture where practical.
 - Wait for CI and maintainer review before tagging an external release.
 
+## Maintainer Workflow
+
+- Do not push directly to `main` for normal feature or release-facing work.
+- Open a PR, let CI run, and get at least one maintainer review before merge.
+- Treat `CODEOWNERS` as the required review path for contributor-facing docs, release plumbing, and policy changes.
+- Cut public releases from merged `main` only.
+- If a PR changes install, release, or benchmark behavior, verify the exact user-facing command path before merging.
+
 ## CI/CD
 
 - PR and main checks run in Woodpecker.
