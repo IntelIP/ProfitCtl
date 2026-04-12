@@ -8,6 +8,7 @@ Use this as the working list for the first evaluator pipeline.
 - update weekly
 - replace weak targets fast
 - do not add targets without a clear question and a benchmark match
+- keep named target accounts in a private operating system such as Linear or an internal sheet now that the repo is public
 
 ## Template
 
@@ -35,4 +36,3 @@ Use this as the working list for the first evaluator pipeline.
 ## Weekly Operating Rule
 
 If a target has no response after three touches and no clear reason to keep it, replace it with a better fit.
-
