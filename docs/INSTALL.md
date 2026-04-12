@@ -1,6 +1,6 @@
 # Install Guide
 
-ProfitCtl ships a release-based install script for macOS and Linux. The script downloads the latest published binary from the release mirror, verifies the checksum when `SHA256SUMS` is available, and installs the binary into a writable prefix.
+ProfitCtl ships a release-based install script for macOS and Linux. The script downloads the latest published binary from GitHub Releases by default, verifies the checksum from the matching `SHA256SUMS` asset, and installs the binary into a writable prefix. If you operate a private mirror, override the source with `PROFITCTL_DOWNLOAD_BASE_URL`.
 
 ## Requirements
 
@@ -19,13 +19,20 @@ The script installs to `~/.local/bin` by default. If that directory is not on yo
 ## Pin a Version
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.0 bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.1 bash
 ```
 
 ## Custom Prefix
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_INSTALL_DIR=/usr/local/bin bash
+```
+
+## Custom Mirror
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | \
+  PROFITCTL_DOWNLOAD_BASE_URL=https://downloads.intelip.co/profitctl bash
 ```
 
 ## Install from Source
