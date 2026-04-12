@@ -11,6 +11,7 @@ go test ./...
 ## Standards
 
 - Run `go test ./...` before opening a PR.
+- When changing the economics engine or Monte Carlo path, run `go test ./internal/simulation -run='^$' -bench=. -count=1` and include the result if it changes materially.
 - Keep changes scoped and documented.
 - Prefer explicit error handling and stable CLI behavior.
 - Keep comments focused on rationale/constraints, not roadmap placeholders.

@@ -47,8 +47,7 @@ go install github.com/IntelIP/ProfitCtl@latest
 
 ```bash
 profitctl --help
-profitctl init
-profitctl validate -f profit.yml
+profitctl simulate --help
 ```
 
 ## Exit Codes
