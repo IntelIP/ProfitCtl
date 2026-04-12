@@ -27,6 +27,14 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 
 ## Install
 
+### Recommended install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
+```
+
+See [Install Guide](docs/INSTALL.md) for pinned versions, custom prefixes, and source-based installs.
+
 ### Build from source
 
 ```bash
@@ -74,14 +82,22 @@ Release artifacts are published to:
 - `https://downloads.intelip.co/profitctl/releases/<tag>/`
 - `https://downloads.intelip.co/profitctl/current/`
 
+## Open-Core Product
+
+The open-source core gives teams a local CLI to model pricing, recurring-margin risk, and contract safety before they ship pricing or sign deals.
+
+The paid layer should sit on top of that core through hosted workflows, collaboration, policy enforcement, and support, not by weakening the local product.
+
 ## Documentation
 
 - [Documentation Index](docs/DOCS_INDEX.md)
 - [Install Guide](docs/INSTALL.md)
 - [Quick Start](docs/QUICK_START.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Open-Core Packaging](docs/OPEN_CORE_PACKAGING.md)
 - [Open-Core Roadmap](docs/OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](benchmark_scenarios/README.md)
+- [Growth Assets](docs/growth/README.md)
 - [MVP Pricing Release Guide](docs/release/MVP_PRICING_RELEASE.md)
 - [Woodpecker + Hostinger Runbook](docs/deployment/WOODPECKER_HOSTINGER_SETUP.md)
 
