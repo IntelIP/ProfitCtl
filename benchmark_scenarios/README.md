@@ -31,6 +31,12 @@ Use them with `profitctl compare` for pricing review:
 ./profitctl compare benchmark_scenarios/hybrid_operating_safe.yml benchmark_scenarios/hybrid_operating_breach.yml
 ```
 
+Committed shareable outputs now live under `benchmark_scenarios/reports/`:
+
+- `reports/open_core_tiered_vs_mix.md`
+- `reports/hybrid_steady_vs_pilot.md`
+- `reports/hybrid_safe_vs_breach.md`
+
 These scenarios are curated to answer three product questions:
 
 - should we ship open-core pricing as tiered bands or explicit plan mix?
@@ -52,6 +58,8 @@ Recommended starting pairs:
 - `open_core_tiered.yml` vs `open_core_mix.yml`
 - `hybrid_steady_contract.yml` vs `hybrid_pilot_contract.yml`
 - `hybrid_operating_safe.yml` vs `hybrid_operating_breach.yml`
+
+If you want an artifact to share instead of raw terminal output, start with the matching file in `benchmark_scenarios/reports/`.
 
 If you are turning one of these into a conversation, keep the frame simple:
 

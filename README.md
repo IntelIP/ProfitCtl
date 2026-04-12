@@ -33,7 +33,14 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 ```
 
-See [Install Guide](docs/INSTALL.md) for pinned versions, custom prefixes, and source-based installs.
+### Homebrew
+
+```bash
+brew tap IntelIP/profitctl
+brew install profitctl
+```
+
+See [Install Guide](docs/INSTALL.md) for pinned versions, Homebrew, custom prefixes, and source-based installs.
 
 ### Build from source
 

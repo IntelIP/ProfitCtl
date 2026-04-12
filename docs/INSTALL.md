@@ -19,7 +19,20 @@ The script installs to `~/.local/bin` by default. If that directory is not on yo
 ## Pin a Version
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.1 bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.2 bash
+```
+
+## Homebrew
+
+```bash
+brew tap IntelIP/profitctl
+brew install profitctl
+```
+
+For explicit tap-qualified installs:
+
+```bash
+brew install IntelIP/profitctl/profitctl
 ```
 
 ## Custom Prefix
@@ -54,7 +67,7 @@ go install github.com/IntelIP/ProfitCtl@latest
 
 ```bash
 profitctl --help
-profitctl simulate --help
+profitctl validate -f examples/mix_profit.yml
 ```
 
 ## Exit Codes
