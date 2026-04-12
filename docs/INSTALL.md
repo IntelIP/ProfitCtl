@@ -70,6 +70,35 @@ profitctl --help
 profitctl validate -f examples/mix_profit.yml
 ```
 
+## Verify Release Integrity
+
+Public GitHub releases include:
+
+- detached Cosign signatures for each archive
+- SPDX JSON SBOMs for each archive
+- a signed `SHA256SUMS` manifest
+- `profitctl-release-cosign.pub`
+
+Example verification flow for `darwin_arm64`:
+
+```bash
+TAG=<tag>
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.tar.gz"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.tar.gz.sig"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.spdx.json"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.spdx.json.sig"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/SHA256SUMS"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/SHA256SUMS.sig"
+curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl-release-cosign.pub"
+
+cosign verify-blob --key profitctl-release-cosign.pub --signature "profitctl_${TAG}_darwin_arm64.tar.gz.sig" --insecure-ignore-tlog=true "profitctl_${TAG}_darwin_arm64.tar.gz"
+cosign verify-blob --key profitctl-release-cosign.pub --signature "profitctl_${TAG}_darwin_arm64.spdx.json.sig" --insecure-ignore-tlog=true "profitctl_${TAG}_darwin_arm64.spdx.json"
+cosign verify-blob --key profitctl-release-cosign.pub --signature SHA256SUMS.sig --insecure-ignore-tlog=true SHA256SUMS
+shasum -a 256 -c SHA256SUMS
+```
+
+Use `brew install cosign` or the upstream Sigstore install path if `cosign` is not already available.
+
 ## Exit Codes
 
 - `0`: success

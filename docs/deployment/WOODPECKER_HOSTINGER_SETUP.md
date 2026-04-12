@@ -13,6 +13,8 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 ## Required Secrets (Doppler: `profitctl` / `prd_ci_woodpecker`)
 
 - `GITHUB_TOKEN_RELEASE`
+- `COSIGN_PRIVATE_KEY`
+- `COSIGN_PASSWORD`
 - `VPS_HOST`
 - `VPS_USER`
 - `VPS_SSH_PRIVATE_KEY`
@@ -79,10 +81,10 @@ Tag push only (semver):
 
 ## GitHub Actions
 
-Actions are disabled to enforce Woodpecker-only CI/CD.
+GitHub Actions is enabled for repository-facing verification (`verify-go` and `verify-install-smoke`), while Woodpecker remains the authoritative tag release pipeline.
 
 ```bash
-printf '{"enabled":false}' | gh api repos/IntelIP/ProfitCtl/actions/permissions -X PUT --input -
+gh api repos/IntelIP/ProfitCtl/actions/permissions
 ```
 
 ## Rollback
