@@ -44,7 +44,7 @@ verify_checksum() {
 
   if command -v shasum >/dev/null 2>&1; then
     local expected_line
-    expected_line="$(grep -F " $(basename "$archive_file")" "$checksum_file" || true)"
+    expected_line="$(grep -E "[[:space:]]\\*?$(basename "$archive_file")$" "$checksum_file" || true)"
     [[ -n "$expected_line" ]] || die "checksum entry missing for $(basename "$archive_file")"
     (
       cd "$archive_dir"
@@ -55,7 +55,7 @@ verify_checksum() {
 
   if command -v sha256sum >/dev/null 2>&1; then
     local expected_line
-    expected_line="$(grep -F " $(basename "$archive_file")" "$checksum_file" || true)"
+    expected_line="$(grep -E "[[:space:]]\\*?$(basename "$archive_file")$" "$checksum_file" || true)"
     [[ -n "$expected_line" ]] || die "checksum entry missing for $(basename "$archive_file")"
     (
       cd "$archive_dir"
