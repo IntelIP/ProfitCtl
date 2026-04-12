@@ -12,15 +12,15 @@ import (
 
 // Config represents the complete profit.yml configuration.
 type Config struct {
-	Project       *ProjectInfo         `yaml:"project"`
-	FixedCosts    []types.FixedCost    `yaml:"fixed_costs"`
-	VariableCosts []types.VariableCost `yaml:"variable_costs"`
-	Pricing       *PricingConfig       `yaml:"pricing"`
-	PaymentFees   *PaymentFeesConfig   `yaml:"payment_fees"`
-	Calibration   *CalibrationConfig   `yaml:"calibration"`
-	CalibrationFile string             `yaml:"calibration_file"`
-	Covenants     []Covenant           `yaml:"covenants"`
-	Simulation    *SimulationConfig    `yaml:"simulation"`
+	Project         *ProjectInfo         `yaml:"project"`
+	FixedCosts      []types.FixedCost    `yaml:"fixed_costs"`
+	VariableCosts   []types.VariableCost `yaml:"variable_costs"`
+	Pricing         *PricingConfig       `yaml:"pricing"`
+	PaymentFees     *PaymentFeesConfig   `yaml:"payment_fees"`
+	Calibration     *CalibrationConfig   `yaml:"calibration"`
+	CalibrationFile string               `yaml:"calibration_file"`
+	Covenants       []Covenant           `yaml:"covenants"`
+	Simulation      *SimulationConfig    `yaml:"simulation"`
 }
 
 type ProjectInfo struct {

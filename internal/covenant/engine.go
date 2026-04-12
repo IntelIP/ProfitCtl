@@ -23,22 +23,22 @@ type Violation struct {
 
 // SimulationResults contains all simulation data needed for covenant validation
 type SimulationResults struct {
-	Margin             float64 // Gross margin percentage
-	OperatingMargin    float64 // Operating / recurring margin percentage
-	CostPerUser        float64 // Cost per user
+	Margin               float64 // Gross margin percentage
+	OperatingMargin      float64 // Operating / recurring margin percentage
+	CostPerUser          float64 // Cost per user
 	OperatingCostPerUser float64 // Operating cost per user
-	P95Margin          float64 // p95 margin percentage (optional)
-	P95OperatingMargin float64 // p95 operating margin percentage (optional)
-	P95CostPerUser     float64 // p95 cost per user (optional)
-	P99Margin          float64 // p99 margin percentage (optional)
-	P99OperatingMargin float64 // p99 operating margin percentage (optional)
-	P99CostPerUser float64 // p99 cost per user (optional)
+	P95Margin            float64 // p95 margin percentage (optional)
+	P95OperatingMargin   float64 // p95 operating margin percentage (optional)
+	P95CostPerUser       float64 // p95 cost per user (optional)
+	P99Margin            float64 // p99 margin percentage (optional)
+	P99OperatingMargin   float64 // p99 operating margin percentage (optional)
+	P99CostPerUser       float64 // p99 cost per user (optional)
 }
 
 // ValidateCovenants validates all covenants against simulation results
 func ValidateCovenants(covenants []config.Covenant, results SimulationResults) ValidationResult {
 	validation := ValidationResult{
-		Passed:    true,
+		Passed:     true,
 		Violations: []Violation{},
 	}
 
