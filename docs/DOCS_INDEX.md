@@ -13,6 +13,8 @@
 - [Benchmark Outreach Pack](growth/benchmark-outreach-pack.md)
 - [Value Proposition](growth/value-proposition.md)
 - [Design-Partner Offer](growth/design-partner-offer.md)
+- [Outreach Message Templates](growth/outreach-message-templates.md)
+- [Evaluator Session Template](growth/evaluator-session-template.md)
 - [Design-Partner Operating System](growth/design-partner-operating-system.md)
 - [Adoption Dashboard](growth/adoption-dashboard.md)
 - [MVP Pricing Release Guide](release/MVP_PRICING_RELEASE.md)
