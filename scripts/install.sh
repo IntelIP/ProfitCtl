@@ -42,24 +42,24 @@ verify_checksum() {
   local archive_dir
   archive_dir="$(dirname "$archive_file")"
 
-  if command -v sha256sum >/dev/null 2>&1; then
-    local expected_line
-    expected_line="$(grep -F " $(basename "$archive_file")" "$checksum_file" || true)"
-    [[ -n "$expected_line" ]] || die "checksum entry missing for $(basename "$archive_file")"
-    (
-      cd "$archive_dir"
-      printf '%s\n' "$expected_line" | sha256sum --check --status
-    ) || die "checksum verification failed"
-    return 0
-  fi
-
   if command -v shasum >/dev/null 2>&1; then
     local expected_line
     expected_line="$(grep -F " $(basename "$archive_file")" "$checksum_file" || true)"
     [[ -n "$expected_line" ]] || die "checksum entry missing for $(basename "$archive_file")"
     (
       cd "$archive_dir"
-      printf '%s\n' "$expected_line" | shasum -a 256 --check --status
+      printf '%s\n' "$expected_line" | shasum -a 256 -c >/dev/null 2>&1
+    ) || die "checksum verification failed"
+    return 0
+  fi
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    local expected_line
+    expected_line="$(grep -F " $(basename "$archive_file")" "$checksum_file" || true)"
+    [[ -n "$expected_line" ]] || die "checksum entry missing for $(basename "$archive_file")"
+    (
+      cd "$archive_dir"
+      printf '%s\n' "$expected_line" | sha256sum -c >/dev/null 2>&1
     ) || die "checksum verification failed"
     return 0
   fi
