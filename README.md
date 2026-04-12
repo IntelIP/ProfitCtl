@@ -77,8 +77,11 @@ OPENROUTER_API_KEY=... profitctl detect --path . --out detect-report.json
 
 ## Release Downloads
 
-Release artifacts are published to:
+Canonical public release artifacts are published on GitHub Releases:
 
+- `https://github.com/IntelIP/ProfitCtl/releases`
+
+Operational mirrors may also publish to:
 - `https://downloads.intelip.co/profitctl/releases/<tag>/`
 - `https://downloads.intelip.co/profitctl/current/`
 

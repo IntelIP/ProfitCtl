@@ -17,5 +17,6 @@
 - Woodpecker pipeline file: `.woodpecker.yml`
 - PR/main verification jobs on `pool=shared-kvm`
 - Tag release jobs on `pool=builder`
+- Canonical public release channel: GitHub Releases
 - Release artifacts mirrored to Hostinger VPS at `/opt/profitctl/releases`
-- Public artifact endpoint: `https://downloads.intelip.co/profitctl`
+- Optional mirror endpoint: `https://downloads.intelip.co/profitctl`

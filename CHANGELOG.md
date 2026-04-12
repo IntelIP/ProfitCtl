@@ -15,3 +15,4 @@ All notable changes to this project will be documented in this file.
 - CLI exit behavior standardized.
 - Installer checksum matching is more robust across common checksum formats.
 - Simulation benchmarks are now discoverable through `go test -bench`.
+- Public installer defaults now use GitHub Releases as the canonical source, with the Hostinger mirror available as an explicit override.

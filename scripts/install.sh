@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOWNLOAD_BASE_URL="${PROFITCTL_DOWNLOAD_BASE_URL:-https://downloads.intelip.co/profitctl}"
+DOWNLOAD_BASE_URL="${PROFITCTL_DOWNLOAD_BASE_URL:-}"
 INSTALL_DIR="${PROFITCTL_INSTALL_DIR:-}"
 VERSION="${PROFITCTL_VERSION:-}"
 BIN_NAME="${PROFITCTL_BIN_NAME:-profitctl}"
+RELEASE_REPO="${PROFITCTL_RELEASE_REPO:-IntelIP/ProfitCtl}"
 
 usage() {
   cat <<'EOF'
@@ -12,7 +13,8 @@ Usage: install.sh [--version TAG] [--prefix DIR] [--download-base-url URL]
 
 Environment variables:
   PROFITCTL_VERSION           Release tag to install, for example v0.1.0
-  PROFITCTL_DOWNLOAD_BASE_URL Release mirror root, default https://downloads.intelip.co/profitctl
+  PROFITCTL_RELEASE_REPO      GitHub release repository, default IntelIP/ProfitCtl
+  PROFITCTL_DOWNLOAD_BASE_URL Optional release mirror root override
   PROFITCTL_INSTALL_DIR       Install prefix, default $HOME/.local/bin
   PROFITCTL_BIN_NAME          Binary name to install, default profitctl
 EOF
@@ -34,6 +36,11 @@ need_cmd() {
 extract_latest_tag() {
   local manifest="$1"
   sed -n 's/.*"latest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$manifest" | head -n 1
+}
+
+extract_latest_github_tag() {
+  local manifest="$1"
+  sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$manifest" | head -n 1
 }
 
 verify_checksum() {
@@ -122,28 +129,49 @@ cleanup() {
 trap cleanup EXIT
 
 BASE_URL="${DOWNLOAD_BASE_URL%/}"
+CHECKSUM_URL=""
+ASSET_URL=""
 if [[ -n "$VERSION" ]]; then
   FOUND_VERSION=""
   for candidate in "$VERSION" "v${VERSION#v}"; do
     [[ -n "$candidate" ]] || continue
-    if curl -fsSL "${BASE_URL}/releases/${candidate}/SHA256SUMS" -o "${TMP_DIR}/SHA256SUMS"; then
+    if [[ -n "$BASE_URL" ]]; then
+      checksum_candidate_url="${BASE_URL}/releases/${candidate}/SHA256SUMS"
+    else
+      checksum_candidate_url="https://github.com/${RELEASE_REPO}/releases/download/${candidate}/SHA256SUMS"
+    fi
+
+    if curl -fsSL "${checksum_candidate_url}" -o "${TMP_DIR}/SHA256SUMS"; then
       FOUND_VERSION="${candidate}"
+      CHECKSUM_URL="${checksum_candidate_url}"
       break
     fi
   done
   [[ -n "$FOUND_VERSION" ]] || die "unable to find release assets for version ${VERSION}"
   VERSION="${FOUND_VERSION}"
 else
-  curl -fsSL "${BASE_URL}/current/index.json" -o "${TMP_DIR}/index.json"
-  VERSION="$(extract_latest_tag "${TMP_DIR}/index.json")"
+  if [[ -n "$BASE_URL" ]]; then
+    curl -fsSL "${BASE_URL}/current/index.json" -o "${TMP_DIR}/index.json"
+    VERSION="$(extract_latest_tag "${TMP_DIR}/index.json")"
+    CHECKSUM_URL="${BASE_URL}/releases/${VERSION}/SHA256SUMS"
+  else
+    curl -fsSL "https://api.github.com/repos/${RELEASE_REPO}/releases/latest" -o "${TMP_DIR}/release.json"
+    VERSION="$(extract_latest_github_tag "${TMP_DIR}/release.json")"
+    CHECKSUM_URL="https://github.com/${RELEASE_REPO}/releases/download/${VERSION}/SHA256SUMS"
+  fi
   [[ -n "$VERSION" ]] || die "unable to determine latest release version"
-  curl -fsSL "${BASE_URL}/releases/${VERSION}/SHA256SUMS" -o "${TMP_DIR}/SHA256SUMS"
 fi
+
+curl -fsSL "${CHECKSUM_URL}" -o "${TMP_DIR}/SHA256SUMS"
 
 ARCHIVE_NAME="profitctl_${VERSION}_${OS_NAME}_${ARCH_NAME}.tar.gz"
 ARCHIVE_PATH="${TMP_DIR}/${ARCHIVE_NAME}"
 CHECKSUM_PATH="${TMP_DIR}/SHA256SUMS"
-ASSET_URL="${BASE_URL}/releases/${VERSION}/${ARCHIVE_NAME}"
+if [[ -n "$BASE_URL" ]]; then
+  ASSET_URL="${BASE_URL}/releases/${VERSION}/${ARCHIVE_NAME}"
+else
+  ASSET_URL="https://github.com/${RELEASE_REPO}/releases/download/${VERSION}/${ARCHIVE_NAME}"
+fi
 
 log "Downloading ${ARCHIVE_NAME}"
 curl -fsSL "$ASSET_URL" -o "$ARCHIVE_PATH"
