@@ -1,0 +1,80 @@
+name: GitHub CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Verify module files
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test ./...
+
+  verify-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify installer syntax
+        run: bash -n scripts/install.sh
+
+      - name: Build local release artifacts
+        run: |
+          TAG=v0.0.0-ci
+          bash scripts/release/build-artifacts.sh "${TAG}"
+          bash scripts/release/create-checksums.sh "${TAG}"
+
+      - name: Build local mirror layout
+        run: |
+          TAG=v0.0.0-ci
+          MIRROR_ROOT="${RUNNER_TEMP}/profitctl-mirror"
+          mkdir -p "${MIRROR_ROOT}/releases/${TAG}" "${MIRROR_ROOT}/current"
+          cp "dist/${TAG}/profitctl_${TAG}_"* "dist/${TAG}/SHA256SUMS" "${MIRROR_ROOT}/releases/${TAG}/"
+          printf '{"latest":"%s"}\n' "${TAG}" > "${MIRROR_ROOT}/current/index.json"
+          echo "PROFITCTL_TEST_MIRROR=file://${MIRROR_ROOT}" >> "${GITHUB_ENV}"
+
+      - name: Run installer smoke test
+        run: |
+          INSTALL_DIR="${RUNNER_TEMP}/profitctl-bin"
+          mkdir -p "${INSTALL_DIR}"
+          PROFITCTL_DOWNLOAD_BASE_URL="${PROFITCTL_TEST_MIRROR}" \
+          PROFITCTL_VERSION=v0.0.0-ci \
+          PROFITCTL_INSTALL_DIR="${INSTALL_DIR}" \
+          bash scripts/install.sh
+          "${INSTALL_DIR}/profitctl" --help >/dev/null
+          "${INSTALL_DIR}/profitctl" validate -f examples/mix_profit.yml >/dev/null

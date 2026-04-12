@@ -10,13 +10,13 @@ Turn one useful benchmark run into one of three outcomes:
 - a calibration request
 - a design-partner pilot
 
-## Intake Sequence
+## 15-Minute Evaluation Path
 
 1. Send the benchmark comparison that matches their problem.
-2. Ask them to run `profitctl compare` or share their current pricing inputs.
-3. Collect their real contract shape and usage assumptions.
-4. Calibrate the model against their numbers.
-5. Decide whether they need docs help, a feature, or a pilot.
+2. Point them to the public install path or Homebrew formula.
+3. Ask them to run `profitctl compare` once or share the closest pricing shape.
+4. If the result is useful, ask for real inputs so the model can be calibrated.
+5. Decide whether they need docs help, a feature, or a design-partner call.
 
 ## Minimum Qualification Questions
 
@@ -43,6 +43,14 @@ Ask only what is needed to map their scenario:
 - calibration help: ask for the minimum exported inputs
 - design-partner pilot: agree on one contract shape to test and one success criterion
 
+## What We Need From The First 5 Evaluations
+
+- which benchmark pair made sense immediately
+- whether install worked without intervention
+- which metric they trusted first
+- which input they could not map into the current config
+- whether they would use `compare` before a real pricing or contract decision
+
 ## Good Design-Partner Criteria
 
 Treat a user as a good fit if they:
@@ -59,4 +67,3 @@ Do not create a heavyweight sales process yet.
 The only thing we need is a consistent loop from:
 
 benchmark -> install -> compare -> calibrate -> follow-up
-

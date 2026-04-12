@@ -54,12 +54,12 @@ func TestCollector_Collect(t *testing.T) {
 
 	// Create test files
 	testFiles := map[string]string{
-		"go.mod":                "module test\n\ngo 1.21\n\nrequire github.com/test v1.0.0",
-		"package.json":          `{"name": "test", "version": "1.0.0"}`,
-		"config.yaml":           "key: value\n",
-		"main.go":               "package main\n\nfunc main() {}",
-		"README.md":             "# Test Project",
-		"subdir/nested.json":    `{"nested": true}`,
+		"go.mod":             "module test\n\ngo 1.21\n\nrequire github.com/test v1.0.0",
+		"package.json":       `{"name": "test", "version": "1.0.0"}`,
+		"config.yaml":        "key: value\n",
+		"main.go":            "package main\n\nfunc main() {}",
+		"README.md":          "# Test Project",
+		"subdir/nested.json": `{"nested": true}`,
 	}
 
 	for path, content := range testFiles {

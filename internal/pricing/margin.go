@@ -8,11 +8,11 @@ import (
 
 // MarginResult represents calculated margin and cost metrics
 type MarginResult struct {
-	GrossMargin       float64                // Gross margin percentage (0-100)
-	MarginPercentage  float64                // Margin as decimal (0-1)
-	CostPerUser       float64                // Total cost per user
-	LayerMargins      LayerMarginBreakdown   // Margin contribution by layer
-	LayerCostPercent  types.CostLayerBreakdown // Cost percentage by layer (0-100)
+	GrossMargin      float64                  // Gross margin percentage (0-100)
+	MarginPercentage float64                  // Margin as decimal (0-1)
+	CostPerUser      float64                  // Total cost per user
+	LayerMargins     LayerMarginBreakdown     // Margin contribution by layer
+	LayerCostPercent types.CostLayerBreakdown // Cost percentage by layer (0-100)
 }
 
 // LayerMarginBreakdown represents margin contribution by layer
