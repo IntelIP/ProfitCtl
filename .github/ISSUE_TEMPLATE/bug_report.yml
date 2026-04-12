@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible ProfitCtl issue.
+title: "[bug] "
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the unexpected behavior.
+      placeholder: ProfitCtl returns the wrong operating margin for a hybrid contract.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: List the exact commands or inputs needed to reproduce the issue.
+      placeholder: |
+        1. Run `go run . simulate -f examples/hybrid_profit.yml`
+        2. Observe the operating margin output
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the observed output or error.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Environment and context
+      description: Include OS, ProfitCtl version or commit, and any relevant config file snippets.
+      placeholder: macOS, main branch, config excerpt, command output
+    validations:
+      required: false

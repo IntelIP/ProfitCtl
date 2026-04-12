@@ -37,6 +37,35 @@ These scenarios are curated to answer three product questions:
 - does a pilot contract look healthy once one-time revenue is separated from operating economics?
 - which contract shapes are covenant-safe on recurring margin rather than booked margin?
 
+## How To Use These Scenarios For Growth
+
+These benchmark files are also the fastest way to show someone what ProfitCtl does.
+
+Use them to support three early motions:
+
+- benchmark-led positioning: show tiered vs mix and steady-state vs pilot comparisons
+- shareable reporting: paste the `compare` result into a short note or post
+- design-partner intake: ask a prospect to pick the scenario that looks most like their pricing shape
+
+Recommended starting pairs:
+
+- `open_core_tiered.yml` vs `open_core_mix.yml`
+- `hybrid_steady_contract.yml` vs `hybrid_pilot_contract.yml`
+- `hybrid_operating_safe.yml` vs `hybrid_operating_breach.yml`
+
+If you are turning one of these into a conversation, keep the frame simple:
+
+1. what are we comparing?
+2. what changes in recurring margin?
+3. what changes in covenant risk?
+4. what should the user do next?
+
+The companion docs live in `docs/growth/`:
+
+- `docs/growth/benchmark-positioning.md`
+- `docs/growth/compare-reporting-guide.md`
+- `docs/growth/design-partner-intake.md`
+
 # Benchmark Scenarios: Astro VPS vs Next.js on Vercel
 
 This folder contains ProfitCtl configs to compare a simple Astro deployment on a VPS against a Next.js deployment on Vercel Pro.
