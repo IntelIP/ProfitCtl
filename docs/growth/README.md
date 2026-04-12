@@ -7,12 +7,15 @@ This folder holds the minimum set of docs needed to turn ProfitCtl into somethin
 1. Read [Benchmark Positioning](benchmark-positioning.md) to understand the message we should lead with.
 2. Read [Compare Reporting Guide](compare-reporting-guide.md) before using `profitctl compare` in demos or content.
 3. Read [Design-Partner Intake](design-partner-intake.md) before asking anyone to pilot the tool.
+4. Run the weekly motion from [Design-Partner Operating System](design-partner-operating-system.md).
+5. Capture each serious evaluator with [Design-Partner Evaluation Template](design-partner-evaluation-template.md).
 
 ## What These Docs Are For
 
 - making the benchmark scenarios part of the product story
 - keeping demo output short, repeatable, and decision-oriented
 - giving us a simple intake loop for early users and design partners
+- turning evaluator conversations into repeatable product and GTM feedback
 
 ## What These Docs Are Not For
 
@@ -20,4 +23,3 @@ This folder holds the minimum set of docs needed to turn ProfitCtl into somethin
 - long-term brand work
 - enterprise sales playbooks
 - vague growth language without a direct action
-

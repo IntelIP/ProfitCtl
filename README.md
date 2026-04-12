@@ -114,6 +114,7 @@ The paid layer should sit on top of that core through hosted workflows, collabor
 - [Open-Core Roadmap](docs/OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](benchmark_scenarios/README.md)
 - [Growth Assets](docs/growth/README.md)
+- [Design-Partner Operating System](docs/growth/design-partner-operating-system.md)
 - [MVP Pricing Release Guide](docs/release/MVP_PRICING_RELEASE.md)
 - [Woodpecker + Hostinger Runbook](docs/deployment/WOODPECKER_HOSTINGER_SETUP.md)
 
