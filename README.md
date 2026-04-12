@@ -80,6 +80,7 @@ Release artifacts are published to:
 - [Install Guide](docs/INSTALL.md)
 - [Quick Start](docs/QUICK_START.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Open-Core Roadmap](docs/OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](benchmark_scenarios/README.md)
 - [MVP Pricing Release Guide](docs/release/MVP_PRICING_RELEASE.md)
 - [Woodpecker + Hostinger Runbook](docs/deployment/WOODPECKER_HOSTINGER_SETUP.md)

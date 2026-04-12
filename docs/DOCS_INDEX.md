@@ -6,6 +6,7 @@
 - [Quick Start](QUICK_START.md)
 - [How It Works](HOW_IT_WORKS.md)
 - [Architecture](ARCHITECTURE.md)
+- [Open-Core Roadmap](OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](../benchmark_scenarios/README.md)
 - [MVP Pricing Release Guide](release/MVP_PRICING_RELEASE.md)
 
