@@ -19,35 +19,6 @@ need_cmd() {
   }
 }
 
-verify_checksum() {
-  local checksum_file="$1"
-  local archive_file="$2"
-  local archive_name
-  archive_name="$(basename "$archive_file")"
-  local expected_hash
-  expected_hash="$(awk -v name="${archive_name}" '$2 == name || $2 == "*"name { print $1; exit }' "${checksum_file}")"
-  [[ -n "${expected_hash}" ]] || {
-    echo "checksum entry missing for ${archive_name}" >&2
-    exit 1
-  }
-
-  local actual_hash
-
-  if command -v shasum >/dev/null 2>&1; then
-    actual_hash="$(shasum -a 256 "${archive_file}" | awk '{ print $1 }')"
-  elif command -v sha256sum >/dev/null 2>&1; then
-    actual_hash="$(sha256sum "${archive_file}" | awk '{ print $1 }')"
-  else
-    echo "missing required checksum verifier: shasum or sha256sum" >&2
-    exit 1
-  fi
-
-  [[ "${actual_hash}" == "${expected_hash}" ]] || {
-    echo "checksum verification failed" >&2
-    exit 1
-  }
-}
-
 case "$(uname -s | tr '[:upper:]' '[:lower:]')" in
   linux) OS_NAME="linux" ;;
   darwin) OS_NAME="darwin" ;;
@@ -64,19 +35,25 @@ ARCHIVE_EXT="tar.gz"
 
 need_cmd gh
 need_cmd tar
+need_cmd cosign
 
 ARCHIVE_NAME="profitctl_${TAG}_${OS_NAME}_${ARCH_NAME}.${ARCHIVE_EXT}"
+SBOM_NAME="profitctl_${TAG}_${OS_NAME}_${ARCH_NAME}.spdx.json"
 
 gh release download "${TAG}" \
   --repo "${REPO}" \
   --pattern "${ARCHIVE_NAME}" \
+  --pattern "${ARCHIVE_NAME}.sig" \
+  --pattern "${SBOM_NAME}" \
+  --pattern "${SBOM_NAME}.sig" \
   --pattern "SHA256SUMS" \
+  --pattern "SHA256SUMS.sig" \
+  --pattern "profitctl-release-cosign.pub" \
   --dir "${TMP_DIR}"
 
 ARCHIVE_PATH="${TMP_DIR}/${ARCHIVE_NAME}"
 CHECKSUM_PATH="${TMP_DIR}/SHA256SUMS"
-
-verify_checksum "${CHECKSUM_PATH}" "${ARCHIVE_PATH}"
+bash "${ROOT}/scripts/release/verify-release-assets.sh" "${TAG}" "${TMP_DIR}"
 
 EXTRACT_DIR="${TMP_DIR}/extract"
 mkdir -p "${EXTRACT_DIR}"

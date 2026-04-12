@@ -31,17 +31,33 @@ Use `GOCACHE` and `GOTMPDIR` overrides in restricted environments.
 2. Run the smoke tests above.
 3. Run the simulation benchmark command so the core economics path has a fresh baseline.
 4. Review benchmark scenario outputs in `benchmark_scenarios/README.md`.
-5. Tag the release and publish binaries.
+5. Tag the release and publish binaries, SBOMs, and detached signatures.
 6. Run the published-artifact smoke path:
    - `bash scripts/release/smoke-published-release.sh <tag>`
-7. Point downstream docs or GTM collateral to:
+7. Verify the release contains:
+   - `profitctl_<tag>_<os>_<arch>.spdx.json`
+   - `profitctl_<tag>_<os>_<arch>.tar.gz.sig` or `profitctl_<tag>_<os>_<arch>.zip.sig`
+   - `SHA256SUMS.sig`
+   - `profitctl-release-cosign.pub`
+8. Confirm the public verification instructions in `docs/INSTALL.md` still match the published assets.
+9. Point downstream docs or GTM collateral to:
    - `compare` for pricing review
    - `calibrate` plus `calibration_file` for assumption grounding
    - `operating_margin` covenants for contract safety checks
-8. Verify the exact public install path from the README against the new tag:
+10. Verify the exact public install path from the README against the new tag:
    - `curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | env -u PROFITCTL_DOWNLOAD_BASE_URL PROFITCTL_VERSION=<tag> bash`
-9. Update and publish the Homebrew tap if `Formula/profitctl.rb` changed:
+11. Update and publish the Homebrew tap if `Formula/profitctl.rb` changed:
    - `bash scripts/release/publish-homebrew-tap.sh`
+
+## Verification Model
+
+The current release pipeline uses Cosign key-pair signing because the authoritative release pipeline runs in Woodpecker, not GitHub Actions. That means releases do not currently use GitHub OIDC keyless signing or Rekor-backed transparency bundles. Consumers verify with the committed and published `profitctl-release-cosign.pub` key instead.
+
+This is a deliberate tradeoff:
+
+- it fits the current release infrastructure
+- it provides deterministic offline verification for archives, SBOMs, and checksum manifests
+- it keeps the upgrade path open if release publishing moves to an OIDC-capable environment later
 
 ## Suggested Release Notes
 
