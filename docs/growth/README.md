@@ -14,8 +14,11 @@ This folder holds the minimum set of docs needed to turn ProfitCtl into somethin
 8. Follow [Design-Partner Outreach Sequencing](design-partner-outreach-sequencing.md) for first touch through commitment.
 9. Apply [Design-Partner Qualification Criteria](design-partner-qualification-criteria.md) before advancing a target.
 10. Track movement in [Design-Partner Progress Tracking](design-partner-progress-tracking.md).
-11. Run the weekly motion from [Design-Partner Operating System](design-partner-operating-system.md).
-12. Capture each serious evaluator with [Design-Partner Evaluation Template](design-partner-evaluation-template.md).
+11. Keep the weekly dashboard in [Adoption Dashboard](adoption-dashboard.md).
+12. Use [Weekly Review Template](weekly-review-template.md) during Friday review.
+13. Follow [Source-Of-Truth Guidance](source-of-truth-guidance.md) before updating any tracker.
+14. Run the weekly motion from [Design-Partner Operating System](design-partner-operating-system.md).
+15. Capture each serious evaluator with [Design-Partner Evaluation Template](design-partner-evaluation-template.md).
 
 ## What These Docs Are For
 
