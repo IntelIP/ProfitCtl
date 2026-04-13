@@ -35,7 +35,7 @@ type JSONResult struct {
 		} `json:"variable"`
 		Total float64 `json:"total"`
 	} `json:"costs"`
-	FullEconomics struct {
+	FullEconomics *struct {
 		Costs struct {
 			Delivery        float64 `json:"delivery"`
 			Productization  float64 `json:"productization"`
@@ -169,14 +169,30 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 	jsonResult.Costs.Variable.ByLayer.Service = result.VariableCosts.ByLayer.Service
 
 	jsonResult.Costs.Total = result.TotalCosts.GrandTotal
-	jsonResult.FullEconomics.Costs.Delivery = result.FullEconomics.DeliveryCost
-	jsonResult.FullEconomics.Costs.Productization = result.FullEconomics.ProductizationCost
-	jsonResult.FullEconomics.Costs.Adoption = result.FullEconomics.AdoptionCost
-	jsonResult.FullEconomics.Costs.Total = result.FullEconomics.TotalCost
-	jsonResult.FullEconomics.Costs.DeliveryPerUser = result.FullEconomics.DeliveryCostPerUser
-	jsonResult.FullEconomics.Costs.TotalPerUser = result.FullEconomics.TotalCostPerUser
-	jsonResult.FullEconomics.Margin.Delivery = result.FullEconomics.DeliveryMargin
-	jsonResult.FullEconomics.Margin.Full = result.FullEconomics.TotalMargin
+	if result.FullEconomics.TotalCost > 0 {
+		jsonResult.FullEconomics = &struct {
+			Costs struct {
+				Delivery        float64 `json:"delivery"`
+				Productization  float64 `json:"productization"`
+				Adoption        float64 `json:"adoption"`
+				Total           float64 `json:"total"`
+				DeliveryPerUser float64 `json:"delivery_per_user,omitempty"`
+				TotalPerUser    float64 `json:"total_per_user,omitempty"`
+			} `json:"costs"`
+			Margin struct {
+				Delivery float64 `json:"delivery,omitempty"`
+				Full     float64 `json:"full,omitempty"`
+			} `json:"margin"`
+		}{}
+		jsonResult.FullEconomics.Costs.Delivery = result.FullEconomics.DeliveryCost
+		jsonResult.FullEconomics.Costs.Productization = result.FullEconomics.ProductizationCost
+		jsonResult.FullEconomics.Costs.Adoption = result.FullEconomics.AdoptionCost
+		jsonResult.FullEconomics.Costs.Total = result.FullEconomics.TotalCost
+		jsonResult.FullEconomics.Costs.DeliveryPerUser = result.FullEconomics.DeliveryCostPerUser
+		jsonResult.FullEconomics.Costs.TotalPerUser = result.FullEconomics.TotalCostPerUser
+		jsonResult.FullEconomics.Margin.Delivery = result.FullEconomics.DeliveryMargin
+		jsonResult.FullEconomics.Margin.Full = result.FullEconomics.TotalMargin
+	}
 
 	// Revenue
 	if result.Revenue.Total > 0 {

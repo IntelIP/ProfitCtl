@@ -150,8 +150,6 @@ func ParseConfig(filename string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	normalizeConfig(&cfg)
-
 	if cfg.Calibration != nil && strings.TrimSpace(cfg.CalibrationFile) != "" {
 		return nil, fmt.Errorf("failed to validate config: calibration and calibration_file are mutually exclusive")
 	}
@@ -185,8 +183,7 @@ func normalizeConfig(cfg *Config) {
 		cfg.VariableCosts[i].UserScope = types.NormalizeVariableCostUserScope(cfg.VariableCosts[i].UserScope)
 	}
 
-	if cfg.Pricing == nil {
-	} else {
+	if cfg.Pricing != nil {
 		cfg.Pricing.Mode = normalizedPricingMode(cfg.Pricing.Mode, cfg.Pricing)
 		for i := range cfg.Pricing.Plans {
 			cfg.Pricing.Plans[i].Cohort = strings.ToLower(strings.TrimSpace(cfg.Pricing.Plans[i].Cohort))
