@@ -48,7 +48,7 @@ func TestRunMonteCarlo(t *testing.T) {
 	months := 1
 	iterations := 1000
 
-	result := RunMonteCarlo(fixedCosts, variableCosts, users, months, NewMonteCarloConfig(iterations))
+	result := RunMonteCarlo(fixedCosts, variableCosts, nil, users, months, NewMonteCarloConfig(iterations))
 
 	assert.Equal(t, iterations, result.Iterations, "Should have correct iterations")
 	assert.Len(t, result.Samples, iterations, "Should have correct number of samples")
@@ -66,7 +66,7 @@ func TestRunMonteCarloPercentiles(t *testing.T) {
 	months := 1
 	iterations := 10000
 
-	result := RunMonteCarlo(fixedCosts, variableCosts, users, months, NewMonteCarloConfig(iterations))
+	result := RunMonteCarlo(fixedCosts, variableCosts, nil, users, months, NewMonteCarloConfig(iterations))
 
 	assert.Equal(t, iterations, result.Iterations)
 
@@ -260,7 +260,7 @@ func TestRunStressTest(t *testing.T) {
 	months := 12
 	iterations := 1000
 
-	result := RunStressTest(fixedCosts, variableCosts, users, months, iterations)
+	result := RunStressTest(fixedCosts, variableCosts, nil, users, months, iterations)
 
 	assert.Equal(t, users, result.Users)
 	assert.Equal(t, months, result.Months)
@@ -299,7 +299,7 @@ func TestRunStressTestPerUserMetrics(t *testing.T) {
 	months := 1
 	iterations := 500
 
-	result := RunStressTest(fixedCosts, variableCosts, users, months, iterations)
+	result := RunStressTest(fixedCosts, variableCosts, nil, users, months, iterations)
 
 	expectedMeanPerUser := result.MonteCarlo.Mean / float64(users)
 	expectedP95PerUser := result.MonteCarlo.P95 / float64(users)
@@ -326,7 +326,7 @@ func TestRunStressTest_ExampleStyleInputsStayWithinReasonableRange(t *testing.T)
 		},
 	}
 
-	result := RunStressTest(nil, variableCosts, 50, 1, 1000)
+	result := RunStressTest(nil, variableCosts, nil, 50, 1, 1000)
 
 	assert.InDelta(t, 1.0, result.MeanCostPerUser, 0.3, "mean cost per user should reflect sampled API call volume without compounding units_per_user twice")
 	assert.Less(t, result.P95CostPerUser, 2.5, "p95 cost per user should remain in a plausible range for the example config")

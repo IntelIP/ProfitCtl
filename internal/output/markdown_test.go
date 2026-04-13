@@ -65,6 +65,20 @@ func TestFormatMarkdownResult_CostBreakdown(t *testing.T) {
 	assert.Contains(t, markdown, "| Service | $100.00 | $200.00 |")
 }
 
+func TestFormatMarkdownResult_FullEconomics(t *testing.T) {
+	result := createMockSimulationResult()
+
+	markdown := FormatMarkdownResult(result)
+
+	assert.Contains(t, markdown, "### Full Economics")
+	assert.Contains(t, markdown, "| Delivery Cost | $6200.00 |")
+	assert.Contains(t, markdown, "| Productization Cost | $500.00 |")
+	assert.Contains(t, markdown, "| Adoption Cost | $300.00 |")
+	assert.Contains(t, markdown, "| Full Cost | $7000.00 |")
+	assert.Contains(t, markdown, "| Delivery Margin | 38.0% |")
+	assert.Contains(t, markdown, "| Full Margin | 30.0% |")
+}
+
 func TestFormatMarkdownResult_StressTest(t *testing.T) {
 	result := createMockSimulationResult()
 

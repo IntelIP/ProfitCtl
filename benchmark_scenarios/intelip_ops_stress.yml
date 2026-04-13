@@ -1,0 +1,123 @@
+# IntelIP business-ops platform: stress / heavier-usage scenario
+project:
+  name: "IntelIP - business ops platform (stress)"
+
+fixed_costs:
+  - name: "Cloudflare Workers and DNS baseline"
+    amount: 5
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Neon managed database baseline"
+    amount: 45
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Clerk auth baseline"
+    amount: 20
+    period: monthly
+    layer: service
+    economics_layer: delivery
+
+  - name: "Backend runtime baseline"
+    amount: 120
+    period: monthly
+    layer: service
+    economics_layer: delivery
+
+  - name: "Telemetry and product ops tooling"
+    amount: 25
+    period: monthly
+    layer: application
+    economics_layer: productization
+
+  - name: "Manual onboarding and support reserve"
+    amount: 650
+    period: monthly
+    layer: application
+    economics_layer: adoption
+
+variable_costs:
+  - name: "Agent execution token spend"
+    cost_per_unit: 0.000007
+    units_per_user: 1
+    distribution: normal
+    mean: 420000
+    stddev: 120000
+    layer: service
+    economics_layer: delivery
+
+  - name: "Workflow execution compute and memory operations"
+    cost_per_unit: 0.0045
+    units_per_user: 1
+    distribution: normal
+    mean: 110
+    stddev: 30
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Integration sync and action overhead"
+    cost_per_unit: 0.00055
+    units_per_user: 1
+    distribution: normal
+    mean: 220
+    stddev: 60
+    layer: application
+    economics_layer: delivery
+
+  - name: "Billing and payment processing"
+    cost_per_unit: 1
+    units_per_user: 1
+    user_scope: paid_users
+    distribution: normal
+    mean: 1.2
+    stddev: 0.3
+    layer: service
+    economics_layer: delivery
+
+pricing:
+  mode: mix
+  plans:
+    - name: Free
+      price: 0
+      share: 0.25
+      limits:
+        users: 10
+
+    - name: Starter
+      price: 49
+      share: 0.35
+      limits:
+        users: 150
+
+    - name: Pro
+      price: 119
+      share: 0.40
+      limits:
+        users: 2000
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 55
+    message: Gross margin must be at least 55% even in the heavier-usage scenario
+
+  - type: threshold
+    field: p95_margin
+    operator: gte
+    value: 30
+    message: p95 margin must be at least 30% under heavy stress
+
+  - type: threshold
+    field: p95_cost_per_user
+    operator: lte
+    value: 25
+    message: p95 cost per active user must stay below $25 under heavy stress
+
+simulation:
+  base_users: 180
+  growth_factor: 1.22
+  iterations: 10000

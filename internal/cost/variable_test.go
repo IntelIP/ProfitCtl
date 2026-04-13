@@ -210,6 +210,38 @@ func TestCalculateVariableCosts(t *testing.T) {
 	assert.Len(t, result.ByCost, 2, "Should have 2 cost line items")
 }
 
+func TestCalculateVariableCostsWithScope_UsesPaidUsersForScopedCosts(t *testing.T) {
+	variableCosts := []types.VariableCost{
+		{
+			Name:         "Runtime",
+			CostPerUnit:  1,
+			UnitsPerUser: 2,
+			Distribution: types.DistUniform,
+			Min:          newFloat64(1),
+			Max:          newFloat64(1),
+			Layer:        types.LayerService,
+		},
+		{
+			Name:         "Payment Processing",
+			CostPerUnit:  1,
+			UnitsPerUser: 1,
+			Distribution: types.DistUniform,
+			Min:          newFloat64(1),
+			Max:          newFloat64(1),
+			Layer:        types.LayerService,
+			UserScope:    types.UserScopePaidUsers,
+		},
+	}
+
+	result := CalculateVariableCostsWithScope(variableCosts, 10, 3)
+
+	assert.Equal(t, 23.0, result.Total)
+	assert.Len(t, result.ByCost, 2)
+	assert.Equal(t, 20.0, result.ByCost[0].Total)
+	assert.Equal(t, 3.0, result.ByCost[1].Total)
+	assert.Equal(t, types.UserScopePaidUsers, result.ByCost[1].UserScope)
+}
+
 func TestCalculateVariableCostsZeroUsers(t *testing.T) {
 	variableCosts := []types.VariableCost{
 		{
@@ -279,6 +311,26 @@ func TestCalculateVariableCostWithVariability_UsesDistributionAsUnitsPerUser(t *
 	assert.InDelta(t, mean, result.ByCost[0].UnitsPerUser, 4000, "sampled units per user should stay near the configured mean")
 }
 
+func TestCalculateVariableCostWithVariabilityAndScope_SkipsPaidCostsWhenNoPaidUsers(t *testing.T) {
+	variableCosts := []types.VariableCost{
+		{
+			Name:         "Payment Processing",
+			CostPerUnit:  1,
+			UnitsPerUser: 1,
+			Distribution: types.DistNormal,
+			Mean:         newFloat64(1),
+			StdDev:       newFloat64(0.1),
+			Layer:        types.LayerService,
+			UserScope:    types.UserScopePaidUsers,
+		},
+	}
+
+	result := CalculateVariableCostWithVariabilityAndScope(variableCosts, 10, 0)
+
+	assert.Equal(t, 0.0, result.Total)
+	assert.Empty(t, result.ByCost)
+}
+
 func TestVariableCostLayerAggregation(t *testing.T) {
 	variableCosts := []types.VariableCost{
 		{
@@ -320,6 +372,49 @@ func TestVariableCostLayerAggregation(t *testing.T) {
 	assert.Equal(t, expectedInfra, result.ByLayer.Infrastructure, "Infrastructure layer")
 	assert.Equal(t, expectedApp, result.ByLayer.Application, "Application layer")
 	assert.Equal(t, expectedService, result.ByLayer.Service, "Service layer")
+}
+
+func TestVariableCostEconomicsLayerAggregation(t *testing.T) {
+	variableCosts := []types.VariableCost{
+		{
+			Name:           "Runtime Tokens",
+			CostPerUnit:    0.01,
+			UnitsPerUser:   100,
+			Distribution:   types.DistUniform,
+			Min:            newFloat64(90),
+			Max:            newFloat64(110),
+			Layer:          types.LayerService,
+			EconomicsLayer: types.EconomicsLayerDelivery,
+		},
+		{
+			Name:           "AI Eval Generation",
+			CostPerUnit:    0.02,
+			UnitsPerUser:   10,
+			Distribution:   types.DistUniform,
+			Min:            newFloat64(9),
+			Max:            newFloat64(11),
+			Layer:          types.LayerApplication,
+			EconomicsLayer: types.EconomicsLayerProductization,
+		},
+		{
+			Name:           "Onboarding Assist",
+			CostPerUnit:    1.5,
+			UnitsPerUser:   1,
+			Distribution:   types.DistUniform,
+			Min:            newFloat64(1),
+			Max:            newFloat64(1),
+			Layer:          types.LayerApplication,
+			EconomicsLayer: types.EconomicsLayerAdoption,
+		},
+	}
+
+	users := 10
+
+	result := CalculateVariableCosts(variableCosts, users)
+
+	assert.Equal(t, 10.0, result.ByEconomicsLayer.Delivery, "Delivery economics layer")
+	assert.Equal(t, 2.0, result.ByEconomicsLayer.Productization, "Productization economics layer")
+	assert.Equal(t, 15.0, result.ByEconomicsLayer.Adoption, "Adoption economics layer")
 }
 
 func newFloat64(v float64) *float64 {

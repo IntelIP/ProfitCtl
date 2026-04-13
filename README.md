@@ -17,11 +17,13 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
 - pricing modes: `tiered`, `mix`, and `hybrid`
+- workspace-aware pricing and minimum-floor scenario modeling
 - payment-fee modeling with monthly vs annual billing mix
 - calibration deltas for modeled vs actual revenue and fees
 - `calibration_file` support for external calibration artifacts
 - explicit `billable_users` support for hybrid seat-based contracts
 - booked vs operating margin reporting for one-time-heavy contract scenarios
+- full-economics reporting across delivery, productization, and adoption cost layers
 - Output formats: human CLI, JSON, Markdown
 - CI/CD via Woodpecker (Hostinger VPS + builder pool)
 
@@ -104,6 +106,14 @@ The open-source core gives teams a local CLI to model pricing, recurring-margin 
 
 The paid layer should sit on top of that core through hosted workflows, collaboration, policy enforcement, and support, not by weakening the local product.
 
+## IntelIP Modeling Pack
+
+The repo now includes IntelIP-specific economics scenario packs for conservative, target, stress, paid-pilot, and tight-free rollout analysis.
+
+- calibration notes: `benchmark_scenarios/intelip_model_calibration_notes.md`
+- cost inventory: `benchmark_scenarios/intelip_tooling_cost_inventory.md`
+- rollout recommendation pack: `benchmark_scenarios/intelip_ops_pricing_pack.md`
+
 ## Documentation
 
 - [Documentation Index](docs/DOCS_INDEX.md)
@@ -113,6 +123,8 @@ The paid layer should sit on top of that core through hosted workflows, collabor
 - [Open-Core Packaging](docs/OPEN_CORE_PACKAGING.md)
 - [Open-Core Roadmap](docs/OPEN_CORE_ROADMAP.md)
 - [Benchmark Scenarios](benchmark_scenarios/README.md)
+- [Full Economics Cost Layers](docs/full-economics-cost-layers.md)
+- [IntelIP Ops Pricing Pack](benchmark_scenarios/intelip_ops_pricing_pack.md)
 - [Growth Assets](docs/growth/README.md)
 - [Benchmark Outreach Pack](docs/growth/benchmark-outreach-pack.md)
 - [Value Proposition](docs/growth/value-proposition.md)

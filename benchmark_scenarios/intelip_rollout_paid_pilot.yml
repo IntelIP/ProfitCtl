@@ -1,0 +1,111 @@
+# IntelIP rollout shape: paid pilot / concierge workspace launch
+project:
+  name: "IntelIP - rollout shape (paid pilot hybrid)"
+
+fixed_costs:
+  - name: "Cloudflare Workers and DNS baseline"
+    amount: 5
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Neon managed database baseline"
+    amount: 22
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Clerk auth baseline"
+    amount: 20
+    period: monthly
+    layer: service
+    economics_layer: delivery
+
+  - name: "Backend runtime baseline"
+    amount: 35
+    period: monthly
+    layer: service
+    economics_layer: delivery
+
+  - name: "Telemetry and product ops tooling"
+    amount: 10
+    period: monthly
+    layer: application
+    economics_layer: productization
+
+  - name: "Manual onboarding and support reserve"
+    amount: 300
+    period: monthly
+    layer: application
+    economics_layer: adoption
+
+variable_costs:
+  - name: "Agent execution token spend"
+    cost_per_unit: 0.000005
+    units_per_user: 1
+    distribution: normal
+    mean: 220000
+    stddev: 70000
+    layer: service
+    economics_layer: delivery
+
+  - name: "Workflow execution compute and memory operations"
+    cost_per_unit: 0.003
+    units_per_user: 1
+    distribution: normal
+    mean: 40
+    stddev: 12
+    layer: infrastructure
+    economics_layer: delivery
+
+  - name: "Integration sync and action overhead"
+    cost_per_unit: 0.00035
+    units_per_user: 1
+    distribution: normal
+    mean: 90
+    stddev: 25
+    layer: application
+    economics_layer: delivery
+
+  - name: "Billing and payment processing"
+    cost_per_unit: 1
+    units_per_user: 1
+    user_scope: paid_users
+    distribution: normal
+    mean: 1.6
+    stddev: 0.35
+    layer: service
+    economics_layer: delivery
+
+pricing:
+  mode: workspace_hybrid
+  workspace:
+    average_users_per_workspace: 3
+  plans:
+    - name: Pilot Workspace
+      price: 149
+      share: 0.8
+      workspace_minimum: 399
+
+    - name: Pro Workspace
+      price: 299
+      share: 0.2
+      workspace_minimum: 699
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 60
+    message: Paid pilot hybrid should maintain at least 60% margin
+
+  - type: threshold
+    field: p95_margin
+    operator: gte
+    value: 40
+    message: Paid pilot hybrid should stay above 40% p95 margin
+
+simulation:
+  base_users: 15
+  growth_factor: 1.05
+  iterations: 10000

@@ -8,6 +8,8 @@
 - [Architecture](ARCHITECTURE.md)
 - [Open-Core Packaging](OPEN_CORE_PACKAGING.md)
 - [Open-Core Roadmap](OPEN_CORE_ROADMAP.md)
+- [Full Economics Cost Layers](full-economics-cost-layers.md)
+- [IntelIP Modeling Backlog](profitctl-bug-backlog-from-intelip-modeling.md)
 - [Benchmark Scenarios](../benchmark_scenarios/README.md)
 - [Growth Assets](growth/README.md)
 - [Benchmark Outreach Pack](growth/benchmark-outreach-pack.md)

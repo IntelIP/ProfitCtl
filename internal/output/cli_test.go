@@ -44,6 +44,16 @@ func createMockSimulationResult() SimulationResult {
 				Service:        300,
 			},
 		},
+		FullEconomics: FullEconomicsSummary{
+			DeliveryCost:        6200,
+			ProductizationCost:  500,
+			AdoptionCost:        300,
+			TotalCost:           7000,
+			DeliveryCostPerUser: 6.2,
+			TotalCostPerUser:    7.0,
+			DeliveryMargin:      38.0,
+			TotalMargin:         30.0,
+		},
 		Revenue: pricing.RevenueResult{
 			Mode:           "tiered",
 			Total:          10000,
@@ -121,6 +131,9 @@ func TestFormatCLIResult_AllSections(t *testing.T) {
 	assert.Contains(t, output, "Service: $100.00")
 	assert.Contains(t, output, "Variable COGS: $1.0000/user")
 	assert.Contains(t, output, "Cost per user: $7.00")
+	assert.Contains(t, output, "Full Economics:")
+	assert.Contains(t, output, "Delivery cost: $6200.00")
+	assert.Contains(t, output, "Full margin: 30.00%")
 	assert.Contains(t, output, "✅ PASSED")
 }
 

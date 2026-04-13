@@ -42,31 +42,39 @@ func NewDistributionGenerator(vc types.VariableCost) (DistributionGenerator, err
 }
 
 type VariableCostResult struct {
-	Total   float64
-	PerUser float64
-	ByLayer types.CostLayerBreakdown
-	ByCost  []VariableCostLineItem
-	Samples []float64
+	Total            float64
+	PerUser          float64
+	ByLayer          types.CostLayerBreakdown
+	ByEconomicsLayer types.EconomicsLayerBreakdown
+	ByCost           []VariableCostLineItem
+	Samples          []float64
 }
 
 type VariableCostLineItem struct {
-	Name         string
-	CostPerUnit  float64
-	UnitsPerUser float64
-	Total        float64
-	Layer        types.CostLayer
-	Distribution types.DistributionType
+	Name           string
+	CostPerUnit    float64
+	UnitsPerUser   float64
+	Total          float64
+	Layer          types.CostLayer
+	EconomicsLayer types.EconomicsLayer
+	Distribution   types.DistributionType
+	UserScope      types.VariableCostUserScope
 }
 
 func CalculateVariableCosts(variableCosts []types.VariableCost, users int) VariableCostResult {
+	return CalculateVariableCostsWithScope(variableCosts, users, users)
+}
+
+func CalculateVariableCostsWithScope(variableCosts []types.VariableCost, users int, paidUsers int) VariableCostResult {
 	result := VariableCostResult{
 		ByLayer: types.CostLayerBreakdown{
 			Infrastructure: 0,
 			Application:    0,
 			Service:        0,
 		},
-		ByCost:  make([]VariableCostLineItem, 0, len(variableCosts)),
-		Samples: make([]float64, 0),
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{},
+		ByCost:           make([]VariableCostLineItem, 0, len(variableCosts)),
+		Samples:          make([]float64, 0),
 	}
 
 	if users == 0 {
@@ -74,16 +82,23 @@ func CalculateVariableCosts(variableCosts []types.VariableCost, users int) Varia
 	}
 
 	for _, vc := range variableCosts {
-		baseUnits := vc.UnitsPerUser * float64(users)
+		scopedUsers := resolveScopedUsers(vc, users, paidUsers)
+		if scopedUsers == 0 {
+			continue
+		}
+
+		baseUnits := vc.UnitsPerUser * float64(scopedUsers)
 		baseCost := vc.CostPerUnit * baseUnits
 
 		lineItem := VariableCostLineItem{
-			Name:         vc.Name,
-			CostPerUnit:  vc.CostPerUnit,
-			UnitsPerUser: vc.UnitsPerUser,
-			Total:        baseCost,
-			Layer:        vc.Layer,
-			Distribution: vc.Distribution,
+			Name:           vc.Name,
+			CostPerUnit:    vc.CostPerUnit,
+			UnitsPerUser:   vc.UnitsPerUser,
+			Total:          baseCost,
+			Layer:          vc.Layer,
+			EconomicsLayer: types.NormalizeEconomicsLayer(vc.EconomicsLayer),
+			Distribution:   vc.Distribution,
+			UserScope:      types.NormalizeVariableCostUserScope(vc.UserScope),
 		}
 
 		result.Total += baseCost
@@ -97,6 +112,7 @@ func CalculateVariableCosts(variableCosts []types.VariableCost, users int) Varia
 		case types.LayerService:
 			result.ByLayer.Service += baseCost
 		}
+		result.ByEconomicsLayer.Add(vc.EconomicsLayer, baseCost)
 	}
 
 	result.PerUser = result.Total / float64(users)
@@ -106,6 +122,7 @@ func CalculateVariableCosts(variableCosts []types.VariableCost, users int) Varia
 	result.ByLayer.Infrastructure = math.Round(result.ByLayer.Infrastructure*100) / 100
 	result.ByLayer.Application = math.Round(result.ByLayer.Application*100) / 100
 	result.ByLayer.Service = math.Round(result.ByLayer.Service*100) / 100
+	result.ByEconomicsLayer.Round()
 
 	for i := range result.ByCost {
 		result.ByCost[i].Total = math.Round(result.ByCost[i].Total*100) / 100
@@ -115,14 +132,19 @@ func CalculateVariableCosts(variableCosts []types.VariableCost, users int) Varia
 }
 
 func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, users int) VariableCostResult {
+	return CalculateVariableCostWithVariabilityAndScope(variableCosts, users, users)
+}
+
+func CalculateVariableCostWithVariabilityAndScope(variableCosts []types.VariableCost, users int, paidUsers int) VariableCostResult {
 	result := VariableCostResult{
 		ByLayer: types.CostLayerBreakdown{
 			Infrastructure: 0,
 			Application:    0,
 			Service:        0,
 		},
-		ByCost:  make([]VariableCostLineItem, 0, len(variableCosts)),
-		Samples: make([]float64, 1),
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{},
+		ByCost:           make([]VariableCostLineItem, 0, len(variableCosts)),
+		Samples:          make([]float64, 1),
 	}
 
 	if users == 0 {
@@ -130,9 +152,14 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 	}
 
 	for _, vc := range variableCosts {
+		scopedUsers := resolveScopedUsers(vc, users, paidUsers)
+		if scopedUsers == 0 {
+			continue
+		}
+
 		generator, err := NewDistributionGenerator(vc)
 		if err != nil {
-			baseCost := vc.CostPerUnit * vc.UnitsPerUser * float64(users)
+			baseCost := vc.CostPerUnit * vc.UnitsPerUser * float64(scopedUsers)
 			result.Total += baseCost
 
 			switch vc.Layer {
@@ -143,11 +170,12 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 			case types.LayerService:
 				result.ByLayer.Service += baseCost
 			}
+			result.ByEconomicsLayer.Add(vc.EconomicsLayer, baseCost)
 			continue
 		}
 
 		totalUnits := 0.0
-		for i := 0; i < users; i++ {
+		for i := 0; i < scopedUsers; i++ {
 			units := generator()
 			if units < 0 {
 				units = 0
@@ -160,12 +188,14 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 		result.Total += variableCost
 
 		lineItem := VariableCostLineItem{
-			Name:         vc.Name,
-			CostPerUnit:  vc.CostPerUnit,
-			UnitsPerUser: totalUnits / float64(users),
-			Total:        variableCost,
-			Layer:        vc.Layer,
-			Distribution: vc.Distribution,
+			Name:           vc.Name,
+			CostPerUnit:    vc.CostPerUnit,
+			UnitsPerUser:   totalUnits / float64(scopedUsers),
+			Total:          variableCost,
+			Layer:          vc.Layer,
+			EconomicsLayer: types.NormalizeEconomicsLayer(vc.EconomicsLayer),
+			Distribution:   vc.Distribution,
+			UserScope:      types.NormalizeVariableCostUserScope(vc.UserScope),
 		}
 		result.ByCost = append(result.ByCost, lineItem)
 
@@ -177,6 +207,7 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 		case types.LayerService:
 			result.ByLayer.Service += variableCost
 		}
+		result.ByEconomicsLayer.Add(vc.EconomicsLayer, variableCost)
 	}
 
 	result.PerUser = result.Total / float64(users)
@@ -187,6 +218,7 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 	result.ByLayer.Infrastructure = math.Round(result.ByLayer.Infrastructure*100) / 100
 	result.ByLayer.Application = math.Round(result.ByLayer.Application*100) / 100
 	result.ByLayer.Service = math.Round(result.ByLayer.Service*100) / 100
+	result.ByEconomicsLayer.Round()
 
 	for i := range result.ByCost {
 		result.ByCost[i].Total = math.Round(result.ByCost[i].Total*100) / 100
@@ -194,4 +226,17 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 	}
 
 	return result
+}
+
+func resolveScopedUsers(vc types.VariableCost, users int, paidUsers int) int {
+	if types.NormalizeVariableCostUserScope(vc.UserScope) == types.UserScopePaidUsers {
+		if paidUsers < 0 {
+			return 0
+		}
+		if paidUsers > users {
+			return users
+		}
+		return paidUsers
+	}
+	return users
 }

@@ -82,6 +82,13 @@ func TestSimulate_JSONOutput(t *testing.T) {
 	totalCost, ok := costs["total"].(float64)
 	assert.True(t, ok, "Should have total cost")
 	assert.Greater(t, totalCost, 0.0)
+
+	fullEconomics, ok := jsonResult["full_economics"].(map[string]interface{})
+	assert.True(t, ok, "Should have full_economics field")
+	fullEconomicsCosts, ok := fullEconomics["costs"].(map[string]interface{})
+	assert.True(t, ok, "Should have full_economics.costs field")
+	_, ok = fullEconomicsCosts["delivery"].(float64)
+	assert.True(t, ok, "Should have delivery full economics cost")
 }
 
 func TestSimulate_MarkdownOutput(t *testing.T) {
@@ -100,6 +107,7 @@ func TestSimulate_MarkdownOutput(t *testing.T) {
 	assert.Contains(t, outputStr, "## profitctl Results")
 	assert.Contains(t, outputStr, "| Metric | Value |")
 	assert.Contains(t, outputStr, "### Cost Breakdown")
+	assert.Contains(t, outputStr, "### Full Economics")
 }
 
 func TestSimulate_CovenantBreach(t *testing.T) {
@@ -343,4 +351,69 @@ func TestSimulate_RichPaymentFeesAndCalibrationJSONOutput(t *testing.T) {
 	assert.Equal(t, "stripe_export", calibration["source"])
 	assert.Contains(t, calibration, "revenue_delta")
 	assert.Contains(t, calibration, "payment_fees_delta")
+}
+
+func TestSimulate_MixPricingConfig(t *testing.T) {
+	binaryPath := getBinaryPath(t)
+	fixturePath := getFixturePath("mix_pricing_config.yml")
+
+	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath, "--json")
+	output, err := cmd.CombinedOutput()
+
+	require.NoError(t, err)
+
+	var jsonResult map[string]interface{}
+	err = json.Unmarshal(output, &jsonResult)
+	require.NoError(t, err)
+
+	revenue, ok := jsonResult["revenue"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, 2660.0, revenue["total"].(float64))
+
+	byPlan, ok := revenue["by_plan"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, byPlan, 3)
+
+	firstPlan := byPlan[0].(map[string]interface{})
+	secondPlan := byPlan[1].(map[string]interface{})
+	thirdPlan := byPlan[2].(map[string]interface{})
+
+	assert.Equal(t, "Free", firstPlan["plan_name"])
+	assert.Equal(t, 60.0, firstPlan["users"])
+	assert.Equal(t, "Starter", secondPlan["plan_name"])
+	assert.Equal(t, 30.0, secondPlan["users"])
+	assert.Equal(t, "Pro", thirdPlan["plan_name"])
+	assert.Equal(t, 10.0, thirdPlan["users"])
+}
+
+func TestSimulate_WorkspaceHybridConfig(t *testing.T) {
+	binaryPath := getBinaryPath(t)
+	fixturePath := getFixturePath("workspace_hybrid_config.yml")
+
+	cmd := exec.Command(binaryPath, "simulate", "-f", fixturePath, "--json")
+	output, err := cmd.CombinedOutput()
+
+	require.NoError(t, err)
+
+	var jsonResult map[string]interface{}
+	err = json.Unmarshal(output, &jsonResult)
+	require.NoError(t, err)
+
+	revenue, ok := jsonResult["revenue"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, 1790.0, revenue["total"].(float64))
+
+	byPlan, ok := revenue["by_plan"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, byPlan, 2)
+
+	firstPlan := byPlan[0].(map[string]interface{})
+	secondPlan := byPlan[1].(map[string]interface{})
+
+	assert.Equal(t, "Minimum", firstPlan["plan_name"])
+	assert.Equal(t, 16.0, firstPlan["users"])
+	assert.Equal(t, 8.0, firstPlan["workspaces"])
+	assert.Equal(t, "Pro", secondPlan["plan_name"])
+	assert.Equal(t, 4.0, secondPlan["users"])
+	assert.Equal(t, 2.0, secondPlan["workspaces"])
 }

@@ -1,0 +1,35 @@
+project:
+  name: Mix Pricing Regression
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: mix
+  plans:
+    - name: Free
+      price: 0
+      share: 0.6
+    - name: Starter
+      price: 49
+      share: 0.3
+    - name: Pro
+      price: 119
+      share: 0.1
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 10
+    message: Margin should remain positive under mix pricing
+
+simulation:
+  base_users: 100
+  growth_factor: 1.05
+  iterations: 1000

@@ -30,7 +30,7 @@ func BenchmarkRunMonteCarlo(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		RunMonteCarlo(fixedCosts, variableCosts, users, months, config)
+		RunMonteCarlo(fixedCosts, variableCosts, nil, users, months, config)
 	}
 }
 
@@ -57,7 +57,7 @@ func BenchmarkRunStressTest(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		RunStressTest(fixedCosts, variableCosts, users, months, iterations)
+		RunStressTest(fixedCosts, variableCosts, nil, users, months, iterations)
 	}
 	b.Logf("Ran %d stress tests", b.N)
 }
@@ -89,6 +89,6 @@ func BenchmarkRunMonteCarloLarge(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		RunMonteCarlo(fixedCosts, variableCosts, users, months, config)
+		RunMonteCarlo(fixedCosts, variableCosts, nil, users, months, config)
 	}
 }

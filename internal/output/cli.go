@@ -122,6 +122,23 @@ func FormatCLIResult(result SimulationResult, verbose bool) {
 		fmt.Println()
 	}
 
+	if result.FullEconomics.TotalCost > 0 {
+		fmt.Println("Full Economics:")
+		fmt.Printf("  Delivery cost: $%.2f\n", result.FullEconomics.DeliveryCost)
+		fmt.Printf("  Productization cost: $%.2f\n", result.FullEconomics.ProductizationCost)
+		fmt.Printf("  Adoption cost: $%.2f\n", result.FullEconomics.AdoptionCost)
+		fmt.Printf("  Full cost: $%.2f\n", result.FullEconomics.TotalCost)
+		if result.Users > 0 {
+			fmt.Printf("  Delivery cost per user: $%.2f\n", result.FullEconomics.DeliveryCostPerUser)
+			fmt.Printf("  Full cost per user: $%.2f\n", result.FullEconomics.TotalCostPerUser)
+		}
+		if result.Revenue.Total > 0 {
+			fmt.Printf("  Delivery margin: %.2f%%\n", result.FullEconomics.DeliveryMargin)
+			fmt.Printf("  Full margin: %.2f%%\n", result.FullEconomics.TotalMargin)
+		}
+		fmt.Println()
+	}
+
 	covenantStatus := "✅ PASSED"
 	if !result.Covenants.Passed {
 		covenantStatus = "❌ FAILED"

@@ -5,6 +5,7 @@ import (
 
 	"github.com/IntelIP/ProfitCtl/internal/config"
 	"github.com/IntelIP/ProfitCtl/internal/cost"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
 	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
@@ -22,10 +23,11 @@ type ScaleScenario struct {
 }
 
 type TotalCosts struct {
-	Fixed      float64
-	Variable   float64
-	GrandTotal float64
-	ByLayer    types.CostLayerBreakdown
+	Fixed            float64
+	Variable         float64
+	GrandTotal       float64
+	ByLayer          types.CostLayerBreakdown
+	ByEconomicsLayer types.EconomicsLayerBreakdown
 }
 
 type ScaleConfig struct {
@@ -42,7 +44,7 @@ func NewScaleConfig(cfg *config.SimulationConfig) ScaleConfig {
 	}
 }
 
-func RunScaleSimulation(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, config ScaleConfig, months int) ScaleSimulationResult {
+func RunScaleSimulation(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, config ScaleConfig, months int) ScaleSimulationResult {
 	result := ScaleSimulationResult{
 		Scenarios: make([]ScaleScenario, 0, config.Steps),
 		Config:    config,
@@ -57,7 +59,11 @@ func RunScaleSimulation(fixedCosts []types.FixedCost, variableCosts []types.Vari
 		}
 
 		scenario.FixedCosts = cost.CalculateFixedCosts(fixedCosts, months)
-		scenario.VariableCost = cost.CalculateVariableCosts(variableCosts, users)
+		paidUsers := users
+		if pricingCfg != nil {
+			paidUsers = pricing.CalculateRevenue(pricingCfg, users).PaidUsers
+		}
+		scenario.VariableCost = cost.CalculateVariableCostsWithScope(variableCosts, users, paidUsers)
 
 		scenario.TotalCosts = calculateTotalCosts(scenario.FixedCosts, scenario.VariableCost)
 
@@ -81,6 +87,11 @@ func calculateTotalCosts(fixedCosts cost.FixedCostResult, variableCost cost.Vari
 			Infrastructure: fixedCosts.ByLayer.Infrastructure + variableCost.ByLayer.Infrastructure,
 			Application:    fixedCosts.ByLayer.Application + variableCost.ByLayer.Application,
 			Service:        fixedCosts.ByLayer.Service + variableCost.ByLayer.Service,
+		},
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{
+			Delivery:       fixedCosts.ByEconomicsLayer.Delivery + variableCost.ByEconomicsLayer.Delivery,
+			Productization: fixedCosts.ByEconomicsLayer.Productization + variableCost.ByEconomicsLayer.Productization,
+			Adoption:       fixedCosts.ByEconomicsLayer.Adoption + variableCost.ByEconomicsLayer.Adoption,
 		},
 	}
 }

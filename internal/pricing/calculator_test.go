@@ -302,6 +302,50 @@ func TestCalculateRevenue_MixModeLargestRemainder(t *testing.T) {
 	assert.Equal(t, 30.0, result.Total)
 }
 
+func TestCalculateRevenue_MixModePaidUserCount(t *testing.T) {
+	pricing := &config.PricingConfig{
+		Mode: config.PricingModeMix,
+		Plans: []config.PricingPlan{
+			{Name: "Free", Price: 0, Share: sharePtr(0.6)},
+			{Name: "Starter", Price: 49, Share: sharePtr(0.3)},
+			{Name: "Pro", Price: 119, Share: sharePtr(0.1)},
+		},
+	}
+
+	result := CalculateRevenue(pricing, 100)
+
+	assert.Equal(t, 2660.0, result.Total)
+	assert.Equal(t, 40, result.PaidUsers)
+	assert.Len(t, result.ByPlan, 3)
+	assert.Equal(t, 60, result.ByPlan[0].Users)
+	assert.Equal(t, 30, result.ByPlan[1].Users)
+	assert.Equal(t, 10, result.ByPlan[2].Users)
+}
+
+func TestCalculateRevenue_WorkspaceHybridMode(t *testing.T) {
+	pricing := &config.PricingConfig{
+		Mode: config.PricingModeWorkspaceHybrid,
+		Workspace: &config.WorkspaceConfig{
+			AverageUsersPerWorkspace: 2,
+		},
+		Plans: []config.PricingPlan{
+			{Name: "Minimum", Price: 0, Share: sharePtr(0.8), WorkspaceMinimum: sharePtr(149)},
+			{Name: "Pro", Price: 39, Share: sharePtr(0.2), WorkspaceMinimum: sharePtr(299)},
+		},
+	}
+
+	result := CalculateRevenue(pricing, 20)
+
+	assert.Equal(t, config.PricingModeWorkspaceHybrid, result.Mode)
+	assert.Equal(t, 1790.0, result.Total)
+	assert.Equal(t, 20, result.PaidUsers)
+	assert.Len(t, result.ByPlan, 2)
+	assert.Equal(t, 8, result.ByPlan[0].Workspaces)
+	assert.Equal(t, 2, result.ByPlan[1].Workspaces)
+	assert.Equal(t, 1192.0, result.ByPlan[0].Revenue)
+	assert.Equal(t, 598.0, result.ByPlan[1].Revenue)
+}
+
 func TestCalculateRevenue_HybridRecurringContract(t *testing.T) {
 	pricing := &config.PricingConfig{
 		Mode: "hybrid",

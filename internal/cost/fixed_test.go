@@ -76,3 +76,17 @@ func TestFixedCostLayerAggregation(t *testing.T) {
 	assert.Equal(t, 700.0, result.ByLayer.Application, "Application layer cost")
 	assert.Equal(t, 300.0, result.ByLayer.Service, "Service layer cost")
 }
+
+func TestFixedCostEconomicsLayerAggregation(t *testing.T) {
+	costs := []types.FixedCost{
+		{Name: "Runtime Infra", Amount: 500, Period: types.PeriodMonthly, Layer: types.LayerInfrastructure},
+		{Name: "AI Dev Tooling", Amount: 300, Period: types.PeriodMonthly, Layer: types.LayerService, EconomicsLayer: types.EconomicsLayerProductization},
+		{Name: "Design Partner Support", Amount: 200, Period: types.PeriodMonthly, Layer: types.LayerApplication, EconomicsLayer: types.EconomicsLayerAdoption},
+	}
+
+	result := CalculateFixedCosts(costs, 1)
+
+	assert.Equal(t, 500.0, result.ByEconomicsLayer.Delivery, "Delivery economics layer cost")
+	assert.Equal(t, 300.0, result.ByEconomicsLayer.Productization, "Productization economics layer cost")
+	assert.Equal(t, 200.0, result.ByEconomicsLayer.Adoption, "Adoption economics layer cost")
+}

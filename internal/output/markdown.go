@@ -152,6 +152,25 @@ func FormatMarkdownResult(result SimulationResult) string {
 		result.VariableCosts.ByLayer.Service)
 	markdown += "\n"
 
+	if result.FullEconomics.TotalCost > 0 {
+		markdown += "### Full Economics\n\n"
+		markdown += "| Metric | Value |\n"
+		markdown += "|--------|-------|\n"
+		markdown += fmt.Sprintf("| Delivery Cost | $%.2f |\n", result.FullEconomics.DeliveryCost)
+		markdown += fmt.Sprintf("| Productization Cost | $%.2f |\n", result.FullEconomics.ProductizationCost)
+		markdown += fmt.Sprintf("| Adoption Cost | $%.2f |\n", result.FullEconomics.AdoptionCost)
+		markdown += fmt.Sprintf("| Full Cost | $%.2f |\n", result.FullEconomics.TotalCost)
+		if result.Users > 0 {
+			markdown += fmt.Sprintf("| Delivery Cost per User | $%.2f |\n", result.FullEconomics.DeliveryCostPerUser)
+			markdown += fmt.Sprintf("| Full Cost per User | $%.2f |\n", result.FullEconomics.TotalCostPerUser)
+		}
+		if result.Revenue.Total > 0 {
+			markdown += fmt.Sprintf("| Delivery Margin | %.1f%% |\n", result.FullEconomics.DeliveryMargin)
+			markdown += fmt.Sprintf("| Full Margin | %.1f%% |\n", result.FullEconomics.TotalMargin)
+		}
+		markdown += "\n"
+	}
+
 	// Covenant violations (if any)
 	if !result.Covenants.Passed && len(result.Covenants.Violations) > 0 {
 		markdown += "### Covenant Violations\n\n"

@@ -24,14 +24,14 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	costEngine := cost.NewCostEngine(cfg)
 
 	scaleConfig := simulation.NewScaleConfig(cfg.Simulation)
-	scaleResult := simulation.RunScaleSimulation(cfg.FixedCosts, cfg.VariableCosts, scaleConfig, 12)
+	scaleResult := simulation.RunScaleSimulation(cfg.FixedCosts, cfg.VariableCosts, cfg.Pricing, scaleConfig, 12)
 	const summaryMonths = 1
 
 	baseUsers := cfg.Simulation.BaseUsers
 	if len(scaleResult.Scenarios) > 0 {
 		baseUsers = scaleResult.Scenarios[0].Users
 	}
-	stressResult := simulation.RunStressTest(cfg.FixedCosts, cfg.VariableCosts, baseUsers, summaryMonths, cfg.Simulation.Iterations)
+	stressResult := simulation.RunStressTest(cfg.FixedCosts, cfg.VariableCosts, cfg.Pricing, baseUsers, summaryMonths, cfg.Simulation.Iterations)
 
 	baseScenario := scaleResult.Scenarios[0]
 	var revenueResult pricing.RevenueResult
@@ -122,6 +122,7 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 		Calibration:     calibrationResult,
 		Margin:          marginResult,
 		OperatingMargin: operatingMarginResult,
+		FullEconomics:   buildFullEconomicsSummary(totalCostResult, paymentFeeResult, revenueResult.Total, baseScenario.Users),
 		ScaleResult:     scaleResult,
 		StressResult:    stressResult,
 		Covenants:       covenantValidation,
@@ -148,4 +149,24 @@ func derefUsers(value *int, fallback int) int {
 		return fallback
 	}
 	return *value
+}
+
+func buildFullEconomicsSummary(totalCosts cost.TotalCostResult, paymentFees pricing.PaymentFeeResult, revenue float64, users int) output.FullEconomicsSummary {
+	summary := output.FullEconomicsSummary{
+		DeliveryCost:       totalCosts.GrandByEconomicsLayer.Delivery + paymentFees.Total,
+		ProductizationCost: totalCosts.GrandByEconomicsLayer.Productization,
+		AdoptionCost:       totalCosts.GrandByEconomicsLayer.Adoption,
+		TotalCost:          totalCosts.GrandTotal + paymentFees.Total,
+	}
+
+	if users > 0 {
+		summary.DeliveryCostPerUser = summary.DeliveryCost / float64(users)
+		summary.TotalCostPerUser = summary.TotalCost / float64(users)
+	}
+	if revenue > 0 {
+		summary.DeliveryMargin = ((revenue - summary.DeliveryCost) / revenue) * 100
+		summary.TotalMargin = ((revenue - summary.TotalCost) / revenue) * 100
+	}
+
+	return summary
 }

@@ -304,6 +304,44 @@ variable_costs: []
 	assert.Equal(t, 3, cfg.Pricing.Contract.Pilot.DurationMonths)
 }
 
+func TestParseConfig_WorkspaceHybridMode(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  mode: workspace_hybrid
+  workspace:
+    average_users_per_workspace: 2
+  plans:
+    - name: minimum
+      price: 0
+      share: 0.8
+      workspace_minimum: 149
+    - name: pro
+      price: 39
+      share: 0.2
+      workspace_minimum: 299
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Pricing)
+	assert.Equal(t, PricingModeWorkspaceHybrid, cfg.Pricing.Mode)
+	assert.NotNil(t, cfg.Pricing.Workspace)
+	assert.Equal(t, 2, cfg.Pricing.Workspace.AverageUsersPerWorkspace)
+	assert.NotNil(t, cfg.Pricing.Plans[0].WorkspaceMinimum)
+	assert.Equal(t, 149.0, *cfg.Pricing.Plans[0].WorkspaceMinimum)
+}
+
 func TestParseConfig_PaymentFees(t *testing.T) {
 	configYAML := `
 simulation:
@@ -554,6 +592,37 @@ variable_costs: []
 	assert.Nil(t, cfg.Project)
 	assert.Nil(t, cfg.Pricing)
 	assert.Empty(t, cfg.Covenants)
+}
+
+func TestParseConfig_DefaultsVariableCostUserScopeToAllUsers(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  plans:
+    - name: starter
+      price: 49
+
+fixed_costs: []
+variable_costs:
+  - name: Billing
+    cost_per_unit: 1
+    units_per_user: 1
+    distribution: normal
+    mean: 1
+    stddev: 0.1
+    layer: service
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.Len(t, cfg.VariableCosts, 1)
+	assert.Equal(t, types.UserScopeAllUsers, cfg.VariableCosts[0].UserScope)
 }
 
 func TestParseConfig_PricingPlanWithoutLimits(t *testing.T) {
