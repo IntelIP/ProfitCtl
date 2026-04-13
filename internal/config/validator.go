@@ -225,9 +225,6 @@ func validateMixPricing(pricing *PricingConfig) error {
 		if err := validatePricingPlanCohort(plan); err != nil {
 			return err
 		}
-		if plan.Limits != nil {
-			return fmt.Errorf("pricing mode mix does not support limits on plan %s: %w", plan.Name, ErrPricingInconsistency)
-		}
 		if plan.Share == nil {
 			return fmt.Errorf("pricing mode mix requires share on each plan: %w", ErrPricingInconsistency)
 		}

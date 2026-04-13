@@ -180,20 +180,19 @@ func TestValidateConfig_MixModeValid(t *testing.T) {
 	assert.NoError(t, err, "Mix mode config should pass when shares sum to 1")
 }
 
-func TestValidateConfig_MixModeRejectsLimits(t *testing.T) {
-	invalidConfig := &Config{
+func TestValidateConfig_MixModeAllowsReferenceLimits(t *testing.T) {
+	validConfig := &Config{
 		Pricing: &PricingConfig{
 			Mode: "mix",
 			Plans: []PricingPlan{
-				{Name: "Free", Price: 0, Share: float64Ptr(0.7)},
+				{Name: "Free", Price: 0, Share: float64Ptr(0.7), Limits: &PlanLimits{Users: 10}},
 				{Name: "Pro", Price: 29, Share: float64Ptr(0.3), Limits: &PlanLimits{Users: 100}},
 			},
 		},
 	}
 
-	err := ValidateConfig(invalidConfig)
-	assert.Error(t, err, "Mix mode should reject limits")
-	assert.Contains(t, err.Error(), "does not support limits")
+	err := ValidateConfig(validConfig)
+	assert.NoError(t, err, "Mix mode should allow limits as reference metadata")
 }
 
 func TestValidateConfig_MixModeRejectsShareTotalMismatch(t *testing.T) {
