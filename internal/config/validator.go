@@ -20,10 +20,16 @@ var (
 )
 
 func ValidateConfig(cfg *Config) error {
+	normalizeConfig(cfg)
+
 	v := validator.New()
 
 	if err := v.Struct(cfg); err != nil {
 		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	if err := validateNestedStructs(cfg, v); err != nil {
+		return err
 	}
 
 	if err := validateDistributionParams(cfg); err != nil {
@@ -40,6 +46,66 @@ func ValidateConfig(cfg *Config) error {
 
 	if err := validateCalibration(cfg); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func validateNestedStructs(cfg *Config, v *validator.Validate) error {
+	if cfg.Project != nil {
+		if err := v.Struct(cfg.Project); err != nil {
+			return fmt.Errorf("project validation failed: %w", err)
+		}
+	}
+
+	for _, fixedCost := range cfg.FixedCosts {
+		if err := v.Struct(fixedCost); err != nil {
+			return fmt.Errorf("fixed cost %q validation failed: %w", fixedCost.Name, err)
+		}
+		if fixedCost.Allocation != nil {
+			if err := v.Struct(fixedCost.Allocation); err != nil {
+				return fmt.Errorf("fixed cost %q allocation validation failed: %w", fixedCost.Name, err)
+			}
+		}
+	}
+
+	for _, variableCost := range cfg.VariableCosts {
+		if err := v.Struct(variableCost); err != nil {
+			return fmt.Errorf("variable cost %q validation failed: %w", variableCost.Name, err)
+		}
+		if variableCost.Allocation != nil {
+			if err := v.Struct(variableCost.Allocation); err != nil {
+				return fmt.Errorf("variable cost %q allocation validation failed: %w", variableCost.Name, err)
+			}
+		}
+	}
+
+	if cfg.Pricing != nil {
+		if err := v.Struct(cfg.Pricing); err != nil {
+			return fmt.Errorf("pricing validation failed: %w", err)
+		}
+		if cfg.Pricing.Workspace != nil {
+			if err := v.Struct(cfg.Pricing.Workspace); err != nil {
+				return fmt.Errorf("workspace pricing validation failed: %w", err)
+			}
+		}
+		for _, plan := range cfg.Pricing.Plans {
+			if err := v.Struct(plan); err != nil {
+				return fmt.Errorf("pricing plan %q validation failed: %w", plan.Name, err)
+			}
+		}
+	}
+
+	for _, covenant := range cfg.Covenants {
+		if err := v.Struct(covenant); err != nil {
+			return fmt.Errorf("covenant %q validation failed: %w", covenant.Message, err)
+		}
+	}
+
+	if cfg.Simulation != nil {
+		if err := v.Struct(cfg.Simulation); err != nil {
+			return fmt.Errorf("simulation validation failed: %w", err)
+		}
 	}
 
 	return nil
@@ -73,17 +139,26 @@ func validateDistributionParams(cfg *Config) error {
 }
 
 func validatePricingConsistency(cfg *Config) error {
+	for _, variableCost := range cfg.VariableCosts {
+		if variableCost.UserScope == types.UserScopePaidUsers {
+			if cfg.Pricing == nil {
+				return fmt.Errorf("variable cost %q uses user_scope=paid_users but pricing is not configured: %w", variableCost.Name, ErrPricingInconsistency)
+			}
+		}
+	}
 	if cfg.Pricing == nil {
 		return nil
 	}
 
 	switch normalizedPricingMode(cfg.Pricing.Mode, cfg.Pricing) {
-	case "tiered":
+	case PricingModeTiered:
 		return validateTieredPricing(cfg.Pricing)
-	case "mix":
+	case PricingModeMix:
 		return validateMixPricing(cfg.Pricing)
-	case "hybrid":
+	case PricingModeHybrid:
 		return validateHybridPricing(cfg.Pricing)
+	case PricingModeWorkspaceHybrid:
+		return validateWorkspaceHybridPricing(cfg.Pricing)
 	default:
 		return fmt.Errorf("unsupported pricing mode %q: %w", cfg.Pricing.Mode, ErrPricingInconsistency)
 	}
@@ -104,6 +179,9 @@ func validateTieredPricing(pricing *PricingConfig) error {
 		}
 		if plan.Share != nil {
 			return fmt.Errorf("tiered pricing does not support share on plan %s: %w", plan.Name, ErrPricingInconsistency)
+		}
+		if plan.WorkspaceMinimum != nil {
+			return fmt.Errorf("tiered pricing does not support workspace_minimum on plan %s: %w", plan.Name, ErrPricingInconsistency)
 		}
 		if plan.Limits == nil {
 			if i != len(plans)-1 {
@@ -153,8 +231,51 @@ func validateMixPricing(pricing *PricingConfig) error {
 		if plan.Share == nil {
 			return fmt.Errorf("pricing mode mix requires share on each plan: %w", ErrPricingInconsistency)
 		}
+		if plan.WorkspaceMinimum != nil {
+			return fmt.Errorf("pricing mode mix does not support workspace_minimum on plan %s: %w", plan.Name, ErrPricingInconsistency)
+		}
 		if *plan.Share <= 0 || *plan.Share > 1 {
 			return fmt.Errorf("pricing share for plan %s must be > 0 and <= 1: %w", plan.Name, ErrPricingInconsistency)
+		}
+
+		totalShare += *plan.Share
+	}
+
+	if math.Abs(totalShare-1.0) > shareTolerance {
+		return fmt.Errorf("pricing shares must sum to 1.0: %w", ErrPricingInconsistency)
+	}
+
+	return nil
+}
+
+func validateWorkspaceHybridPricing(pricing *PricingConfig) error {
+	if pricing.Contract != nil {
+		return fmt.Errorf("pricing mode workspace_hybrid does not support contract: %w", ErrPricingInconsistency)
+	}
+	if pricing.Workspace == nil || pricing.Workspace.AverageUsersPerWorkspace < 1 {
+		return fmt.Errorf("pricing mode workspace_hybrid requires workspace.average_users_per_workspace >= 1: %w", ErrPricingInconsistency)
+	}
+	if len(pricing.Plans) == 0 {
+		return fmt.Errorf("pricing mode workspace_hybrid requires plans: %w", ErrPricingInconsistency)
+	}
+
+	const shareTolerance = 1e-9
+	totalShare := 0.0
+	for _, plan := range pricing.Plans {
+		if err := validatePricingPlanCohort(plan); err != nil {
+			return err
+		}
+		if plan.Limits != nil {
+			return fmt.Errorf("pricing mode workspace_hybrid does not support limits on plan %s: %w", plan.Name, ErrPricingInconsistency)
+		}
+		if plan.Share == nil {
+			return fmt.Errorf("pricing mode workspace_hybrid requires share on each plan: %w", ErrPricingInconsistency)
+		}
+		if *plan.Share <= 0 || *plan.Share > 1 {
+			return fmt.Errorf("pricing share for plan %s must be > 0 and <= 1: %w", plan.Name, ErrPricingInconsistency)
+		}
+		if plan.WorkspaceMinimum != nil && *plan.WorkspaceMinimum < 0 {
+			return fmt.Errorf("pricing workspace_minimum for plan %s must be >= 0: %w", plan.Name, ErrPricingInconsistency)
 		}
 
 		totalShare += *plan.Share

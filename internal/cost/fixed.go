@@ -22,9 +22,10 @@ func CalculateMonthlyAmount(cost types.FixedCost) float64 {
 
 // FixedCostResult contains fixed cost calculation results
 type FixedCostResult struct {
-	Total   float64
-	Monthly float64
-	ByLayer types.CostLayerBreakdown
+	Total            float64
+	Monthly          float64
+	ByLayer          types.CostLayerBreakdown
+	ByEconomicsLayer types.EconomicsLayerBreakdown
 }
 
 // CalculateFixedCosts calculates total fixed costs and layer breakdown
@@ -35,6 +36,7 @@ func CalculateFixedCosts(costs []types.FixedCost, months int) FixedCostResult {
 			Application:    0,
 			Service:        0,
 		},
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{},
 	}
 
 	for _, cost := range costs {
@@ -50,6 +52,8 @@ func CalculateFixedCosts(costs []types.FixedCost, months int) FixedCostResult {
 		case types.LayerService:
 			result.ByLayer.Service += monthlyAmount
 		}
+
+		result.ByEconomicsLayer.Add(cost.EconomicsLayer, monthlyAmount)
 	}
 
 	result.Total = math.Round(result.Total*100) / 100
@@ -57,6 +61,7 @@ func CalculateFixedCosts(costs []types.FixedCost, months int) FixedCostResult {
 	result.ByLayer.Infrastructure = math.Round(result.ByLayer.Infrastructure*100) / 100
 	result.ByLayer.Application = math.Round(result.ByLayer.Application*100) / 100
 	result.ByLayer.Service = math.Round(result.ByLayer.Service*100) / 100
+	result.ByEconomicsLayer.Round()
 
 	return result
 }

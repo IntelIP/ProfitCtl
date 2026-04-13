@@ -28,17 +28,19 @@ type ProjectInfo struct {
 }
 
 type PricingConfig struct {
-	Mode     string          `yaml:"mode"`
-	Plans    []PricingPlan   `yaml:"plans"`
-	Contract *HybridContract `yaml:"contract"`
+	Mode      string           `yaml:"mode"`
+	Workspace *WorkspaceConfig `yaml:"workspace,omitempty"`
+	Plans     []PricingPlan    `yaml:"plans"`
+	Contract  *HybridContract  `yaml:"contract"`
 }
 
 type PricingPlan struct {
-	Name   string      `yaml:"name" validate:"required"`
-	Price  float64     `yaml:"price" validate:"required,min=0"`
-	Share  *float64    `yaml:"share"`
-	Cohort string      `yaml:"cohort"`
-	Limits *PlanLimits `yaml:"limits"`
+	Name             string      `yaml:"name" validate:"required"`
+	Price            float64     `yaml:"price" validate:"gte=0"`
+	Share            *float64    `yaml:"share"`
+	Cohort           string      `yaml:"cohort"`
+	Limits           *PlanLimits `yaml:"limits"`
+	WorkspaceMinimum *float64    `yaml:"workspace_minimum,omitempty"`
 }
 
 type HybridContract struct {
@@ -110,11 +112,22 @@ type PlanLimits struct {
 	Users int `yaml:"users" validate:"required,min=1"`
 }
 
+type WorkspaceConfig struct {
+	AverageUsersPerWorkspace int `yaml:"average_users_per_workspace" validate:"gte=1"`
+}
+
+const (
+	PricingModeTiered          = "tiered"
+	PricingModeMix             = "mix"
+	PricingModeHybrid          = "hybrid"
+	PricingModeWorkspaceHybrid = "workspace_hybrid"
+)
+
 type Covenant struct {
 	Type     string  `yaml:"type" validate:"required,oneof=threshold"`
 	Field    string  `yaml:"field,omitempty" validate:"required_if=Type threshold"`
 	Operator string  `yaml:"operator,omitempty" validate:"required_if=Type threshold,oneof=gt lt gte lte eq"`
-	Value    float64 `yaml:"value,omitempty" validate:"required_if=Type threshold"`
+	Value    float64 `yaml:"value,omitempty"`
 	Message  string  `yaml:"message" validate:"required"`
 }
 
@@ -136,8 +149,6 @@ func ParseConfig(filename string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
-
-	normalizeConfig(&cfg)
 
 	if cfg.Calibration != nil && strings.TrimSpace(cfg.CalibrationFile) != "" {
 		return nil, fmt.Errorf("failed to validate config: calibration and calibration_file are mutually exclusive")
@@ -164,13 +175,19 @@ func ParseConfig(filename string) (*Config, error) {
 }
 
 func normalizeConfig(cfg *Config) {
-	if cfg.Pricing == nil {
-		return
+	for i := range cfg.FixedCosts {
+		cfg.FixedCosts[i].EconomicsLayer = types.NormalizeEconomicsLayer(cfg.FixedCosts[i].EconomicsLayer)
+	}
+	for i := range cfg.VariableCosts {
+		cfg.VariableCosts[i].EconomicsLayer = types.NormalizeEconomicsLayer(cfg.VariableCosts[i].EconomicsLayer)
+		cfg.VariableCosts[i].UserScope = types.NormalizeVariableCostUserScope(cfg.VariableCosts[i].UserScope)
 	}
 
-	cfg.Pricing.Mode = normalizedPricingMode(cfg.Pricing.Mode, cfg.Pricing)
-	for i := range cfg.Pricing.Plans {
-		cfg.Pricing.Plans[i].Cohort = strings.ToLower(strings.TrimSpace(cfg.Pricing.Plans[i].Cohort))
+	if cfg.Pricing != nil {
+		cfg.Pricing.Mode = normalizedPricingMode(cfg.Pricing.Mode, cfg.Pricing)
+		for i := range cfg.Pricing.Plans {
+			cfg.Pricing.Plans[i].Cohort = strings.ToLower(strings.TrimSpace(cfg.Pricing.Plans[i].Cohort))
+		}
 	}
 	if cfg.PaymentFees == nil {
 		return
@@ -202,9 +219,9 @@ func normalizeConfig(cfg *Config) {
 func normalizedPricingMode(mode string, pricing *PricingConfig) string {
 	if strings.TrimSpace(mode) == "" {
 		if pricing != nil && pricing.Contract != nil {
-			return "hybrid"
+			return PricingModeHybrid
 		}
-		return "tiered"
+		return PricingModeTiered
 	}
 
 	return strings.ToLower(mode)

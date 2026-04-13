@@ -35,6 +35,20 @@ type JSONResult struct {
 		} `json:"variable"`
 		Total float64 `json:"total"`
 	} `json:"costs"`
+	FullEconomics *struct {
+		Costs struct {
+			Delivery        float64 `json:"delivery"`
+			Productization  float64 `json:"productization"`
+			Adoption        float64 `json:"adoption"`
+			Total           float64 `json:"total"`
+			DeliveryPerUser float64 `json:"delivery_per_user,omitempty"`
+			TotalPerUser    float64 `json:"total_per_user,omitempty"`
+		} `json:"costs"`
+		Margin struct {
+			Delivery float64 `json:"delivery,omitempty"`
+			Full     float64 `json:"full,omitempty"`
+		} `json:"margin"`
+	} `json:"full_economics,omitempty"`
 	Revenue struct {
 		Mode           string  `json:"mode,omitempty"`
 		Total          float64 `json:"total"`
@@ -46,11 +60,12 @@ type JSONResult struct {
 			Amount float64 `json:"amount"`
 		} `json:"components,omitempty"`
 		ByPlan []struct {
-			PlanName string   `json:"plan_name"`
-			Price    float64  `json:"price"`
-			Share    *float64 `json:"share,omitempty"`
-			Users    int      `json:"users"`
-			Revenue  float64  `json:"revenue"`
+			PlanName   string   `json:"plan_name"`
+			Price      float64  `json:"price"`
+			Share      *float64 `json:"share,omitempty"`
+			Users      int      `json:"users"`
+			Workspaces int      `json:"workspaces,omitempty"`
+			Revenue    float64  `json:"revenue"`
 		} `json:"by_plan,omitempty"`
 	} `json:"revenue,omitempty"`
 	PaymentFees struct {
@@ -154,6 +169,30 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 	jsonResult.Costs.Variable.ByLayer.Service = result.VariableCosts.ByLayer.Service
 
 	jsonResult.Costs.Total = result.TotalCosts.GrandTotal
+	if result.FullEconomics.TotalCost > 0 {
+		jsonResult.FullEconomics = &struct {
+			Costs struct {
+				Delivery        float64 `json:"delivery"`
+				Productization  float64 `json:"productization"`
+				Adoption        float64 `json:"adoption"`
+				Total           float64 `json:"total"`
+				DeliveryPerUser float64 `json:"delivery_per_user,omitempty"`
+				TotalPerUser    float64 `json:"total_per_user,omitempty"`
+			} `json:"costs"`
+			Margin struct {
+				Delivery float64 `json:"delivery,omitempty"`
+				Full     float64 `json:"full,omitempty"`
+			} `json:"margin"`
+		}{}
+		jsonResult.FullEconomics.Costs.Delivery = result.FullEconomics.DeliveryCost
+		jsonResult.FullEconomics.Costs.Productization = result.FullEconomics.ProductizationCost
+		jsonResult.FullEconomics.Costs.Adoption = result.FullEconomics.AdoptionCost
+		jsonResult.FullEconomics.Costs.Total = result.FullEconomics.TotalCost
+		jsonResult.FullEconomics.Costs.DeliveryPerUser = result.FullEconomics.DeliveryCostPerUser
+		jsonResult.FullEconomics.Costs.TotalPerUser = result.FullEconomics.TotalCostPerUser
+		jsonResult.FullEconomics.Margin.Delivery = result.FullEconomics.DeliveryMargin
+		jsonResult.FullEconomics.Margin.Full = result.FullEconomics.TotalMargin
+	}
 
 	// Revenue
 	if result.Revenue.Total > 0 {
@@ -171,11 +210,12 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 			jsonResult.Revenue.Components[i].Amount = component.Amount
 		}
 		jsonResult.Revenue.ByPlan = make([]struct {
-			PlanName string   `json:"plan_name"`
-			Price    float64  `json:"price"`
-			Share    *float64 `json:"share,omitempty"`
-			Users    int      `json:"users"`
-			Revenue  float64  `json:"revenue"`
+			PlanName   string   `json:"plan_name"`
+			Price      float64  `json:"price"`
+			Share      *float64 `json:"share,omitempty"`
+			Users      int      `json:"users"`
+			Workspaces int      `json:"workspaces,omitempty"`
+			Revenue    float64  `json:"revenue"`
 		}, len(result.Revenue.ByPlan))
 
 		for i, plan := range result.Revenue.ByPlan {
@@ -183,6 +223,7 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 			jsonResult.Revenue.ByPlan[i].Price = plan.Price
 			jsonResult.Revenue.ByPlan[i].Share = plan.Share
 			jsonResult.Revenue.ByPlan[i].Users = plan.Users
+			jsonResult.Revenue.ByPlan[i].Workspaces = plan.Workspaces
 			jsonResult.Revenue.ByPlan[i].Revenue = plan.Revenue
 		}
 	}

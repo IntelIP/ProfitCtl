@@ -94,6 +94,44 @@ func TestCostEngine_CalculateVariableCosts(t *testing.T) {
 	assert.Equal(t, 0.0, result.ByLayer.Service, "Service layer")
 }
 
+func TestCostEngine_CalculateVariableCosts_UsesPaidUsersFromPricing(t *testing.T) {
+	cfg := &config.Config{
+		VariableCosts: []types.VariableCost{
+			{
+				Name:         "Runtime",
+				CostPerUnit:  1,
+				UnitsPerUser: 2,
+				Distribution: types.DistNormal,
+				Mean:         newFloat64Ptr(1),
+				StdDev:       newFloat64Ptr(0.1),
+				Layer:        types.LayerService,
+			},
+			{
+				Name:         "Billing",
+				CostPerUnit:  1,
+				UnitsPerUser: 1,
+				Distribution: types.DistNormal,
+				Mean:         newFloat64Ptr(1),
+				StdDev:       newFloat64Ptr(0.1),
+				Layer:        types.LayerService,
+				UserScope:    types.UserScopePaidUsers,
+			},
+		},
+		Pricing: &config.PricingConfig{
+			Mode: config.PricingModeMix,
+			Plans: []config.PricingPlan{
+				{Name: "Free", Price: 0, Share: newFloat64Ptr(0.6)},
+				{Name: "Starter", Price: 49, Share: newFloat64Ptr(0.4)},
+			},
+		},
+	}
+
+	engine := NewCostEngine(cfg)
+	result := engine.CalculateVariableCosts(10)
+
+	assert.Equal(t, 24.0, result.Total)
+}
+
 func TestCostEngine_CalculateTotalCosts(t *testing.T) {
 	mean := 10000.0
 	stddev := 2000.0
@@ -233,6 +271,45 @@ func TestCostEngine_CalculateTotalCosts_AllLayers(t *testing.T) {
 		result.GrandByLayer.Application +
 		result.GrandByLayer.Service
 	assert.InDelta(t, expectedGrandTotal, result.GrandTotal, 0.01, "Grand total should match sum of layers")
+}
+
+func TestCostEngine_CalculateTotalCosts_EconomicsLayers(t *testing.T) {
+	cfg := &config.Config{
+		FixedCosts: []types.FixedCost{
+			{Name: "Runtime Infra", Amount: 100, Period: types.PeriodMonthly, Layer: types.LayerInfrastructure},
+			{Name: "AI Dev Tooling", Amount: 250, Period: types.PeriodMonthly, Layer: types.LayerService, EconomicsLayer: types.EconomicsLayerProductization},
+			{Name: "Evaluator Support", Amount: 75, Period: types.PeriodMonthly, Layer: types.LayerApplication, EconomicsLayer: types.EconomicsLayerAdoption},
+		},
+		VariableCosts: []types.VariableCost{
+			{
+				Name:           "Runtime Tokens",
+				CostPerUnit:    0.01,
+				UnitsPerUser:   100,
+				Distribution:   types.DistUniform,
+				Min:            newFloat64Ptr(100),
+				Max:            newFloat64Ptr(100),
+				Layer:          types.LayerService,
+				EconomicsLayer: types.EconomicsLayerDelivery,
+			},
+			{
+				Name:           "Eval Inference",
+				CostPerUnit:    0.02,
+				UnitsPerUser:   10,
+				Distribution:   types.DistUniform,
+				Min:            newFloat64Ptr(10),
+				Max:            newFloat64Ptr(10),
+				Layer:          types.LayerApplication,
+				EconomicsLayer: types.EconomicsLayerProductization,
+			},
+		},
+	}
+
+	engine := NewCostEngine(cfg)
+	result := engine.CalculateTotalCosts(10, 1)
+
+	assert.Equal(t, 110.0, result.GrandByEconomicsLayer.Delivery, "Delivery economics total")
+	assert.Equal(t, 252.0, result.GrandByEconomicsLayer.Productization, "Productization economics total")
+	assert.Equal(t, 75.0, result.GrandByEconomicsLayer.Adoption, "Adoption economics total")
 }
 
 func TestCostEngine_EmptyConfig(t *testing.T) {

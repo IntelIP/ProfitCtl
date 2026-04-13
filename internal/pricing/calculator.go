@@ -15,18 +15,20 @@ type RevenueResult struct {
 	RecurringTotal float64
 	OneTimeTotal   float64
 	MinimumUplift  float64
+	PaidUsers      int
 	Components     []RevenueComponent
 	ByPlan         []PlanRevenue
 }
 
 // PlanRevenue represents revenue from a single pricing plan
 type PlanRevenue struct {
-	PlanName string
-	Price    float64
-	Share    *float64
-	Cohort   string
-	Users    int
-	Revenue  float64
+	PlanName   string
+	Price      float64
+	Share      *float64
+	Cohort     string
+	Users      int
+	Workspaces int
+	Revenue    float64
 }
 
 type RevenueComponent struct {
@@ -34,8 +36,7 @@ type RevenueComponent struct {
 	Amount float64
 }
 
-// CalculateRevenue calculates total revenue from pricing plans for a given number of users
-// Uses tiered pricing where each plan applies to a range of users
+// CalculateRevenue calculates total revenue from pricing plans for a given number of users.
 func CalculateRevenue(pricing *config.PricingConfig, users int) RevenueResult {
 	return CalculateRevenueWithSeats(pricing, users, nil)
 }
@@ -44,27 +45,24 @@ func CalculateRevenue(pricing *config.PricingConfig, users int) RevenueResult {
 func CalculateRevenueWithSeats(pricing *config.PricingConfig, users int, billableUsers *int) RevenueResult {
 	if pricing == nil {
 		return RevenueResult{
-			Mode:       "tiered",
-			Total:      0,
+			Mode:       config.PricingModeTiered,
 			Components: []RevenueComponent{},
 			ByPlan:     []PlanRevenue{},
 		}
 	}
 
 	mode := resolvedPricingMode(pricing)
-	if len(pricing.Plans) == 0 && mode != "hybrid" {
+	if len(pricing.Plans) == 0 && mode != config.PricingModeHybrid {
 		return RevenueResult{
 			Mode:       mode,
-			Total:      0,
 			Components: []RevenueComponent{},
 			ByPlan:     []PlanRevenue{},
 		}
 	}
 
-	if users <= 0 && mode != "hybrid" {
+	if users <= 0 && mode != config.PricingModeHybrid {
 		return RevenueResult{
 			Mode:       mode,
-			Total:      0,
 			Components: []RevenueComponent{},
 			ByPlan:     []PlanRevenue{},
 		}
@@ -76,15 +74,17 @@ func CalculateRevenueWithSeats(pricing *config.PricingConfig, users int, billabl
 		ByPlan:     make([]PlanRevenue, 0, len(pricing.Plans)),
 	}
 
-	switch result.Mode {
-	case "mix":
+	switch mode {
+	case config.PricingModeMix:
 		return calculateMixRevenue(pricing, users, result)
-	case "hybrid":
+	case config.PricingModeWorkspaceHybrid:
+		return calculateWorkspaceHybridRevenue(pricing, users, result)
+	case config.PricingModeHybrid:
 		hybridSeats := users
 		if billableUsers != nil {
 			hybridSeats = *billableUsers
 		}
-		return calculateHybridRevenue(pricing, hybridSeats, result)
+		return calculateHybridRevenue(pricing, users, hybridSeats, result)
 	default:
 		return calculateTieredRevenue(pricing, users, result)
 	}
@@ -94,80 +94,70 @@ func calculateTieredRevenue(pricing *config.PricingConfig, users int, result Rev
 	remainingUsers := users
 	previousLimit := 0
 
-	// Iterate through plans in order
 	for i, plan := range pricing.Plans {
 		if plan.Limits == nil {
-			// If no limits specified, this plan applies to all remaining users
 			planUsers := remainingUsers
 			revenue := plan.Price * float64(planUsers)
 
 			result.ByPlan = append(result.ByPlan, PlanRevenue{
 				PlanName: plan.Name,
 				Price:    plan.Price,
-				Share:    nil,
 				Cohort:   plan.Cohort,
 				Users:    planUsers,
-				Revenue:  math.Round(revenue*100) / 100,
+				Revenue:  roundCurrency(revenue),
 			})
 
 			result.Total += revenue
+			if isMonetizedPlan(plan) {
+				result.PaidUsers += planUsers
+			}
 			break
 		}
 
 		planLimit := plan.Limits.Users
-
-		// Calculate how many users fall into this tier
-		// Users in this tier = min(remainingUsers, planLimit - previousLimit)
 		tierCapacity := planLimit - previousLimit
-
 		if tierCapacity <= 0 {
-			// Skip invalid tiers (limit <= previous limit)
 			continue
 		}
 
 		isLastPlan := i == len(pricing.Plans)-1
 		planUsers := remainingUsers
-
-		// If this is the last plan and we have remaining users, apply to all remaining
-		// Otherwise, cap at tier capacity
 		if !isLastPlan && planUsers > tierCapacity {
 			planUsers = tierCapacity
 		}
 
 		revenue := plan.Price * float64(planUsers)
-
 		result.ByPlan = append(result.ByPlan, PlanRevenue{
 			PlanName: plan.Name,
 			Price:    plan.Price,
-			Share:    nil,
 			Cohort:   plan.Cohort,
 			Users:    planUsers,
-			Revenue:  math.Round(revenue*100) / 100,
+			Revenue:  roundCurrency(revenue),
 		})
 
 		result.Total += revenue
+		if isMonetizedPlan(plan) {
+			result.PaidUsers += planUsers
+		}
 		remainingUsers -= planUsers
 		previousLimit = planLimit
-
 		if remainingUsers <= 0 {
 			break
 		}
 	}
 
-	// Round total to 2 decimal places
-	result.Total = math.Round(result.Total*100) / 100
+	result.Total = roundCurrency(result.Total)
 	result.RecurringTotal = result.Total
-
 	return result
 }
 
-func calculateMixRevenue(pricing *config.PricingConfig, users int, result RevenueResult) RevenueResult {
-	type planAllocation struct {
-		index     int
-		users     int
-		remainder float64
-	}
+type planAllocation struct {
+	index      int
+	users      int
+	fractional float64
+}
 
+func allocateUsersByShare(pricing *config.PricingConfig, users int) []planAllocation {
 	allocations := make([]planAllocation, len(pricing.Plans))
 	allocatedUsers := 0
 
@@ -177,55 +167,102 @@ func calculateMixRevenue(pricing *config.PricingConfig, users int, result Revenu
 			share = *plan.Share
 		}
 
-		exactUsers := float64(users) * share
-		baseUsers := int(math.Floor(exactUsers))
+		rawUsers := share * float64(users)
+		baseUsers := int(math.Floor(rawUsers))
 		allocations[i] = planAllocation{
-			index:     i,
-			users:     baseUsers,
-			remainder: exactUsers - float64(baseUsers),
+			index:      i,
+			users:      baseUsers,
+			fractional: rawUsers - float64(baseUsers),
 		}
 		allocatedUsers += baseUsers
 	}
 
 	remainingUsers := users - allocatedUsers
 	sort.SliceStable(allocations, func(i, j int) bool {
-		return allocations[i].remainder > allocations[j].remainder
+		return allocations[i].fractional > allocations[j].fractional
 	})
-	for i := 0; i < remainingUsers && i < len(allocations); i++ {
-		allocations[i].users++
+	for i := 0; i < remainingUsers; i++ {
+		allocations[i%len(allocations)].users++
 	}
-
 	sort.SliceStable(allocations, func(i, j int) bool {
 		return allocations[i].index < allocations[j].index
 	})
 
+	return allocations
+}
+
+func calculateMixRevenue(pricing *config.PricingConfig, users int, result RevenueResult) RevenueResult {
+	allocations := allocateUsersByShare(pricing, users)
 	for _, allocation := range allocations {
 		plan := pricing.Plans[allocation.index]
 		revenue := plan.Price * float64(allocation.users)
-
 		result.ByPlan = append(result.ByPlan, PlanRevenue{
 			PlanName: plan.Name,
 			Price:    plan.Price,
 			Share:    plan.Share,
 			Cohort:   plan.Cohort,
 			Users:    allocation.users,
-			Revenue:  math.Round(revenue*100) / 100,
+			Revenue:  roundCurrency(revenue),
 		})
 		result.Total += revenue
+		if isMonetizedPlan(plan) {
+			result.PaidUsers += allocation.users
+		}
 	}
 
-	result.Total = math.Round(result.Total*100) / 100
+	result.Total = roundCurrency(result.Total)
 	result.RecurringTotal = result.Total
 	return result
 }
 
-func calculateHybridRevenue(pricing *config.PricingConfig, users int, result RevenueResult) RevenueResult {
+func calculateWorkspaceHybridRevenue(pricing *config.PricingConfig, users int, result RevenueResult) RevenueResult {
+	allocations := allocateUsersByShare(pricing, users)
+	avgUsersPerWorkspace := 1
+	if pricing.Workspace != nil && pricing.Workspace.AverageUsersPerWorkspace > 0 {
+		avgUsersPerWorkspace = pricing.Workspace.AverageUsersPerWorkspace
+	}
+
+	for _, allocation := range allocations {
+		plan := pricing.Plans[allocation.index]
+		workspaces := 0
+		if allocation.users > 0 {
+			workspaces = int(math.Ceil(float64(allocation.users) / float64(avgUsersPerWorkspace)))
+		}
+
+		seatRevenue := plan.Price * float64(allocation.users)
+		minimumRevenue := 0.0
+		if plan.WorkspaceMinimum != nil {
+			minimumRevenue = *plan.WorkspaceMinimum * float64(workspaces)
+		}
+		revenue := math.Max(seatRevenue, minimumRevenue)
+
+		result.ByPlan = append(result.ByPlan, PlanRevenue{
+			PlanName:   plan.Name,
+			Price:      plan.Price,
+			Share:      plan.Share,
+			Cohort:     plan.Cohort,
+			Users:      allocation.users,
+			Workspaces: workspaces,
+			Revenue:    roundCurrency(revenue),
+		})
+		result.Total += revenue
+		if isMonetizedPlan(plan) {
+			result.PaidUsers += allocation.users
+		}
+	}
+
+	result.Total = roundCurrency(result.Total)
+	result.RecurringTotal = result.Total
+	return result
+}
+
+func calculateHybridRevenue(pricing *config.PricingConfig, users int, hybridSeats int, result RevenueResult) RevenueResult {
 	if pricing.Contract == nil {
 		return result
 	}
 
 	contract := pricing.Contract
-	billableSeats := users - contract.IncludedSeats
+	billableSeats := hybridSeats - contract.IncludedSeats
 	if billableSeats < 0 {
 		billableSeats = 0
 	}
@@ -241,6 +278,9 @@ func calculateHybridRevenue(pricing *config.PricingConfig, users int, result Rev
 
 	result.RecurringTotal = steadyStateRecurring
 	result.MinimumUplift = minimumUplift
+	if users > 0 && steadyStateRecurring > 0 {
+		result.PaidUsers = users
+	}
 
 	if baseFee > 0 {
 		result.Components = append(result.Components, RevenueComponent{Name: "base_platform_fee", Amount: baseFee})
@@ -274,9 +314,8 @@ func calculateHybridRevenue(pricing *config.PricingConfig, users int, result Rev
 
 func resolvedPricingMode(pricing *config.PricingConfig) string {
 	if pricing == nil {
-		return "tiered"
+		return config.PricingModeTiered
 	}
-
 	return normalizedMode(pricing.Mode, pricing.Contract != nil)
 }
 
@@ -284,12 +323,18 @@ func normalizedMode(mode string, hasContract bool) string {
 	trimmed := strings.ToLower(strings.TrimSpace(mode))
 	if trimmed == "" {
 		if hasContract {
-			return "hybrid"
+			return config.PricingModeHybrid
 		}
-		return "tiered"
+		return config.PricingModeTiered
 	}
-
 	return trimmed
+}
+
+func isMonetizedPlan(plan config.PricingPlan) bool {
+	if plan.Price > 0 {
+		return true
+	}
+	return plan.WorkspaceMinimum != nil && *plan.WorkspaceMinimum > 0
 }
 
 func roundCurrency(value float64) float64 {

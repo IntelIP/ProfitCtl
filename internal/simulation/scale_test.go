@@ -105,7 +105,7 @@ func TestRunScaleSimulation(t *testing.T) {
 
 	months := 6
 
-	result := RunScaleSimulation(fixedCosts, variableCosts, scaleConfig, months)
+	result := RunScaleSimulation(fixedCosts, variableCosts, nil, scaleConfig, months)
 
 	assert.Len(t, result.Scenarios, 3, "Should have 3 scenarios")
 	assert.Equal(t, scaleConfig, result.Config)
@@ -150,7 +150,7 @@ func TestRunScaleSimulationExponentialGrowth(t *testing.T) {
 
 	months := 1
 
-	result := RunScaleSimulation(fixedCosts, variableCosts, scaleConfig, months)
+	result := RunScaleSimulation(fixedCosts, variableCosts, nil, scaleConfig, months)
 
 	expectedUsers := []int{100, 200, 400, 800, 1600}
 	for i, scenario := range result.Scenarios {
@@ -175,6 +175,11 @@ func TestCalculateTotalCosts(t *testing.T) {
 			Application:    700,
 			Service:        300,
 		},
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{
+			Delivery:       1200,
+			Productization: 200,
+			Adoption:       100,
+		},
 	}
 
 	variableResult := cost.VariableCostResult{
@@ -184,6 +189,11 @@ func TestCalculateTotalCosts(t *testing.T) {
 			Infrastructure: 200,
 			Application:    150,
 			Service:        150,
+		},
+		ByEconomicsLayer: types.EconomicsLayerBreakdown{
+			Delivery:       400,
+			Productization: 75,
+			Adoption:       25,
 		},
 	}
 
@@ -195,6 +205,9 @@ func TestCalculateTotalCosts(t *testing.T) {
 	assert.Equal(t, 700.0, totalCosts.ByLayer.Infrastructure, "Infrastructure total")
 	assert.Equal(t, 850.0, totalCosts.ByLayer.Application, "Application total")
 	assert.Equal(t, 450.0, totalCosts.ByLayer.Service, "Service total")
+	assert.Equal(t, 1600.0, totalCosts.ByEconomicsLayer.Delivery, "Delivery economics total")
+	assert.Equal(t, 275.0, totalCosts.ByEconomicsLayer.Productization, "Productization economics total")
+	assert.Equal(t, 125.0, totalCosts.ByEconomicsLayer.Adoption, "Adoption economics total")
 }
 
 func TestRunScaleSimulationLayerBreakdown(t *testing.T) {
@@ -257,7 +270,7 @@ func TestRunScaleSimulationLayerBreakdown(t *testing.T) {
 
 	months := 1
 
-	result := RunScaleSimulation(fixedCosts, variableCosts, scaleConfig, months)
+	result := RunScaleSimulation(fixedCosts, variableCosts, nil, scaleConfig, months)
 
 	for _, scenario := range result.Scenarios {
 		expectedInfra := 500 + 0.01*100*float64(scenario.Users)
@@ -268,6 +281,68 @@ func TestRunScaleSimulationLayerBreakdown(t *testing.T) {
 		assert.InDelta(t, expectedApp, scenario.TotalCosts.ByLayer.Application, 1.0, "Application total")
 		assert.InDelta(t, expectedService, scenario.TotalCosts.ByLayer.Service, 1.0, "Service total")
 	}
+}
+
+func TestRunScaleSimulationEconomicsLayerBreakdown(t *testing.T) {
+	fixedCosts := []types.FixedCost{
+		{
+			Name:           "Runtime Infra",
+			Amount:         100,
+			Period:         types.PeriodMonthly,
+			Layer:          types.LayerInfrastructure,
+			EconomicsLayer: types.EconomicsLayerDelivery,
+		},
+		{
+			Name:           "AI Dev Tooling",
+			Amount:         250,
+			Period:         types.PeriodMonthly,
+			Layer:          types.LayerService,
+			EconomicsLayer: types.EconomicsLayerProductization,
+		},
+		{
+			Name:           "Evaluator Support",
+			Amount:         75,
+			Period:         types.PeriodMonthly,
+			Layer:          types.LayerApplication,
+			EconomicsLayer: types.EconomicsLayerAdoption,
+		},
+	}
+
+	variableCosts := []types.VariableCost{
+		{
+			Name:           "Runtime Tokens",
+			CostPerUnit:    0.01,
+			UnitsPerUser:   100,
+			Distribution:   types.DistUniform,
+			Min:            newFloat64(100),
+			Max:            newFloat64(100),
+			Layer:          types.LayerService,
+			EconomicsLayer: types.EconomicsLayerDelivery,
+		},
+		{
+			Name:           "Eval Inference",
+			CostPerUnit:    0.02,
+			UnitsPerUser:   10,
+			Distribution:   types.DistUniform,
+			Min:            newFloat64(10),
+			Max:            newFloat64(10),
+			Layer:          types.LayerApplication,
+			EconomicsLayer: types.EconomicsLayerProductization,
+		},
+	}
+
+	scaleConfig := ScaleConfig{
+		BaseUsers:    10,
+		GrowthFactor: 2.0,
+		Steps:        1,
+	}
+
+	result := RunScaleSimulation(fixedCosts, variableCosts, nil, scaleConfig, 1)
+	scenario := result.Scenarios[0]
+
+	assert.Equal(t, 110.0, scenario.TotalCosts.ByEconomicsLayer.Delivery, "Delivery economics total")
+	assert.Equal(t, 252.0, scenario.TotalCosts.ByEconomicsLayer.Productization, "Productization economics total")
+	assert.Equal(t, 75.0, scenario.TotalCosts.ByEconomicsLayer.Adoption, "Adoption economics total")
 }
 
 func newFloat64(v float64) *float64 {

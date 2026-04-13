@@ -9,6 +9,24 @@ const (
 	LayerService        CostLayer = "service"
 )
 
+// EconomicsLayer represents the business-level purpose of a cost.
+type EconomicsLayer string
+
+const (
+	EconomicsLayerDelivery       EconomicsLayer = "delivery"
+	EconomicsLayerProductization EconomicsLayer = "productization"
+	EconomicsLayerAdoption       EconomicsLayer = "adoption"
+)
+
+// NormalizeEconomicsLayer preserves backward compatibility by treating omitted values as delivery costs.
+func NormalizeEconomicsLayer(layer EconomicsLayer) EconomicsLayer {
+	if layer == "" {
+		return EconomicsLayerDelivery
+	}
+
+	return layer
+}
+
 // CostPeriod represents the time period for fixed costs
 type CostPeriod string
 
@@ -26,3 +44,31 @@ const (
 	DistExponential DistributionType = "exponential"
 	DistUniform     DistributionType = "uniform"
 )
+
+// EconomicsAllocationMode describes how non-delivery costs should be allocated in later reporting layers.
+type EconomicsAllocationMode string
+
+const (
+	AllocationFixedMonthly     EconomicsAllocationMode = "fixed_monthly"
+	AllocationPerActiveUser    EconomicsAllocationMode = "per_active_user"
+	AllocationPerDesignPartner EconomicsAllocationMode = "per_design_partner"
+	AllocationPerWorkspace     EconomicsAllocationMode = "per_workspace"
+	AllocationPerRelease       EconomicsAllocationMode = "per_release"
+)
+
+// VariableCostUserScope controls which users a variable cost applies to.
+type VariableCostUserScope string
+
+const (
+	UserScopeAllUsers  VariableCostUserScope = "all_users"
+	UserScopePaidUsers VariableCostUserScope = "paid_users"
+)
+
+// NormalizeVariableCostUserScope preserves backward compatibility by treating omitted values as all_users.
+func NormalizeVariableCostUserScope(scope VariableCostUserScope) VariableCostUserScope {
+	if scope == "" {
+		return UserScopeAllUsers
+	}
+
+	return scope
+}

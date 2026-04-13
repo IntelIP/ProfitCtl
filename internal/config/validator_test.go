@@ -375,6 +375,131 @@ func TestValidateConfig_CalibrationRejectsPlanMixMismatch(t *testing.T) {
 	assert.Contains(t, err.Error(), "plan_mix shares must sum to 1.0")
 }
 
+func TestValidateConfig_WorkspaceHybridRequiresWorkspaceAssumption(t *testing.T) {
+	invalidConfig := &Config{
+		Pricing: &PricingConfig{
+			Mode: PricingModeWorkspaceHybrid,
+			Plans: []PricingPlan{
+				{Name: "Minimum", Price: 0, Share: float64Ptr(0.8), WorkspaceMinimum: float64Ptr(149)},
+				{Name: "Pro", Price: 39, Share: float64Ptr(0.2), WorkspaceMinimum: float64Ptr(299)},
+			},
+		},
+	}
+
+	err := ValidateConfig(invalidConfig)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "average_users_per_workspace")
+}
+
+func TestValidateConfig_WorkspaceHybridAllowsMinimums(t *testing.T) {
+	validConfig := &Config{
+		Pricing: &PricingConfig{
+			Mode: PricingModeWorkspaceHybrid,
+			Workspace: &WorkspaceConfig{
+				AverageUsersPerWorkspace: 2,
+			},
+			Plans: []PricingPlan{
+				{Name: "Minimum", Price: 0, Share: float64Ptr(0.8), WorkspaceMinimum: float64Ptr(149)},
+				{Name: "Pro", Price: 39, Share: float64Ptr(0.2), WorkspaceMinimum: float64Ptr(299)},
+			},
+		},
+	}
+
+	err := ValidateConfig(validConfig)
+	assert.NoError(t, err)
+}
+
+func TestValidateConfig_PaidUserScopedVariableCostsRequirePricing(t *testing.T) {
+	invalidConfig := &Config{
+		VariableCosts: []types.VariableCost{
+			{
+				Name:         "Billing",
+				CostPerUnit:  1,
+				UnitsPerUser: 1,
+				Distribution: types.DistNormal,
+				Mean:         float64Ptr(1),
+				StdDev:       float64Ptr(0.1),
+				Layer:        types.LayerService,
+				UserScope:    types.UserScopePaidUsers,
+			},
+		},
+	}
+
+	err := ValidateConfig(invalidConfig)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "user_scope=paid_users")
+}
+
+func TestValidateConfig_DefaultsEconomicsLayerToDelivery(t *testing.T) {
+	validConfig := &Config{
+		FixedCosts: []types.FixedCost{
+			{
+				Name:   "Runtime Infra",
+				Amount: 100,
+				Period: types.PeriodMonthly,
+				Layer:  types.LayerInfrastructure,
+			},
+		},
+		VariableCosts: []types.VariableCost{
+			{
+				Name:         "Runtime Tokens",
+				CostPerUnit:  0.01,
+				UnitsPerUser: 100,
+				Distribution: types.DistNormal,
+				Mean:         float64Ptr(100),
+				StdDev:       float64Ptr(10),
+				Layer:        types.LayerService,
+			},
+		},
+	}
+
+	err := ValidateConfig(validConfig)
+	assert.NoError(t, err)
+	assert.Equal(t, types.EconomicsLayerDelivery, validConfig.FixedCosts[0].EconomicsLayer)
+	assert.Equal(t, types.EconomicsLayerDelivery, validConfig.VariableCosts[0].EconomicsLayer)
+}
+
+func TestValidateConfig_InvalidEconomicsLayer(t *testing.T) {
+	invalidConfig := &Config{
+		FixedCosts: []types.FixedCost{
+			{
+				Name:           "Bad Layer",
+				Amount:         100,
+				Period:         types.PeriodMonthly,
+				Layer:          types.LayerInfrastructure,
+				EconomicsLayer: types.EconomicsLayer("unsupported"),
+			},
+		},
+	}
+
+	err := ValidateConfig(invalidConfig)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "EconomicsLayer")
+	assert.Contains(t, err.Error(), "oneof")
+}
+
+func TestValidateConfig_InvalidEconomicsAllocation(t *testing.T) {
+	invalidConfig := &Config{
+		FixedCosts: []types.FixedCost{
+			{
+				Name:           "AI Dev Tooling",
+				Amount:         500,
+				Period:         types.PeriodMonthly,
+				Layer:          types.LayerService,
+				EconomicsLayer: types.EconomicsLayerProductization,
+				Allocation: &types.EconomicsAllocation{
+					Mode: types.EconomicsAllocationMode("unsupported"),
+				},
+			},
+		},
+	}
+
+	err := ValidateConfig(invalidConfig)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Allocation.Mode")
+	assert.Contains(t, err.Error(), "oneof")
+}
+
 func float64Ptr(f float64) *float64 {
 	return &f
 }

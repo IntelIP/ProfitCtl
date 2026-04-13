@@ -1,0 +1,36 @@
+project:
+  name: Workspace Hybrid Regression
+
+fixed_costs:
+  - name: Platform baseline
+    amount: 100
+    period: monthly
+    layer: infrastructure
+
+variable_costs: []
+
+pricing:
+  mode: workspace_hybrid
+  workspace:
+    average_users_per_workspace: 2
+  plans:
+    - name: Minimum
+      price: 0
+      share: 0.8
+      workspace_minimum: 149
+    - name: Pro
+      price: 39
+      share: 0.2
+      workspace_minimum: 299
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 10
+    message: Margin should remain positive under workspace hybrid pricing
+
+simulation:
+  base_users: 20
+  growth_factor: 1.05
+  iterations: 1000

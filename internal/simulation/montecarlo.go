@@ -5,7 +5,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/IntelIP/ProfitCtl/internal/config"
 	"github.com/IntelIP/ProfitCtl/internal/cost"
+	"github.com/IntelIP/ProfitCtl/internal/pricing"
 	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
 
@@ -34,14 +36,18 @@ func NewMonteCarloConfig(iterations int) MonteCarloConfig {
 	}
 }
 
-func RunMonteCarlo(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, users int, months int, config MonteCarloConfig) MonteCarloResult {
+func RunMonteCarlo(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, users int, months int, config MonteCarloConfig) MonteCarloResult {
 	samples := make([]float64, 0, config.Iterations)
 
 	fixedMonthly := cost.CalculateFixedCosts(fixedCosts, 1)
 	fixedTotal := fixedMonthly.Total * float64(months)
+	paidUsers := users
+	if pricingCfg != nil {
+		paidUsers = pricing.CalculateRevenue(pricingCfg, users).PaidUsers
+	}
 
 	for i := 0; i < config.Iterations; i++ {
-		variableResult := cost.CalculateVariableCostWithVariability(variableCosts, users)
+		variableResult := cost.CalculateVariableCostWithVariabilityAndScope(variableCosts, users, paidUsers)
 		totalCost := fixedTotal + variableResult.Total
 		samples = append(samples, totalCost)
 	}
@@ -127,9 +133,9 @@ type StressTestResult struct {
 	WorstCaseTotalCost float64
 }
 
-func RunStressTest(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, users int, months int, iterations int) StressTestResult {
+func RunStressTest(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, users int, months int, iterations int) StressTestResult {
 	mcConfig := NewMonteCarloConfig(iterations)
-	monteCarlo := RunMonteCarlo(fixedCosts, variableCosts, users, months, mcConfig)
+	monteCarlo := RunMonteCarlo(fixedCosts, variableCosts, pricingCfg, users, months, mcConfig)
 
 	meanCostPerUser := monteCarlo.Mean / float64(users)
 	p95CostPerUser := monteCarlo.P95 / float64(users)

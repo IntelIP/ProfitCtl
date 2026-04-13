@@ -51,6 +51,12 @@ func TestFormatJSONResult_AllFields(t *testing.T) {
 	assert.Equal(t, 200.0, jsonResult.Costs.Variable.ByLayer.Service)
 
 	assert.Equal(t, 7000.0, jsonResult.Costs.Total)
+	assert.Equal(t, 6200.0, jsonResult.FullEconomics.Costs.Delivery)
+	assert.Equal(t, 500.0, jsonResult.FullEconomics.Costs.Productization)
+	assert.Equal(t, 300.0, jsonResult.FullEconomics.Costs.Adoption)
+	assert.Equal(t, 7000.0, jsonResult.FullEconomics.Costs.Total)
+	assert.Equal(t, 6.2, jsonResult.FullEconomics.Costs.DeliveryPerUser)
+	assert.Equal(t, 7.0, jsonResult.FullEconomics.Costs.TotalPerUser)
 
 	// Verify revenue
 	assert.Equal(t, "tiered", jsonResult.Revenue.Mode)
@@ -64,6 +70,8 @@ func TestFormatJSONResult_AllFields(t *testing.T) {
 	// Verify margin
 	assert.Equal(t, 30.0, jsonResult.Margin.Gross)
 	assert.Equal(t, 7.0, jsonResult.Margin.CostPerUser)
+	assert.Equal(t, 38.0, jsonResult.FullEconomics.Margin.Delivery)
+	assert.Equal(t, 30.0, jsonResult.FullEconomics.Margin.Full)
 
 	// Verify stress test
 	assert.Equal(t, 7.0, jsonResult.StressTest.Mean.CostPerUser)
