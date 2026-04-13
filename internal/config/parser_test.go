@@ -263,6 +263,44 @@ variable_costs: []
 	assert.Equal(t, 0.7, *cfg.Pricing.Plans[0].Share)
 }
 
+func TestParseConfig_MixModePreservesReferenceLimits(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+pricing:
+  mode: mix
+  plans:
+    - name: free
+      price: 0
+      share: 0.7
+      limits:
+        users: 10
+    - name: pro
+      price: 29
+      share: 0.3
+      limits:
+        users: 100
+
+fixed_costs: []
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.NotNil(t, cfg.Pricing)
+	assert.Equal(t, PricingModeMix, cfg.Pricing.Mode)
+	assert.NotNil(t, cfg.Pricing.Plans[0].Limits)
+	assert.Equal(t, 10, cfg.Pricing.Plans[0].Limits.Users)
+	assert.NotNil(t, cfg.Pricing.Plans[1].Limits)
+	assert.Equal(t, 100, cfg.Pricing.Plans[1].Limits.Users)
+}
+
 func TestParseConfig_HybridMode(t *testing.T) {
 	configYAML := `
 simulation:
