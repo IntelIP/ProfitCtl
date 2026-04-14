@@ -14,15 +14,34 @@ These entries are based on repository configuration, local secret inventory, and
 
 What is verified from repo code and local Doppler secret-name inventory:
 
-- `intelip_frontend` (`stg` and `prd`) carries Clerk, Cloudflare, and PostHog inputs. There is no active R2, OpenPanel, or Faro secret inventory left in the frontend config.
+- `intelip_frontend` (`stg` and `prd`) carries Clerk, Cloudflare, PostHog, and Stripe billing inputs. There is no active R2, OpenPanel, or Faro secret inventory left in the frontend config.
 - `web-app-2.0` no longer contains active R2 upload code, OpenPanel fan-out, or Grafana Faro browser instrumentation.
 - `intelip_api` `dev` still carries `REDIS_URL`, `CHROMA_*`, `OPENROUTER_API_KEY`, `COMPOSIO_DEV_API_KEY`, `EXA_API_KEY`, and a stale `OPENPANEL_CLIENT_*` pair.
-- `intelip_api` `prd` is only partially readable from local Doppler access and currently exposes a minimal secret-name set (`DB_URL`, `STRIPE_KEY`, `FEATURE_FLAGS`, `LOGGING`, `PRIVATE_KEY`). Treat that as incomplete until we refresh backend secret access and live cloud auth.
+- `intelip_api` `prd` is now richer than the initial minimal inventory: the missing Chroma, Composio, and runtime-auth secrets were backfilled during the Apr 13 backend bootstrap. The original visible minimal set (`DB_URL`, `STRIPE_KEY`, `FEATURE_FLAGS`, `LOGGING`, `PRIVATE_KEY`) should no longer be treated as the full production backend picture.
+- GCP-side backend reality is now active rather than partial: both `intelip-agentos-staging` and `intelip-agentos-prod` exist as Cloud Run services in `intelip-prod-2025`.
 - The landing-page repo still documents Hostinger/VPS deployment, not Cloudflare Pages, so the current modeled landing-hosting line should remain Hostinger/VPS unless infra changed outside the repo after April 13, 2026.
 
 What is still blocked on live auth or network access:
 
 - Neon, PostHog, Composio, and Chroma current spend still need dashboard or API access; the repo only proves they are wired.
+
+## Secret ownership rule used for this inventory
+
+The modeled stack now assumes a split secret-management model rather than one
+shared system:
+
+- frontend runtime:
+  - `Doppler` is the operator-facing source of truth
+  - `Cloudflare` is the runtime mirror
+- backend Cloud Run runtime:
+  - `Doppler` or the vendor dashboard may be the editing surface
+  - `Google Secret Manager` is the runtime mirror
+  - `Cloud Run` is the final consumer
+
+This matters for cost modeling because local Doppler visibility alone is not
+proof that a backend production cost surface is fully active. For Condere-style
+runtime assumptions, production readiness should be judged from Cloud Run plus
+Google Secret Manager, not from Doppler alone.
 
 ## Live Stripe test-mode findings on April 13, 2026
 
@@ -86,7 +105,10 @@ This is enough to tighten the current backend runtime assumption:
 Additional live blockers:
 
 - The production backend `DB_URL` resolves to a private `10.x` host and times out from this machine even after normalizing the stored `psql://` scheme to `postgresql://`. That means Neon footprint still needs either VPN/private-network access or a different public connection path.
-- The production `STRIPE_KEY` secret currently present in local Doppler is rejected by Stripe as invalid. Treat the current Stripe live-inspection path as blocked until that key is rotated or replaced with an authenticated CLI session.
+- The production `STRIPE_KEY` secret in `intelip_api/prd` now resolves successfully against the live IntelIP Stripe account.
+- Google Secret Manager now contains the production backend secret set required by the current Cloud Run manifest, including the previously missing `chroma-*`, `composio-*`, `os-security-key`, and `jwt-verification-key` entries.
+- The first intentional production backend Cloud Run deploy completed successfully, creating `intelip-agentos-prod` in `us-east1`.
+- Production backend smoke checks now pass for `/health`, `/config`, inbox, and integrations status.
 
 ## Current product stack observed in repo
 
@@ -126,7 +148,7 @@ Additional live blockers:
 | Clerk | Auth and session management | Hobby is free; Pro starts at $20/mo annually | Fixed auth baseline |
 | Stripe Payments | Paid checkout | No monthly base fee for standard payments, but card processing takes a percentage plus a fixed fee | Variable billing / payment processing line |
 | Stripe Billing | Subscription logic | Pay-as-you-go pricing is 0.7% of billing volume if used | Folded into billing variable-cost reserve |
-| Cloud Run / backend runtime | Condere agent API | Scale-to-zero reduces fixed cost at low traffic, but active agent work turns backend spend into a real variable line | Small fixed baseline plus workflow compute |
+| Cloud Run / backend runtime | Condere agent API | Scale-to-zero reduces fixed cost at low traffic, but active agent work turns backend spend into a real variable line | Small fixed baseline plus workflow compute; production service now exists and should be treated as active infrastructure |
 | OpenRouter / model spend | Agent reasoning | Pay-as-you-go by routed model | Variable token line |
 | Composio | Business integrations and actions | Free tier is generous, then paid usage is inexpensive at low volumes | Variable integration-action line |
 | Chroma Cloud | Retrieval / memory | Pure usage-based storage and read/write pricing | Fold into workflow and memory operations |
@@ -159,7 +181,7 @@ Additional live blockers:
 3. Manual onboarding and support reserve was increased sharply, because IntelIP's early go-to-market motion is likely high-touch.
 4. Stripe-style payment processing is now explicit as a variable cost.
 5. Integration cost was lowered to better match Composio's published low-volume economics, while keeping room for premium tool usage.
-6. Cloud Run should now be modeled as a single modest Condere runtime footprint unless live production services are confirmed separately.
+6. Cloud Run should now be modeled as a modest but real Condere staging + production footprint, not as staging-only infrastructure.
 
 ## Launch implication
 
