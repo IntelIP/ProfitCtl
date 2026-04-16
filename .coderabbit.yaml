@@ -1,0 +1,20 @@
+reviews:
+  path_filters:
+    - "!**/.git/**"
+    - "!**/test/fixtures/**"
+    - "!**/benchmark_scenarios/reports/**"
+    - "!**/keys/**"
+    - "!**/*.sum"
+  path_instructions:
+    - path: "cmd/**"
+      instructions: |
+        Focus on CLI correctness, output stability, and breaking changes to user-facing commands.
+    - path: "internal/**"
+      instructions: |
+        Prioritize pricing correctness, simulation integrity, config handling, and release-safety regressions.
+    - path: "scripts/**"
+      instructions: |
+        Check release and CI scripts for credential safety, idempotency, and accidental publishing risk.
+    - path: "docs/**"
+      instructions: |
+        Review docs for accuracy only when behavior or commands are affected by the code change.
