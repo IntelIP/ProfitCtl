@@ -3,16 +3,18 @@
 ## Tooling Policy
 
 - Greptile is deprecated for this repository.
-- Prefer CodeRabbit for local Codex review loops.
-- Keep the CodeRabbit usage-based add-on disabled unless the user explicitly approves overage billing.
+- Use Codex plus native GitHub checks and review comments for local review loops.
+- Do not use paid review bots or usage-based review add-ons unless the user explicitly approves the spend.
 - Use native GitHub checks and review comments with `$check-pr` for PR readiness.
 
 ## Review Workflow
 
-1. Run `coderabbit --agent` or `cr --agent` from this repo when the user asks for a local review or pre-PR quality pass.
-2. Fix `Critical` and `Warning` findings first.
-3. Re-run CodeRabbit once after material fixes.
-4. Use `$check-pr` after local review when the task is PR readiness.
+1. Inspect the PR or local diff with Codex using GitHub metadata, diff, checks, local tests, and changed files.
+2. Lead with findings ordered by severity, then classify each item as `actionable`, `informational`, or `already addressed`.
+3. Fix actionable findings first.
+4. Re-run affected checks after material fixes.
+5. Update Plane with status, blockers, and validation evidence.
+6. Use `$check-pr` after local review when the task is PR readiness.
 
 ## Review Focus
 
