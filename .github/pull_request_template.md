@@ -8,6 +8,13 @@ What changed and why.
 - [ ] Relevant CLI smoke tests
 - [ ] Config or fixture updates, if applicable
 
+## Review Readiness
+
+- [ ] Codex review completed and actionable findings addressed
+- [ ] GitHub checks are passing or failures are explicitly classified
+- [ ] Plane issue updated with status, blockers, and validation evidence
+- [ ] Merge/deploy has explicit human approval
+
 ## Release Impact
 
 - [ ] No release impact

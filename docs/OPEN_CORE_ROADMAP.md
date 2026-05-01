@@ -60,7 +60,7 @@ Stories:
 
 - Add issue templates, pull request template, and `CODEOWNERS`.
 - Label and curate a starter set of contributor issues.
-- Decide and document PR policy for CI, AppSec, and Greptile.
+- Decide and document PR policy for CI, AppSec, and code review.
 - Reduce backlog noise so active work is obvious.
 
 Exit condition:

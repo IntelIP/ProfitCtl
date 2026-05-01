@@ -1,0 +1,22 @@
+# AGENTS.md
+
+## Tooling Policy
+
+- Greptile is deprecated for this repository.
+- Use Codex plus native GitHub checks and review comments for local review loops.
+- Do not use paid review bots or usage-based review add-ons unless the user explicitly approves the spend.
+- Use native GitHub checks and review comments with `$check-pr` for PR readiness.
+
+## Review Workflow
+
+1. Inspect the PR or local diff with Codex using GitHub metadata, diff, checks, local tests, and changed files.
+2. Lead with findings ordered by severity, then classify each item as `actionable`, `informational`, or `already addressed`.
+3. Fix actionable findings first.
+4. Re-run affected checks after material fixes.
+5. Update Plane with status, blockers, and validation evidence.
+6. Use `$check-pr` after local review when the task is PR readiness.
+
+## Review Focus
+
+- Prioritize pricing correctness, simulation integrity, CLI output regressions, release safety, and configuration drift.
+- Treat benchmark scenarios and docs as secondary to executable behavior unless the user explicitly asks for doc review.
