@@ -67,6 +67,11 @@ func validateNestedStructs(cfg *Config, v *validator.Validate) error {
 				return fmt.Errorf("fixed cost %q allocation validation failed: %w", fixedCost.Name, err)
 			}
 		}
+		if fixedCost.Source != nil {
+			if err := v.Struct(fixedCost.Source); err != nil {
+				return fmt.Errorf("fixed cost %q source validation failed: %w", fixedCost.Name, err)
+			}
+		}
 	}
 
 	for _, variableCost := range cfg.VariableCosts {
@@ -76,6 +81,11 @@ func validateNestedStructs(cfg *Config, v *validator.Validate) error {
 		if variableCost.Allocation != nil {
 			if err := v.Struct(variableCost.Allocation); err != nil {
 				return fmt.Errorf("variable cost %q allocation validation failed: %w", variableCost.Name, err)
+			}
+		}
+		if variableCost.Source != nil {
+			if err := v.Struct(variableCost.Source); err != nil {
+				return fmt.Errorf("variable cost %q source validation failed: %w", variableCost.Name, err)
 			}
 		}
 	}

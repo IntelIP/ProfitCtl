@@ -27,6 +27,27 @@ func NormalizeEconomicsLayer(layer EconomicsLayer) EconomicsLayer {
 	return layer
 }
 
+// CostSourceType records where a scenario assumption came from.
+type CostSourceType string
+
+const (
+	CostSourceTemplate        CostSourceType = "template"
+	CostSourceUserSupplied    CostSourceType = "user_supplied"
+	CostSourceRepoDetected    CostSourceType = "repo_detected"
+	CostSourceTelemetry       CostSourceType = "telemetry"
+	CostSourceInvoice         CostSourceType = "invoice"
+	CostSourceProviderCatalog CostSourceType = "provider_catalog"
+)
+
+// CostSourceConfidence describes how much trust to place in a scenario assumption.
+type CostSourceConfidence string
+
+const (
+	CostSourceConfidenceLow    CostSourceConfidence = "low"
+	CostSourceConfidenceMedium CostSourceConfidence = "medium"
+	CostSourceConfidenceHigh   CostSourceConfidence = "high"
+)
+
 // CostPeriod represents the time period for fixed costs
 type CostPeriod string
 

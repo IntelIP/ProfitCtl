@@ -2,7 +2,6 @@
 
 ## Tooling Policy
 
-- Greptile is deprecated for this repository.
 - Use Codex plus native GitHub checks and review comments for local review loops.
 - Do not use paid review bots or usage-based review add-ons unless the user explicitly approves the spend.
 - Use native GitHub checks and review comments with `$check-pr` for PR readiness.

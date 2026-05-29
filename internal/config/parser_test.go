@@ -74,6 +74,77 @@ simulation:
 	assert.Equal(t, 100, cfg.Simulation.BaseUsers)
 }
 
+func TestParseConfig_CostSourceProvenance(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+fixed_costs:
+  - name: Server
+    amount: 500
+    period: monthly
+    layer: infrastructure
+    source:
+      type: provider_catalog
+      confidence: medium
+      url: https://example.com/pricing
+      captured_at: 2026-05-29
+      note: Catalog seed used for planning.
+
+variable_costs:
+  - name: API Calls
+    cost_per_unit: 0.0001
+    units_per_user: 10000
+    distribution: normal
+    mean: 10000
+    stddev: 2000
+    layer: application
+    source:
+      type: user_supplied
+      confidence: high
+      note: Provided by product owner.
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	cfg, err := ParseConfig(tmpFile)
+
+	assert.NoError(t, err)
+	assert.Equal(t, types.CostSourceProviderCatalog, cfg.FixedCosts[0].Source.Type)
+	assert.Equal(t, types.CostSourceConfidenceMedium, cfg.FixedCosts[0].Source.Confidence)
+	assert.Equal(t, "https://example.com/pricing", cfg.FixedCosts[0].Source.URL)
+	assert.Equal(t, types.CostSourceUserSupplied, cfg.VariableCosts[0].Source.Type)
+	assert.Equal(t, types.CostSourceConfidenceHigh, cfg.VariableCosts[0].Source.Confidence)
+}
+
+func TestParseConfig_InvalidCostSourceProvenance(t *testing.T) {
+	configYAML := `
+simulation:
+  base_users: 100
+  growth_factor: 1.5
+  iterations: 10000
+
+fixed_costs:
+  - name: Server
+    amount: 500
+    period: monthly
+    layer: infrastructure
+    source:
+      type: scraped_guess
+      confidence: certain
+
+variable_costs: []
+`
+
+	tmpFile := createTempConfigFile(t, configYAML)
+	_, err := ParseConfig(tmpFile)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Source.Type")
+	assert.Contains(t, err.Error(), "Source.Confidence")
+}
+
 func TestParseConfig_MinimalConfig(t *testing.T) {
 	configYAML := `
 simulation:

@@ -78,3 +78,69 @@ jobs:
           bash scripts/install.sh
           "${INSTALL_DIR}/profitctl" --help >/dev/null
           "${INSTALL_DIR}/profitctl" validate -f examples/mix_profit.yml >/dev/null
+
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Run scanners
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+
+          docker run --rm --entrypoint semgrep -v "$PWD:/src" -w /src semgrep/semgrep:1.154.0 \
+            scan --config p/default --sarif --sarif-output reports/semgrep.sarif . \
+            || echo "semgrep exited non-zero; preserving report if present"
+          [ -f reports/semgrep.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/semgrep.sarif
+
+          docker run --rm --entrypoint trivy -v "$PWD:/src" -w /src aquasec/trivy:0.69.3 \
+            fs --scanners vuln,misconfig,secret --format sarif -o reports/trivy.sarif . \
+            || echo "trivy exited non-zero; preserving report if present"
+          [ -f reports/trivy.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
+
+          docker run --rm --entrypoint gitleaks -v "$PWD:/src" -w /src ghcr.io/gitleaks/gitleaks:v8.30.0 \
+            git --report-format sarif --report-path reports/gitleaks.sarif . \
+            || echo "gitleaks exited non-zero; preserving report if present"
+          [ -f reports/gitleaks.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/gitleaks.sarif
+
+          docker run --rm --entrypoint osv-scanner -v "$PWD:/src" -w /src ghcr.io/google/osv-scanner:v2.3.3 \
+            scan --recursive --format json --output reports/osv.json . \
+            || echo "osv-scanner exited non-zero; preserving report if present"
+          [ -f reports/osv.json ] || echo '{"results":[]}' > reports/osv.json
+
+      - name: Upload scan findings
+        env:
+          APPSEC_API_URL: ${{ secrets.APPSEC_API_URL }}
+          APPSEC_API_TOKEN: ${{ secrets.APPSEC_API_TOKEN }}
+          APPSEC_STRICT_API: ${{ vars.APPSEC_STRICT_API || 'false' }}
+          CI_PIPELINE_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+        run: |
+          set -euo pipefail
+          upload() {
+            tool="$1"
+            format="$2"
+            report="$3"
+            if [ -n "${PR_NUMBER}" ]; then
+              sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$tool" "$format" "$PR_NUMBER" "$report"
+            else
+              sh scripts/ci/upload_scan.sh "$APPSEC_API_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$tool" "$format" "$report"
+            fi
+          }
+
+          upload semgrep sarif reports/semgrep.sarif
+          upload trivy sarif reports/trivy.sarif
+          upload gitleaks sarif reports/gitleaks.sarif
+          upload osv json reports/osv.json
+
+      - name: Evaluate policy gate
+        if: github.event_name == 'pull_request'
+        env:
+          APPSEC_API_URL: ${{ secrets.APPSEC_API_URL }}
+          APPSEC_API_TOKEN: ${{ secrets.APPSEC_API_TOKEN }}
+          APPSEC_STRICT_API: ${{ vars.APPSEC_STRICT_API || 'false' }}
+        run: |
+          sh scripts/ci/evaluate_gate.sh "$APPSEC_API_URL" "$GITHUB_REPOSITORY" "${{ github.event.pull_request.number }}"

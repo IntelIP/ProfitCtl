@@ -6,9 +6,13 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 
 `/.woodpecker.yml` defines:
 
-- PR workflow (`pool=shared-kvm`): checks for `main` plus AppSec scan upload/gate evaluation
-- Main workflow (`pool=shared-kvm`): push checks for `main`
 - Tag release workflow (`pool=shared-kvm`): semver tag release + VPS publish
+
+PR and main verification now run in GitHub Actions:
+
+- `verify-go`
+- `verify-install-smoke`
+- `security-scan` with AppSec upload and PR gate evaluation
 
 ## Required Secrets (Doppler: `profitctl` / `prd_ci_woodpecker`)
 
@@ -28,13 +32,14 @@ This runbook onboards `IntelIP/ProfitCtl` into your existing Woodpecker infrastr
 - Events: include `tag`
 - Image filters: leave empty (`[]`) so command steps can consume it
 - Repo trust: set `IntelIP/ProfitCtl` as trusted in Woodpecker so `from_secret` works in command steps
+
+## Required Secrets (GitHub Actions)
+
 - Repo secret name: `APPSEC_API_TOKEN`
 - Secret value: bearer token used by `appsec-mvp` ingestion and summary endpoints
-- Events: include `pull_request`
 - Repo secret name: `APPSEC_API_URL`
-- Secret value: reachable base URL for the deployed `appsec-mvp` API, for example `http://172.17.0.1:18080`
-- Events: include `pull_request`
-- Optional repo secret name: `APPSEC_STRICT_API`
+- Secret value: reachable base URL for the deployed `appsec-mvp` API
+- Optional repo variable name: `APPSEC_STRICT_API`
 - Rollout default: leave unset or set to `false` so AppSec transport failures do not block PRs while `/.appsec.yml` is still `report_only`
 - Post-rollout: set to `true` when the service is stable and you want CI to fail closed on AppSec API errors
 

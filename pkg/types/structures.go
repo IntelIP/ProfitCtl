@@ -10,6 +10,7 @@ type FixedCost struct {
 	Layer          CostLayer            `yaml:"layer" validate:"required,oneof=infrastructure application service"`
 	EconomicsLayer EconomicsLayer       `yaml:"economics_layer,omitempty" validate:"omitempty,oneof=delivery productization adoption"`
 	Allocation     *EconomicsAllocation `yaml:"allocation,omitempty"`
+	Source         *CostSource          `yaml:"source,omitempty"`
 }
 
 // VariableCost represents a per-user variable cost with statistical distribution
@@ -29,13 +30,23 @@ type VariableCost struct {
 	Max    *float64 `yaml:"max,omitempty"`    // Required for uniform
 	Rate   *float64 `yaml:"rate,omitempty"`   // Required for exponential
 
-	Layer CostLayer `yaml:"layer" validate:"required,oneof=infrastructure application service"`
+	Layer  CostLayer   `yaml:"layer" validate:"required,oneof=infrastructure application service"`
+	Source *CostSource `yaml:"source,omitempty"`
 }
 
 // EconomicsAllocation defines how non-delivery costs should be allocated in future reporting layers.
 type EconomicsAllocation struct {
 	Mode    EconomicsAllocationMode `yaml:"mode" validate:"required,oneof=fixed_monthly per_active_user per_design_partner per_workspace per_release"`
 	Divisor int                     `yaml:"divisor,omitempty" validate:"omitempty,min=1"`
+}
+
+// CostSource captures provenance for cost and usage assumptions.
+type CostSource struct {
+	Type       CostSourceType       `yaml:"type" validate:"required,oneof=template user_supplied repo_detected telemetry invoice provider_catalog"`
+	Confidence CostSourceConfidence `yaml:"confidence" validate:"required,oneof=low medium high"`
+	URL        string               `yaml:"url,omitempty" validate:"omitempty,url"`
+	CapturedAt string               `yaml:"captured_at,omitempty"`
+	Note       string               `yaml:"note,omitempty"`
 }
 
 // CostLayerBreakdown separates costs by infrastructure layer

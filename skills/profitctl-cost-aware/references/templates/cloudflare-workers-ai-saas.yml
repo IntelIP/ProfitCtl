@@ -1,0 +1,165 @@
+# ProfitCtl template: Cloudflare Workers + Neon + Clerk + LLM/search
+project:
+  name: "AI SaaS - Cloudflare Workers"
+
+fixed_costs:
+  - name: "Cloudflare Workers paid baseline"
+    amount: 5
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Seed planning assumption from ProfitCtl AI SaaS template.
+
+  - name: "Neon managed Postgres baseline"
+    amount: 30
+    period: monthly
+    layer: infrastructure
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Seed planning assumption from ProfitCtl AI SaaS template.
+
+  - name: "Clerk auth baseline"
+    amount: 25
+    period: monthly
+    layer: service
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Seed planning assumption from ProfitCtl AI SaaS template.
+
+  - name: "Product analytics and observability"
+    amount: 30
+    period: monthly
+    layer: application
+    economics_layer: productization
+    allocation:
+      mode: fixed_monthly
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Productization overhead seed; replace with actual tooling spend when available.
+
+  - name: "Operator onboarding reserve"
+    amount: 250
+    period: monthly
+    layer: application
+    economics_layer: adoption
+    allocation:
+      mode: fixed_monthly
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Adoption/support reserve seed; user should calibrate against onboarding reality.
+
+variable_costs:
+  - name: "LLM token spend"
+    cost_per_unit: 0.000006
+    units_per_user: 1
+    distribution: normal
+    mean: 220000
+    stddev: 70000
+    layer: service
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Blended token-spend seed; replace with model catalog or telemetry.
+
+  - name: "Search and research API calls"
+    cost_per_unit: 0.004
+    units_per_user: 1
+    distribution: normal
+    mean: 40
+    stddev: 15
+    layer: service
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Blended search/research seed; replace with provider catalog or invoice data.
+
+  - name: "Worker execution and queue overhead"
+    cost_per_unit: 0.00008
+    units_per_user: 1
+    distribution: normal
+    mean: 900
+    stddev: 250
+    layer: infrastructure
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Worker execution seed for architecture comparison.
+
+  - name: "Integration sync overhead"
+    cost_per_unit: 0.0004
+    units_per_user: 1
+    distribution: normal
+    mean: 120
+    stddev: 40
+    layer: application
+    economics_layer: delivery
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Integration volume seed; replace with runtime telemetry.
+
+pricing:
+  mode: mix
+  plans:
+    - name: "Free"
+      price: 0
+      share: 0.45
+      limits:
+        users: 10
+
+    - name: "Starter"
+      price: 49
+      share: 0.35
+      limits:
+        users: 150
+
+    - name: "Pro"
+      price: 119
+      share: 0.20
+      limits:
+        users: 1500
+
+covenants:
+  - type: threshold
+    field: margin
+    operator: gte
+    value: 60
+    message: "Gross margin must be at least 60%"
+
+  - type: threshold
+    field: p95_margin
+    operator: gte
+    value: 40
+    message: "p95 margin must be at least 40%"
+
+  - type: threshold
+    field: cost_per_user
+    operator: lte
+    value: 18
+    message: "Cost per active user must stay below $18"
+
+simulation:
+  base_users: 100
+  growth_factor: 1.20
+  iterations: 10000
