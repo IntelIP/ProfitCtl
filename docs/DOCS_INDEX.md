@@ -8,6 +8,7 @@
 - [Architecture](ARCHITECTURE.md)
 - [Cost Intelligence System Design](cost-intelligence-system-design.md)
 - [Cost Model Standards](cost-model-standards.md)
+- [Cost-Aware Skill Dogfood](profitctl-cost-aware-skill-dogfood.md)
 - [Open-Core Packaging](OPEN_CORE_PACKAGING.md)
 - [Open-Core Roadmap](OPEN_CORE_ROADMAP.md)
 - [Full Economics Cost Layers](full-economics-cost-layers.md)
