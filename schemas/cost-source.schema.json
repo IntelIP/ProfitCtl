@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IntelIP/ProfitCtl/schemas/cost-source.schema.json",
+  "title": "ProfitCtl Cost Source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "confidence"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "template",
+        "user_supplied",
+        "repo_detected",
+        "telemetry",
+        "invoice",
+        "provider_catalog"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "captured_at": {
+      "type": "string",
+      "description": "Capture date or timestamp for the source value."
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

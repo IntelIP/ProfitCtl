@@ -1,0 +1,7 @@
+interface:
+  display_name: "ProfitCtl Cost-Aware"
+  short_description: "Cost-aware architecture and product economics"
+  default_prompt: "Use $profitctl-cost-aware to compare architecture choices with ProfitCtl economics."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,85 @@
+# Seed defaults for AI SaaS planning.
+# These are scenario defaults, not official provider pricing truth.
+catalog_version: 2026-05-29
+status: seed_defaults_not_pricing_truth
+notes:
+  - Replace template entries with provider_catalog, telemetry, or invoice-backed values before high-confidence decisions.
+  - Use official provider docs or authenticated billing exports for production calibration.
+
+entries:
+  - id: cloudflare_workers_paid_baseline
+    provider: cloudflare
+    service: workers
+    unit: fixed_monthly_baseline
+    default_amount_usd: 5
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Planning seed used by bundled AI SaaS templates.
+
+  - id: cloud_run_service_baseline
+    provider: google_cloud
+    service: cloud_run
+    unit: fixed_monthly_baseline
+    default_amount_usd: 70
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Planning seed for low-volume AgentOS-style service.
+
+  - id: vercel_pro_team_baseline
+    provider: vercel
+    service: hosting
+    unit: fixed_monthly_baseline
+    default_amount_usd: 20
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Planning seed for Vercel-hosted SaaS app.
+
+  - id: neon_managed_postgres_baseline
+    provider: neon
+    service: postgres
+    unit: fixed_monthly_baseline
+    default_amount_usd: 30
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Planning seed for managed Postgres baseline.
+
+  - id: clerk_auth_baseline
+    provider: clerk
+    service: auth
+    unit: fixed_monthly_baseline
+    default_amount_usd: 25
+    source:
+      type: template
+      confidence: medium
+      captured_at: 2026-05-29
+      note: Planning seed for auth baseline.
+
+  - id: llm_token_spend
+    provider: model_provider
+    service: llm
+    unit: token
+    default_amount_usd: 0.000006
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Blended token-spend planning estimate; replace with model-specific catalog or telemetry.
+
+  - id: search_research_call
+    provider: search_provider
+    service: research
+    unit: call
+    default_amount_usd: 0.004
+    source:
+      type: template
+      confidence: low
+      captured_at: 2026-05-29
+      note: Blended search/research planning estimate; replace with provider catalog or invoice actuals.
