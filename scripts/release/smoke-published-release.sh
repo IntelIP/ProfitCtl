@@ -12,6 +12,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
+if [[ -z "${GH_TOKEN:-}" && -n "${GITHUB_TOKEN_RELEASE:-}" ]]; then
+  export GH_TOKEN="${GITHUB_TOKEN_RELEASE}"
+fi
+
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
     echo "missing required command: $1" >&2
