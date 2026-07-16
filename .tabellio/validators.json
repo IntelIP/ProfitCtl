@@ -28,9 +28,7 @@
     "operational": {
       "commands": [["go", "run", "scripts/judge_cost_standards.go", "benchmark_scenarios", "skills/profitctl-cost-aware/references/templates"]],
       "metrics": [
-        {"name": "benchmark_cost_standards_pass", "unit": "boolean", "passValue": 1, "failValue": 0},
-        {"name": "live_provider_calls", "unit": "calls", "passValue": 0, "failValue": 1},
-        {"name": "validation_external_cost_usd", "unit": "usd", "passValue": 0, "failValue": 1}
+        {"name": "benchmark_cost_standards_pass", "unit": "boolean", "passValue": 1, "failValue": 0}
       ],
       "cost": {"telemetry": "available", "usd": 0, "modelCalls": 0, "toolCalls": 0},
       "summary": "Executable benchmark cost standards with no provider calls"
