@@ -1,0 +1,35 @@
+name: product-validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - name: Validate exact candidate
+        run: |
+          set -o pipefail
+          npm exec --yes --package=github:IntelIP/Tabellio#9ab5a1f1d3bd199b42705e462067ed34a2121439 -- \
+            tabellio-validate gate --repo . --repo-id IntelIP/ProfitCtl \
+            --base origin/main --commit HEAD --manifest tabellio.validation.json | tee tabellio-validation-result.json
+      - name: Upload validation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabellio-validation-${{ github.sha }}
+          path: |
+            tabellio-validation-result.json
+            refs/tabellio/validations/
+          if-no-files-found: warn

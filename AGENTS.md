@@ -19,3 +19,11 @@
 
 - Prioritize pricing correctness, simulation integrity, CLI output regressions, release safety, and configuration drift.
 - Treat benchmark scenarios and docs as secondary to executable behavior unless the user explicitly asks for doc review.
+
+## Product validation gate
+
+- Unit tests are structural evidence only. Before review or merge readiness, run `tabellio-validate gate` with the committed `tabellio.validation.json` against the exact candidate commit.
+- Required schema, semantic, workflow, operational, and security evidence must pass. `blocked` is not `passed`; any new commit invalidates old evidence.
+- Pricing correctness, simulation integrity, benchmark cost standards, CLI output, structured LLM parsing, and zero-cost validation are explicit boundaries.
+- Never call OpenRouter, deploy, publish, or mutate billing during validation. Upload generated evidence from CI; do not commit it.
+- Track rollout and failures in Plane item `PCTL-17`.

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "tabellio-validation/v0.2",
+  "id": "pctl-product-validity",
+  "failFast": false,
+  "requireEntireCheckpoint": false,
+  "acceptance": {
+    "id": "PCTL-17",
+    "source": "plane",
+    "risk": "critical",
+    "outcomes": [
+      "Cost configuration and provenance contracts reject malformed or unsupported inputs.",
+      "Pricing, margin, covenant, and simulation results match executable oracles.",
+      "CLI simulate, compare, calibrate, and output workflows remain correct.",
+      "Benchmark scenarios satisfy declared cost-model standards."
+    ],
+    "invariants": [
+      "Validation is deterministic and makes no live provider call.",
+      "Provider-derived and telemetry-derived costs retain explicit provenance and confidence."
+    ],
+    "forbiddenOutcomes": [
+      "A malformed structured provider response is accepted.",
+      "Validation invokes OpenRouter, publishes a release, deploys, or mutates billing.",
+      "Unknown validation cost is treated as zero."
+    ],
+    "requiredValidatorTypes": ["schema", "semantic", "workflow", "operational", "security"]
+  },
+  "validators": [
+    {"id": "static-go", "type": "static", "argv": ["tabellio-validator", "--profile", "static"], "cwd": ".", "timeoutMs": 900000, "required": true, "evidence": null, "policy": {"metricThresholds": [], "maxCostUsd": null, "requireCostTelemetry": false}},
+    {"id": "schema-cost-config", "type": "schema", "argv": ["tabellio-validator", "--profile", "schema", "--validator-id", "schema-cost-config", "--out", ".artifacts/tabellio/schema.json"], "cwd": ".", "timeoutMs": 300000, "required": true, "evidence": {"path": ".artifacts/tabellio/schema.json"}, "policy": {"metricThresholds": [{"metric": "cost_config_contracts_pass", "operator": "eq", "value": 1}], "maxCostUsd": null, "requireCostTelemetry": false}},
+    {"id": "semantic-economics", "type": "semantic", "argv": ["tabellio-validator", "--profile", "semantic", "--validator-id", "semantic-economics", "--out", ".artifacts/tabellio/semantic.json"], "cwd": ".", "timeoutMs": 600000, "required": true, "evidence": {"path": ".artifacts/tabellio/semantic.json"}, "policy": {"metricThresholds": [{"metric": "pricing_and_simulation_oracles_pass", "operator": "eq", "value": 1}], "maxCostUsd": null, "requireCostTelemetry": false}},
+    {"id": "workflow-cli", "type": "workflow", "argv": ["tabellio-validator", "--profile", "workflow", "--validator-id", "workflow-cli", "--out", ".artifacts/tabellio/workflow.json"], "cwd": ".", "timeoutMs": 600000, "required": true, "evidence": {"path": ".artifacts/tabellio/workflow.json"}, "policy": {"metricThresholds": [{"metric": "cli_simulation_workflows_pass", "operator": "eq", "value": 1}], "maxCostUsd": null, "requireCostTelemetry": false}},
+    {"id": "operational-cost-standards", "type": "operational", "argv": ["tabellio-validator", "--profile", "operational", "--validator-id", "operational-cost-standards", "--out", ".artifacts/tabellio/operational.json"], "cwd": ".", "timeoutMs": 600000, "required": true, "evidence": {"path": ".artifacts/tabellio/operational.json"}, "policy": {"metricThresholds": [{"metric": "benchmark_cost_standards_pass", "operator": "eq", "value": 1}, {"metric": "live_provider_calls", "operator": "eq", "value": 0}, {"metric": "validation_external_cost_usd", "operator": "eq", "value": 0}], "maxCostUsd": 0, "requireCostTelemetry": true}},
+    {"id": "security-structured-detection", "type": "security", "argv": ["tabellio-validator", "--profile", "security", "--validator-id", "security-structured-detection", "--out", ".artifacts/tabellio/security.json"], "cwd": ".", "timeoutMs": 300000, "required": true, "evidence": {"path": ".artifacts/tabellio/security.json"}, "policy": {"metricThresholds": [{"metric": "structured_detection_boundaries_pass", "operator": "eq", "value": 1}], "maxCostUsd": null, "requireCostTelemetry": false}}
+  ]
+}
