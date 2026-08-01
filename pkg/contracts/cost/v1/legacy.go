@@ -108,6 +108,18 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 		return evidence
 	}
 
+	// Legacy provider_catalog entries predate the required refresh policy. Keep
+	// them mappable without upgrading incomplete provenance into v1 catalog
+	// evidence.
+	if SourceType(source.Type) == SourceProviderCatalog {
+		evidence.Source.URL = source.URL
+		if source.CapturedAt != "" {
+			evidence.Source.CapturedAt = source.CapturedAt
+		}
+		evidence.ConfidenceRationale = "Legacy provider catalog assumption mapped without v1 refresh policy or current-price claim."
+		return evidence
+	}
+
 	evidence.Source.Type = SourceType(source.Type)
 	evidence.Source.URL = source.URL
 	evidence.Source.CapturedAt = source.CapturedAt

@@ -39,6 +39,9 @@ func (d CostDriver) Validate() error {
 		if err := d.Per.Validate(); err != nil {
 			return fmt.Errorf("per: %w", err)
 		}
+		if (d.Kind == DriverVariable || d.Kind == DriverCadence) && d.Per.Value <= 0 {
+			return fmt.Errorf("%s driver per.value must be greater than zero", d.Kind)
+		}
 	}
 	if err := d.UnitPrice.Validate(); err != nil {
 		return fmt.Errorf("unit_price: %w", err)
@@ -227,6 +230,9 @@ func (e Evidence) Validate() error {
 	}
 	if e.Kind == EvidenceBilled && e.Source.Type != SourceInvoice {
 		return errors.New("billed evidence requires invoice source")
+	}
+	if e.Kind == EvidenceBilled && e.Measurement != MeasurementMeasured {
+		return errors.New("billed evidence must be measured")
 	}
 	if e.Kind == EvidenceUserSupplied && e.Source.Type != SourceUserSupplied {
 		return errors.New("user_supplied evidence requires user_supplied source")

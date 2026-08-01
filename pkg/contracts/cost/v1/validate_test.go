@@ -49,6 +49,9 @@ func TestScalingDriversRequirePerBasis(t *testing.T) {
 		driver.Kind = kind
 		driver.Per = nil
 		require.ErrorContains(t, driver.Validate(), "requires per scale basis")
+
+		driver.Per = &v1.Quantity{Value: 0, Unit: "user"}
+		require.ErrorContains(t, driver.Validate(), "per.value must be greater than zero")
 	}
 }
 
@@ -66,6 +69,13 @@ func TestBilledEvidenceRequiresInvoice(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Kind = v1.EvidenceBilled
 	require.ErrorContains(t, evidence.Validate(), "invoice")
+
+	evidence.Source.Type = v1.SourceInvoice
+	evidence.Measurement = v1.MeasurementDeclared
+	require.ErrorContains(t, evidence.Validate(), "must be measured")
+
+	evidence.Measurement = v1.MeasurementMeasured
+	require.NoError(t, evidence.Validate())
 }
 
 func TestObservationEnforcesClaimSpecificAuthority(t *testing.T) {

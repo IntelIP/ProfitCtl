@@ -53,7 +53,15 @@
         "required": ["kind"]
       },
       "then": {
-        "required": ["per"]
+        "required": ["per"],
+        "properties": {
+          "per": {
+            "allOf": [
+              { "$ref": "common.schema.json#/$defs/quantity" },
+              { "properties": { "value": { "exclusiveMinimum": 0 } } }
+            ]
+          }
+        }
       }
     }
   ]

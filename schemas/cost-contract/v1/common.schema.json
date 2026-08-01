@@ -134,6 +134,24 @@
               "confidence": { "enum": ["low", "medium"] }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "billed" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "const": "measured" },
+              "source": {
+                "properties": {
+                  "type": { "const": "invoice" }
+                }
+              }
+            }
+          }
         }
       ],
       "required": [

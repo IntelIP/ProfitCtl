@@ -110,6 +110,33 @@ func TestLegacyMappingPreservesThirtyDayDailyNormalization(t *testing.T) {
 	require.Equal(t, float64(60), drivers[0].Quantity.Value*drivers[0].UnitPrice.Amount.Amount)
 }
 
+func TestLegacyMappingDowngradesIncompleteProviderCatalogProvenance(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts([]types.FixedCost{{
+		Name:   "Catalog-backed database",
+		Amount: 20,
+		Period: types.PeriodMonthly,
+		Source: &types.CostSource{
+			Type:       types.CostSourceProviderCatalog,
+			URL:        "https://example.com/pricing",
+			CapturedAt: "2026-07-31",
+			Confidence: types.CostSourceConfidenceMedium,
+		},
+	}}, nil, v1.LegacyMapping{
+		ArtifactIdentity: "legacy.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, v1.SourceLegacyScenario, drivers[0].Evidence.Source.Type)
+	require.Equal(t, "https://example.com/pricing", drivers[0].Evidence.Source.URL)
+	require.Equal(t, v1.ConfidenceLow, drivers[0].Evidence.Confidence)
+	require.Contains(t, drivers[0].Evidence.ConfidenceRationale, "without v1 refresh policy")
+}
+
 func TestCompatibilityFixtureIsStableJSON(t *testing.T) {
 	path := filepath.Join(repoRoot(t), "test", "fixtures", "cost_contract", "v1", "legacy_valid_config_mapping.json")
 	data, err := os.ReadFile(path)
