@@ -65,6 +65,25 @@
     {
       "if": {
         "properties": {
+          "kind": { "const": "uptime" }
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "quantity": {
+            "properties": {
+              "unit": {
+                "enum": ["second", "minute", "hour", "day", "week", "month", "year"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "kind": { "const": "cadence" }
         },
         "required": ["kind"]

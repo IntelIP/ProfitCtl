@@ -43,6 +43,7 @@ canonical subject. A cadence driver cannot omit its time denominator.
 Every present `per` denominator must be greater than zero.
 Cadence denominators use `second`, `minute`, `hour`, `day`, `week`, `month`,
 or `year`.
+Uptime quantities use the same canonical time units.
 
 Variable drivers may carry an explicit `normal`, `uniform`, or `exponential`
 distribution. Distribution-specific parameters preserve the stochastic basis
@@ -111,6 +112,8 @@ Rules:
 
 Provider-catalog evidence additionally requires `refresh_owner`,
 `refresh_cadence`, and `stale_after`, and cannot claim high confidence.
+Catalog evidence stale before the enclosing driver or observation window fails
+closed.
 Template evidence also cannot claim high confidence.
 
 ## Current Scenario Compatibility

@@ -24,6 +24,10 @@ func TestAllDriverKindsValidate(t *testing.T) {
 			if kind == v1.DriverCadence {
 				driver.Per = &v1.Quantity{Value: 1, Unit: "minute"}
 			}
+			if kind == v1.DriverUptime {
+				driver.Quantity.Unit = "hour"
+				driver.UnitPrice.Per.Unit = "hour"
+			}
 			require.NoError(t, driver.Validate())
 		})
 	}
@@ -68,6 +72,10 @@ func TestEveryPresentPerBasisMustBePositive(t *testing.T) {
 	} {
 		driver := validDriver()
 		driver.Kind = kind
+		if kind == v1.DriverUptime {
+			driver.Quantity.Unit = "hour"
+			driver.UnitPrice.Per.Unit = "hour"
+		}
 		driver.Per = &v1.Quantity{Value: 0, Unit: "user"}
 		require.ErrorContains(t, driver.Validate(), "per.value must be greater than zero")
 	}
@@ -80,6 +88,16 @@ func TestCadenceRequiresTimeBasis(t *testing.T) {
 	require.ErrorContains(t, driver.Validate(), "canonical time unit")
 
 	driver.Per.Unit = "minute"
+	require.NoError(t, driver.Validate())
+}
+
+func TestUptimeRequiresTimeQuantity(t *testing.T) {
+	driver := validDriver()
+	driver.Kind = v1.DriverUptime
+	require.ErrorContains(t, driver.Validate(), "canonical time unit")
+
+	driver.Quantity.Unit = "hour"
+	driver.UnitPrice.Per.Unit = "hour"
 	require.NoError(t, driver.Validate())
 }
 
@@ -164,6 +182,19 @@ func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
 
 	evidence.Source.StaleAfter = "2026-07-31"
 	require.ErrorContains(t, evidence.Validate(), "must be after")
+}
+
+func TestDriverRejectsCatalogStaleBeforeWindow(t *testing.T) {
+	driver := validDriver()
+	driver.Evidence.Source.Type = v1.SourceProviderCatalog
+	driver.Evidence.Source.RefreshOwner = "catalog-maintainer"
+	driver.Evidence.Source.RefreshCadence = "30d"
+	driver.Evidence.Source.CapturedAt = "2026-07-01"
+	driver.Evidence.Source.StaleAfter = "2026-07-31"
+	require.ErrorContains(t, driver.Validate(), "stale before window start")
+
+	driver.Evidence.Source.StaleAfter = "2026-08-15"
+	require.NoError(t, driver.Validate())
 }
 
 func TestTemplateEvidenceCannotClaimHighConfidence(t *testing.T) {

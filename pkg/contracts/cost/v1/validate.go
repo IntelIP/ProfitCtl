@@ -35,6 +35,9 @@ func (d CostDriver) Validate() error {
 	if err := d.Quantity.Validate(); err != nil {
 		return fmt.Errorf("quantity: %w", err)
 	}
+	if d.Kind == DriverUptime && !isTimeUnit(d.Quantity.Unit) {
+		return errors.New("uptime driver quantity.unit must be a canonical time unit")
+	}
 	if d.Per != nil {
 		if err := d.Per.Validate(); err != nil {
 			return fmt.Errorf("per: %w", err)
@@ -59,6 +62,9 @@ func (d CostDriver) Validate() error {
 		return fmt.Errorf("dimensions: %w", err)
 	}
 	if err := d.Evidence.Validate(); err != nil {
+		return fmt.Errorf("evidence: %w", err)
+	}
+	if err := validateEvidenceFreshForWindow(d.Evidence, d.Window); err != nil {
 		return fmt.Errorf("evidence: %w", err)
 	}
 	if d.Distribution != nil {
@@ -150,6 +156,9 @@ func (o CostObservation) Validate() error {
 			return fmt.Errorf("evidence.%s: %w", claim.name, err)
 		}
 		if err := validateClaimAuthority(claim.name, claim.evidence.Source.Type); err != nil {
+			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
+		if err := validateEvidenceFreshForWindow(claim.evidence, o.Window); err != nil {
 			return fmt.Errorf("evidence.%s: %w", claim.name, err)
 		}
 	}
@@ -315,6 +324,24 @@ func validateClaimAuthority(claim string, source SourceType) error {
 	}
 	if !allowed {
 		return fmt.Errorf("source type %q is not authoritative for %s claim", source, claim)
+	}
+	return nil
+}
+
+func validateEvidenceFreshForWindow(evidence Evidence, window TimeWindow) error {
+	if evidence.Source.Type != SourceProviderCatalog {
+		return nil
+	}
+	staleAfter, err := parseCaptureTime(evidence.Source.StaleAfter)
+	if err != nil {
+		return errors.New("source.stale_after must be an RFC3339 timestamp or ISO date")
+	}
+	windowStart, err := time.Parse(time.RFC3339, window.Start)
+	if err != nil {
+		return errors.New("window.start must be an RFC3339 timestamp")
+	}
+	if staleAfter.Before(windowStart) {
+		return errors.New("provider_catalog source is stale before window start")
 	}
 	return nil
 }

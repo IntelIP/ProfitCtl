@@ -119,6 +119,30 @@ func TestLegacyMappingCapsHighConfidenceTemplate(t *testing.T) {
 	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
 }
 
+func TestLegacyMappingFallsBackFromFreeFormCaptureText(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts([]types.FixedCost{{
+		Name:   "Database",
+		Amount: 20,
+		Period: types.PeriodMonthly,
+		Source: &types.CostSource{
+			Type:       types.CostSourceUserSupplied,
+			Confidence: types.CostSourceConfidenceMedium,
+			CapturedAt: "May 2026",
+		},
+	}}, nil, v1.LegacyMapping{
+		ArtifactIdentity: "capture.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "2026-08-01", drivers[0].Evidence.Source.CapturedAt)
+	require.Contains(t, drivers[0].Evidence.ConfidenceRationale, "May 2026")
+}
+
 func TestLegacyMappingFailsClosedWithoutVariableUnit(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(repoRoot(t), "test", "fixtures", "valid_config.yml"))
 	require.NoError(t, err)

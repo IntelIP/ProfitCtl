@@ -145,22 +145,23 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 	// evidence.
 	if SourceType(source.Type) == SourceProviderCatalog {
 		evidence.Source.URL = source.URL
-		if source.CapturedAt != "" {
-			evidence.Source.CapturedAt = source.CapturedAt
-		}
+		evidence.Source.CapturedAt = legacyCaptureAt(source.CapturedAt, mapping.CapturedAt)
 		evidence.ConfidenceRationale = "Legacy provider catalog assumption mapped without v1 refresh policy or current-price claim."
+		if source.CapturedAt != "" && !validCaptureTime(source.CapturedAt) {
+			evidence.ConfidenceRationale += " Original capture text: " + source.CapturedAt + "."
+		}
 		return evidence
 	}
 
 	evidence.Source.Type = SourceType(source.Type)
 	evidence.Source.URL = source.URL
-	evidence.Source.CapturedAt = source.CapturedAt
-	if evidence.Source.CapturedAt == "" {
-		evidence.Source.CapturedAt = mapping.CapturedAt
-	}
+	evidence.Source.CapturedAt = legacyCaptureAt(source.CapturedAt, mapping.CapturedAt)
 	evidence.Confidence = Confidence(source.Confidence)
 	if strings.TrimSpace(source.Note) != "" {
 		evidence.ConfidenceRationale = source.Note
+	}
+	if source.CapturedAt != "" && !validCaptureTime(source.CapturedAt) {
+		evidence.ConfidenceRationale += " Original capture text: " + source.CapturedAt + "."
 	}
 	if evidence.Source.Type == SourceTemplate && evidence.Confidence == ConfidenceHigh {
 		evidence.Confidence = ConfidenceMedium
@@ -168,6 +169,13 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 		evidence.ConfidenceRationale = strings.TrimSpace(evidence.ConfidenceRationale)
 	}
 	return evidence
+}
+
+func legacyCaptureAt(sourceCapture, fallback string) string {
+	if validCaptureTime(sourceCapture) {
+		return sourceCapture
+	}
+	return fallback
 }
 
 func legacyFixedBasis(period types.CostPeriod) (float64, string, error) {
