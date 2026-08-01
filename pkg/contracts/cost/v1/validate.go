@@ -88,9 +88,14 @@ func (d Distribution) Validate() error {
 			return errors.New("normal distribution requires positive mean and stddev")
 		}
 	case DistributionUniform:
-		if d.Min == nil || math.IsNaN(*d.Min) || math.IsInf(*d.Min, 0) || *d.Min < 0 ||
-			!validPositive(d.Max) || *d.Min >= *d.Max {
-			return errors.New("uniform distribution requires non-negative min less than positive max")
+		if d.Min == nil || d.Max == nil ||
+			math.IsNaN(*d.Min) || math.IsInf(*d.Min, 0) ||
+			math.IsNaN(*d.Max) || math.IsInf(*d.Max, 0) ||
+			*d.Min >= *d.Max {
+			return errors.New("uniform distribution requires finite min less than max")
+		}
+		if d.Floor == nil {
+			return errors.New("uniform distribution requires explicit non-negative floor")
 		}
 	case DistributionExponential:
 		if !validPositive(d.Rate) {
@@ -278,6 +283,9 @@ func (e Evidence) Validate() error {
 	}
 	if e.Source.Type == SourceRepoDetected && e.Confidence == ConfidenceHigh {
 		return errors.New("repo_detected evidence cannot claim high confidence")
+	}
+	if e.Source.Type == SourceProfitCtlDerived && e.Measurement != MeasurementDerived {
+		return errors.New("profitctl_derived evidence must use derived measurement")
 	}
 	if e.Measurement == MeasurementMeasured && e.Source.Type != SourceTelemetry &&
 		e.Source.Type != SourceRuntimeLedger && e.Source.Type != SourceInvoice {

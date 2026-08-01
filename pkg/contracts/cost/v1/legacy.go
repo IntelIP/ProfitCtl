@@ -122,7 +122,7 @@ func legacyDistribution(cost types.VariableCost) *Distribution {
 		Max:    cost.Max,
 		Rate:   cost.Rate,
 	}
-	if cost.Distribution == types.DistNormal {
+	if cost.Distribution == types.DistNormal || cost.Distribution == types.DistUniform {
 		floor := 0.0
 		distribution.Floor = &floor
 	}

@@ -67,8 +67,8 @@
         "type": { "enum": ["normal", "uniform", "exponential"] },
         "mean": { "type": "number", "exclusiveMinimum": 0 },
         "stddev": { "type": "number", "exclusiveMinimum": 0 },
-        "min": { "type": "number", "minimum": 0 },
-        "max": { "type": "number", "exclusiveMinimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
         "rate": { "type": "number", "exclusiveMinimum": 0 },
         "floor": { "type": "number", "minimum": 0 }
       },
@@ -79,7 +79,7 @@
         },
         {
           "if": { "properties": { "type": { "const": "uniform" } } },
-          "then": { "required": ["min", "max"] }
+          "then": { "required": ["min", "max", "floor"] }
         },
         {
           "if": { "properties": { "type": { "const": "exponential" } } },
@@ -130,14 +130,19 @@
         "artifact_identity": { "type": "string", "minLength": 1 },
         "url": { "type": "string", "format": "uri" },
         "captured_at": {
-          "type": "string",
-          "minLength": 1,
+          "anyOf": [
+            { "type": "string", "format": "date" },
+            { "type": "string", "format": "date-time" }
+          ],
           "description": "ISO date or RFC3339 timestamp."
         },
         "refresh_owner": { "type": "string", "minLength": 1 },
         "refresh_cadence": { "type": "string", "minLength": 1 },
         "stale_after": {
-          "type": "string",
+          "anyOf": [
+            { "type": "string", "format": "date" },
+            { "type": "string", "format": "date-time" }
+          ],
           "description": "ISO date or RFC3339 timestamp."
         }
       }
@@ -161,6 +166,41 @@
           "then": {
             "properties": {
               "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "measurement": { "const": "synthetic" }
+            },
+            "required": ["measurement"]
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "synthetic_fixture" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "profitctl_derived" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "const": "derived" }
             }
           }
         },

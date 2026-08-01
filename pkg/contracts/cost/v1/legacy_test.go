@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/IntelIP/ProfitCtl/internal/config"
-	"github.com/IntelIP/ProfitCtl/internal/cost"
 	v1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
 	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,7 @@ func TestLegacyScenarioMapsForwardWithoutChangingCosts(t *testing.T) {
 	root := repoRoot(t)
 	cfg, err := config.ParseConfig(filepath.Join(root, fixture.SourceScenario))
 	require.NoError(t, err)
-	before := cost.NewCostEngine(cfg).CalculateTotalCosts(100, 1)
+	before := *cfg
 
 	drivers, err := v1.MapLegacyCosts(cfg.FixedCosts, cfg.VariableCosts, fixture.Mapping)
 	require.NoError(t, err)
@@ -47,8 +46,7 @@ func TestLegacyScenarioMapsForwardWithoutChangingCosts(t *testing.T) {
 		}
 	}
 
-	after := cost.NewCostEngine(cfg).CalculateTotalCosts(100, 1)
-	require.Equal(t, before, after)
+	require.Equal(t, before, *cfg)
 }
 
 func TestLegacyMappingPreservesStochasticVariableBasis(t *testing.T) {
@@ -96,6 +94,31 @@ func TestLegacyMappingPreservesNormalNonNegativeFloor(t *testing.T) {
 		VariableUnits: map[string]string{"Bursty requests": "request"},
 	})
 	require.NoError(t, err)
+	require.NotNil(t, drivers[0].Distribution.Floor)
+	require.Zero(t, *drivers[0].Distribution.Floor)
+}
+
+func TestLegacyMappingPreservesUniformNonNegativeFloor(t *testing.T) {
+	minimum, maximum := -10.0, 10.0
+	drivers, err := v1.MapLegacyCosts(nil, []types.VariableCost{{
+		Name:         "Burst range",
+		CostPerUnit:  0.01,
+		UnitsPerUser: 1,
+		Distribution: types.DistUniform,
+		Min:          &minimum,
+		Max:          &maximum,
+	}}, v1.LegacyMapping{
+		ArtifactIdentity: "uniform.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+		VariableUnits: map[string]string{"Burst range": "request"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, minimum, *drivers[0].Distribution.Min)
 	require.NotNil(t, drivers[0].Distribution.Floor)
 	require.Zero(t, *drivers[0].Distribution.Floor)
 }

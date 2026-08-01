@@ -103,11 +103,13 @@ func TestUptimeRequiresTimeQuantity(t *testing.T) {
 
 func TestUniformDistributionAllowsZeroMinimum(t *testing.T) {
 	minimum, maximum := 0.0, 10.0
+	floor := 0.0
 	driver := validDriver()
 	driver.Distribution = &v1.Distribution{
-		Type: v1.DistributionUniform,
-		Min:  &minimum,
-		Max:  &maximum,
+		Type:  v1.DistributionUniform,
+		Min:   &minimum,
+		Max:   &maximum,
+		Floor: &floor,
 	}
 	require.NoError(t, driver.Validate())
 }
@@ -164,6 +166,17 @@ func TestObservationValidatesDerivedTotalArithmetic(t *testing.T) {
 	require.NoError(t, fixture.Observation.Validate())
 	fixture.Observation.TotalCost.Amount = 999
 	require.ErrorContains(t, fixture.Observation.Validate(), "derived total_cost")
+}
+
+func TestProfitCtlDerivedEvidenceRequiresDerivedMeasurement(t *testing.T) {
+	var fixture struct {
+		Observation v1.CostObservation `json:"observation"`
+	}
+	decodeFixture(t, "upstash_idle_polling.json", &fixture)
+	fixture.Observation.Evidence.TotalCost.Source.Type = v1.SourceProfitCtlDerived
+	fixture.Observation.Evidence.TotalCost.Source.ArtifactIdentity = "profitctl://derived/total"
+	fixture.Observation.Evidence.TotalCost.Measurement = v1.MeasurementDeclared
+	require.ErrorContains(t, fixture.Observation.Validate(), "must use derived measurement")
 }
 
 func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {

@@ -49,8 +49,8 @@ Variable drivers may carry an explicit `normal`, `uniform`, or `exponential`
 distribution. Distribution-specific parameters preserve the stochastic basis
 used by stress forecasts instead of silently substituting deterministic
 `units_per_user`.
-Legacy normal distributions also carry `floor: 0`, matching ProfitCtl's
-non-negative sampler.
+Legacy normal and uniform distributions also carry `floor: 0`, matching
+ProfitCtl's non-negative sampler.
 
 Units use lowercase canonical identifiers such as `request`, `command`,
 `token`, `gibibyte`, `user`, `worker`, `hour`, or `month`. Ambiguous storage
