@@ -80,9 +80,10 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 				Amount: Money{Amount: cost.CostPerUnit, Currency: mapping.Currency},
 				Per:    Quantity{Value: 1, Unit: unit},
 			},
-			Window:     mapping.Window,
-			Dimensions: Dimensions{Workload: cost.Name},
-			Evidence:   legacyEvidence(cost.Source, mapping),
+			Window:       mapping.Window,
+			Dimensions:   Dimensions{Workload: cost.Name},
+			Evidence:     legacyEvidence(cost.Source, mapping),
+			Distribution: legacyDistribution(cost),
 		}
 		if err := driver.Validate(); err != nil {
 			return nil, fmt.Errorf("variable cost %q: %w", cost.Name, err)
@@ -90,6 +91,20 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 		drivers = append(drivers, driver)
 	}
 	return drivers, nil
+}
+
+func legacyDistribution(cost types.VariableCost) *Distribution {
+	if cost.Distribution == "" {
+		return nil
+	}
+	return &Distribution{
+		Type:   DistributionType(cost.Distribution),
+		Mean:   cost.Mean,
+		StdDev: cost.StdDev,
+		Min:    cost.Min,
+		Max:    cost.Max,
+		Rate:   cost.Rate,
+	}
 }
 
 func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {

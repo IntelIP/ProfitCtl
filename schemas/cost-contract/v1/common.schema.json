@@ -59,6 +59,33 @@
         "workload": { "type": "string", "minLength": 1 }
       }
     },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["normal", "uniform", "exponential"] },
+        "mean": { "type": "number", "exclusiveMinimum": 0 },
+        "stddev": { "type": "number", "exclusiveMinimum": 0 },
+        "min": { "type": "number", "exclusiveMinimum": 0 },
+        "max": { "type": "number", "exclusiveMinimum": 0 },
+        "rate": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "normal" } } },
+          "then": { "required": ["mean", "stddev"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "uniform" } } },
+          "then": { "required": ["min", "max"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "exponential" } } },
+          "then": { "required": ["rate"] }
+        }
+      ]
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
@@ -123,6 +150,24 @@
               "source": {
                 "properties": {
                   "type": { "const": "provider_catalog" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "template" }
                 },
                 "required": ["type"]
               }

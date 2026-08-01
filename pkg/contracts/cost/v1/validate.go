@@ -39,8 +39,8 @@ func (d CostDriver) Validate() error {
 		if err := d.Per.Validate(); err != nil {
 			return fmt.Errorf("per: %w", err)
 		}
-		if (d.Kind == DriverVariable || d.Kind == DriverCadence) && d.Per.Value <= 0 {
-			return fmt.Errorf("%s driver per.value must be greater than zero", d.Kind)
+		if d.Per.Value <= 0 {
+			return errors.New("per.value must be greater than zero")
 		}
 	}
 	if err := d.UnitPrice.Validate(); err != nil {
@@ -57,6 +57,37 @@ func (d CostDriver) Validate() error {
 	}
 	if err := d.Evidence.Validate(); err != nil {
 		return fmt.Errorf("evidence: %w", err)
+	}
+	if d.Distribution != nil {
+		if d.Kind != DriverVariable {
+			return errors.New("distribution is only valid for variable drivers")
+		}
+		if err := d.Distribution.Validate(); err != nil {
+			return fmt.Errorf("distribution: %w", err)
+		}
+	}
+	return nil
+}
+
+func (d Distribution) Validate() error {
+	validPositive := func(value *float64) bool {
+		return value != nil && !math.IsNaN(*value) && !math.IsInf(*value, 0) && *value > 0
+	}
+	switch d.Type {
+	case DistributionNormal:
+		if !validPositive(d.Mean) || !validPositive(d.StdDev) {
+			return errors.New("normal distribution requires positive mean and stddev")
+		}
+	case DistributionUniform:
+		if !validPositive(d.Min) || !validPositive(d.Max) || *d.Min >= *d.Max {
+			return errors.New("uniform distribution requires positive min less than max")
+		}
+	case DistributionExponential:
+		if !validPositive(d.Rate) {
+			return errors.New("exponential distribution requires positive rate")
+		}
+	default:
+		return fmt.Errorf("unsupported distribution type %q", d.Type)
 	}
 	return nil
 }
@@ -220,6 +251,9 @@ func (e Evidence) Validate() error {
 		if e.Confidence == ConfidenceHigh {
 			return errors.New("provider_catalog evidence cannot claim high confidence")
 		}
+	}
+	if e.Source.Type == SourceTemplate && e.Confidence == ConfidenceHigh {
+		return errors.New("template evidence cannot claim high confidence")
 	}
 	if e.Measurement == MeasurementMeasured && e.Source.Type != SourceTelemetry &&
 		e.Source.Type != SourceRuntimeLedger && e.Source.Type != SourceInvoice {

@@ -40,6 +40,12 @@ Every driver requires:
 `variable` and `cadence` drivers also require a `per` scale basis. A variable
 driver cannot omit whether it scales per `user`, `paid_user`, or another
 canonical subject. A cadence driver cannot omit its time denominator.
+Every present `per` denominator must be greater than zero.
+
+Variable drivers may carry an explicit `normal`, `uniform`, or `exponential`
+distribution. Distribution-specific parameters preserve the stochastic basis
+used by stress forecasts instead of silently substituting deterministic
+`units_per_user`.
 
 Units use lowercase canonical identifiers such as `request`, `command`,
 `token`, `gibibyte`, `user`, `worker`, `hour`, or `month`. Ambiguous storage
@@ -103,6 +109,7 @@ Rules:
 
 Provider-catalog evidence additionally requires `refresh_owner`,
 `refresh_cadence`, and `stale_after`, and cannot claim high confidence.
+Template evidence also cannot claim high confidence.
 
 ## Current Scenario Compatibility
 
@@ -118,6 +125,7 @@ Mapping rules:
 | `fixed_costs[].period` | explicit legacy-normalized commitment count and time basis |
 | `variable_costs[].cost_per_unit` | unit-price amount |
 | `variable_costs[].units_per_user` | quantity per one `user` |
+| `variable_costs[].distribution` and parameters | explicit v1 stochastic distribution |
 | absent variable unit | caller must supply explicit name-to-unit mapping |
 | absent scenario currency/window | caller must supply both |
 | absent source | low-confidence `legacy_scenario`; never measured |

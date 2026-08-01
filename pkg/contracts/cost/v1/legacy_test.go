@@ -42,10 +42,38 @@ func TestLegacyScenarioMapsForwardWithoutChangingCosts(t *testing.T) {
 		require.Equal(t, expected.Unit, drivers[i].Quantity.Unit)
 		require.NotNil(t, drivers[i].Per)
 		require.Equal(t, expected.PerUnit, drivers[i].Per.Unit)
+		if expected.Kind == v1.DriverVariable {
+			require.NotNil(t, drivers[i].Distribution)
+		}
 	}
 
 	after := cost.NewCostEngine(cfg).CalculateTotalCosts(100, 1)
 	require.Equal(t, before, after)
+}
+
+func TestLegacyMappingPreservesStochasticVariableBasis(t *testing.T) {
+	rate := 0.001
+	drivers, err := v1.MapLegacyCosts(nil, []types.VariableCost{{
+		Name:         "LLM Tokens",
+		CostPerUnit:  0.01,
+		UnitsPerUser: 5000,
+		Distribution: types.DistExponential,
+		Rate:         &rate,
+	}}, v1.LegacyMapping{
+		ArtifactIdentity: "stress.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+		VariableUnits: map[string]string{"LLM Tokens": "token"},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, drivers[0].Distribution)
+	require.Equal(t, v1.DistributionExponential, drivers[0].Distribution.Type)
+	require.Equal(t, rate, *drivers[0].Distribution.Rate)
+	require.NotEqual(t, drivers[0].Quantity.Value, 1/rate)
 }
 
 func TestLegacyMappingFailsClosedWithoutVariableUnit(t *testing.T) {

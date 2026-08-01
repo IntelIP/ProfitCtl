@@ -29,7 +29,10 @@
       "$ref": "common.schema.json#/$defs/quantity"
     },
     "per": {
-      "$ref": "common.schema.json#/$defs/quantity"
+      "allOf": [
+        { "$ref": "common.schema.json#/$defs/quantity" },
+        { "properties": { "value": { "exclusiveMinimum": 0 } } }
+      ]
     },
     "unit_price": {
       "$ref": "common.schema.json#/$defs/unit_price"
@@ -42,6 +45,9 @@
     },
     "evidence": {
       "$ref": "common.schema.json#/$defs/evidence"
+    },
+    "distribution": {
+      "$ref": "common.schema.json#/$defs/distribution"
     }
   },
   "allOf": [
@@ -53,14 +59,16 @@
         "required": ["kind"]
       },
       "then": {
-        "required": ["per"],
+        "required": ["per"]
+      }
+    },
+    {
+      "if": {
+        "required": ["distribution"]
+      },
+      "then": {
         "properties": {
-          "per": {
-            "allOf": [
-              { "$ref": "common.schema.json#/$defs/quantity" },
-              { "properties": { "value": { "exclusiveMinimum": 0 } } }
-            ]
-          }
+          "kind": { "const": "variable" }
         }
       }
     }

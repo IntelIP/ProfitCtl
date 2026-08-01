@@ -55,6 +55,25 @@ const (
 	ConfidenceHigh   Confidence = "high"
 )
 
+type DistributionType string
+
+const (
+	DistributionNormal      DistributionType = "normal"
+	DistributionUniform     DistributionType = "uniform"
+	DistributionExponential DistributionType = "exponential"
+)
+
+// Distribution preserves the stochastic workload basis used by legacy stress
+// simulations. Parameters are distribution-specific.
+type Distribution struct {
+	Type   DistributionType `json:"type" yaml:"type"`
+	Mean   *float64         `json:"mean,omitempty" yaml:"mean,omitempty"`
+	StdDev *float64         `json:"stddev,omitempty" yaml:"stddev,omitempty"`
+	Min    *float64         `json:"min,omitempty" yaml:"min,omitempty"`
+	Max    *float64         `json:"max,omitempty" yaml:"max,omitempty"`
+	Rate   *float64         `json:"rate,omitempty" yaml:"rate,omitempty"`
+}
+
 type Quantity struct {
 	Value float64 `json:"value" yaml:"value"`
 	Unit  string  `json:"unit" yaml:"unit"`
@@ -104,16 +123,17 @@ type Evidence struct {
 }
 
 type CostDriver struct {
-	SchemaVersion string     `json:"schema_version" yaml:"schema_version"`
-	ID            string     `json:"id" yaml:"id"`
-	Name          string     `json:"name" yaml:"name"`
-	Kind          DriverKind `json:"kind" yaml:"kind"`
-	Quantity      Quantity   `json:"quantity" yaml:"quantity"`
-	Per           *Quantity  `json:"per,omitempty" yaml:"per,omitempty"`
-	UnitPrice     UnitPrice  `json:"unit_price" yaml:"unit_price"`
-	Window        TimeWindow `json:"window" yaml:"window"`
-	Dimensions    Dimensions `json:"dimensions" yaml:"dimensions"`
-	Evidence      Evidence   `json:"evidence" yaml:"evidence"`
+	SchemaVersion string        `json:"schema_version" yaml:"schema_version"`
+	ID            string        `json:"id" yaml:"id"`
+	Name          string        `json:"name" yaml:"name"`
+	Kind          DriverKind    `json:"kind" yaml:"kind"`
+	Quantity      Quantity      `json:"quantity" yaml:"quantity"`
+	Per           *Quantity     `json:"per,omitempty" yaml:"per,omitempty"`
+	UnitPrice     UnitPrice     `json:"unit_price" yaml:"unit_price"`
+	Window        TimeWindow    `json:"window" yaml:"window"`
+	Dimensions    Dimensions    `json:"dimensions" yaml:"dimensions"`
+	Evidence      Evidence      `json:"evidence" yaml:"evidence"`
+	Distribution  *Distribution `json:"distribution,omitempty" yaml:"distribution,omitempty"`
 }
 
 type ClaimEvidence struct {

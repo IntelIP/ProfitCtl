@@ -55,6 +55,21 @@ func TestScalingDriversRequirePerBasis(t *testing.T) {
 	}
 }
 
+func TestEveryPresentPerBasisMustBePositive(t *testing.T) {
+	for _, kind := range []v1.DriverKind{
+		v1.DriverFixed,
+		v1.DriverVariable,
+		v1.DriverCadence,
+		v1.DriverConcurrency,
+		v1.DriverUptime,
+	} {
+		driver := validDriver()
+		driver.Kind = kind
+		driver.Per = &v1.Quantity{Value: 0, Unit: "user"}
+		require.ErrorContains(t, driver.Validate(), "per.value must be greater than zero")
+	}
+}
+
 func TestEvidenceDoesNotTreatProvenanceAsMeasurement(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Measurement = v1.MeasurementMeasured
@@ -122,6 +137,13 @@ func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
 
 	evidence.Confidence = v1.ConfidenceMedium
 	require.NoError(t, evidence.Validate())
+}
+
+func TestTemplateEvidenceCannotClaimHighConfidence(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Source.Type = v1.SourceTemplate
+	evidence.Confidence = v1.ConfidenceHigh
+	require.ErrorContains(t, evidence.Validate(), "template evidence cannot claim high confidence")
 }
 
 func TestObservationRejectsDuplicateDriverIDs(t *testing.T) {
