@@ -124,7 +124,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 			if fresh {
 				report("ok", "catalog", detail)
 			} else {
-				report("warn", "catalog", detail+"; stale catalog cannot support current-price claims")
+				report("fail", "catalog", detail+"; stale catalog cannot support current-price or release-readiness claims")
 			}
 		}
 	}
@@ -167,18 +167,30 @@ func supportedExecutableName(path, goos string) bool {
 }
 
 func catalogFreshness(catalog *catalogProbe, now time.Time) (bool, string) {
-	staleEntries := 0
 	for _, entry := range catalog.Entries {
 		staleAfter, err := time.Parse("2006-01-02", entry.StaleAfter)
 		if err != nil {
 			return false, fmt.Sprintf("entry %s stale_after is not YYYY-MM-DD", entry.ID)
 		}
 		if now.UTC().After(staleAfter.Add(24*time.Hour - time.Nanosecond)) {
-			staleEntries++
+			return false, fmt.Sprintf("entry %s exceeded stale_after %s", entry.ID, entry.StaleAfter)
 		}
-	}
-	if staleEntries > 0 {
-		return false, fmt.Sprintf("%d of %d entries are stale", staleEntries, len(catalog.Entries))
+
+		capturedAt, err := parseCapturedAt(entry.Source.CapturedAt)
+		if err != nil {
+			return false, fmt.Sprintf("entry %s source captured_at is invalid", entry.ID)
+		}
+		age := now.UTC().Sub(capturedAt)
+		switch types.CostSourceType(entry.Source.Type) {
+		case types.CostSourceProviderCatalog:
+			if age > 7*24*time.Hour {
+				return false, fmt.Sprintf("entry %s provider catalog capture exceeds the 7-day decision-grade window", entry.ID)
+			}
+		case types.CostSourceTemplate:
+			if age > 90*24*time.Hour {
+				return false, fmt.Sprintf("entry %s template capture exceeds the 90-day review window", entry.ID)
+			}
+		}
 	}
 	return true, fmt.Sprintf("%d entries within declared stale-after dates", len(catalog.Entries))
 }
@@ -226,9 +238,9 @@ func readCatalog(path string) (*catalogProbe, error) {
 		if strings.TrimSpace(entry.Source.URL) == "" && strings.TrimSpace(entry.Source.ArtifactIdentity) == "" {
 			return nil, fmt.Errorf("entry %s requires source url or artifact_identity", entry.ID)
 		}
-		capturedAt, err := time.Parse("2006-01-02", entry.Source.CapturedAt)
+		capturedAt, err := parseCapturedAt(entry.Source.CapturedAt)
 		if err != nil {
-			return nil, fmt.Errorf("entry %s source captured_at must be YYYY-MM-DD", entry.ID)
+			return nil, fmt.Errorf("entry %s source captured_at must be YYYY-MM-DD or RFC3339", entry.ID)
 		}
 		if capturedAt.After(time.Now().UTC()) {
 			return nil, fmt.Errorf("entry %s source captured_at cannot be in the future", entry.ID)
@@ -245,6 +257,17 @@ func readCatalog(path string) (*catalogProbe, error) {
 		}
 	}
 	return &catalog, nil
+}
+
+func parseCapturedAt(value string) (time.Time, error) {
+	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
+		return parsed.UTC(), nil
+	}
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parsed.UTC(), nil
 }
 
 func supportedSourceType(value string) bool {

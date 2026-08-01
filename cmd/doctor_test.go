@@ -53,6 +53,22 @@ func TestRunDoctorReportsMissingInputsWithoutFallback(t *testing.T) {
 	assert.Contains(t, output.String(), "no fallback or local state change was performed")
 }
 
+func TestRunDoctorFailsStaleCatalog(t *testing.T) {
+	oldCatalog := doctorCatalog
+	defer func() { doctorCatalog = oldCatalog }()
+	doctorCatalog = writeCatalogVariant(t, "stale_after: 2099-01-01", "stale_after: 2026-07-01")
+
+	command := doctorTestCommand(filepath.Join("..", "examples", "valid_profit.yml"))
+	var output bytes.Buffer
+	command.SetOut(&output)
+
+	err := runDoctor(command, nil)
+	require.Error(t, err)
+	assert.Equal(t, 2, ExitCode(err))
+	assert.Contains(t, output.String(), "[fail] catalog:")
+	assert.Contains(t, output.String(), "stale catalog cannot support current-price or release-readiness claims")
+}
+
 func TestReadCatalogRejectsIncompleteEntry(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "catalog.yml")
 	err := os.WriteFile(path, []byte("catalog_version: today\nstatus: test\nentries:\n  - id: incomplete\n"), 0644)
@@ -113,6 +129,13 @@ func TestReadCatalogRejectsFutureCaptureDate(t *testing.T) {
 	assert.Contains(t, err.Error(), "captured_at cannot be in the future")
 }
 
+func TestReadCatalogAcceptsRFC3339CaptureTimestamp(t *testing.T) {
+	path := writeCatalogVariant(t, "captured_at: 2026-07-31", "captured_at: 2026-07-31T12:00:00Z")
+
+	_, err := readCatalog(path)
+	require.NoError(t, err)
+}
+
 func TestCatalogFreshness(t *testing.T) {
 	now := time.Date(2026, time.July, 31, 0, 0, 0, 0, time.UTC)
 	catalog, err := readCatalog(filepath.Join("..", "test", "fixtures", "provider_catalog_valid.yml"))
@@ -125,7 +148,22 @@ func TestCatalogFreshness(t *testing.T) {
 	catalog.Entries[0].StaleAfter = "2026-07-01"
 	fresh, detail = catalogFreshness(catalog, now)
 	assert.False(t, fresh)
-	assert.Contains(t, detail, "1 of 1 entries are stale")
+	assert.Contains(t, detail, "exceeded stale_after")
+}
+
+func TestCatalogFreshnessBoundsProviderCaptureAge(t *testing.T) {
+	now := time.Date(2026, time.July, 31, 0, 0, 0, 0, time.UTC)
+	path := writeCatalogVariant(t, "type: user_supplied", "type: provider_catalog")
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	err = os.WriteFile(path, []byte(strings.Replace(string(data), "captured_at: 2026-07-31", "captured_at: 2026-07-01", 1)), 0644)
+	require.NoError(t, err)
+	catalog, err := readCatalog(path)
+	require.NoError(t, err)
+
+	fresh, detail := catalogFreshness(catalog, now)
+	assert.False(t, fresh)
+	assert.Contains(t, detail, "7-day decision-grade window")
 }
 
 func TestSupportedExecutableName(t *testing.T) {
