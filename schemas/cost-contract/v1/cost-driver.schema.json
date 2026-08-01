@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IntelIP/ProfitCtl/schemas/cost-contract/v1/cost-driver.schema.json",
+  "title": "ProfitCtl Cost Driver v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "kind",
+    "quantity",
+    "unit_price",
+    "window",
+    "dimensions",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": "profitctl.cost/v1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["fixed", "variable", "cadence", "concurrency", "uptime"]
+    },
+    "quantity": {
+      "$ref": "common.schema.json#/$defs/quantity"
+    },
+    "per": {
+      "$ref": "common.schema.json#/$defs/quantity"
+    },
+    "unit_price": {
+      "$ref": "common.schema.json#/$defs/unit_price"
+    },
+    "window": {
+      "$ref": "common.schema.json#/$defs/window"
+    },
+    "dimensions": {
+      "$ref": "common.schema.json#/$defs/dimensions"
+    },
+    "evidence": {
+      "$ref": "common.schema.json#/$defs/evidence"
+    }
+  }
+}

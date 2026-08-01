@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IntelIP/ProfitCtl/schemas/cost-contract/v1/common.schema.json",
+  "$defs": {
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,62}$",
+          "not": { "enum": ["unit", "units", "gb", "mb", "kb"] }
+        }
+      }
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "unit_price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "per"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/money" },
+        "per": {
+          "allOf": [
+            { "$ref": "#/$defs/quantity" },
+            { "properties": { "value": { "exclusiveMinimum": 0 } } }
+          ]
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workload"],
+      "properties": {
+        "provider": { "type": "string" },
+        "service": { "type": "string" },
+        "region": { "type": "string" },
+        "tier": { "type": "string" },
+        "workload": { "type": "string", "minLength": 1 }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "captured_at"],
+      "anyOf": [
+        { "required": ["artifact_identity"] },
+        { "required": ["url"] }
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "template",
+            "user_supplied",
+            "repo_detected",
+            "telemetry",
+            "runtime_ledger",
+            "invoice",
+            "provider_catalog",
+            "synthetic_fixture",
+            "legacy_scenario"
+          ]
+        },
+        "artifact_identity": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "captured_at": {
+          "type": "string",
+          "description": "ISO date or RFC3339 timestamp."
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "measurement",
+        "source",
+        "confidence",
+        "confidence_rationale"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["predicted", "observed", "billed", "user_supplied"]
+        },
+        "measurement": {
+          "enum": ["measured", "synthetic", "derived", "declared"]
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "confidence_rationale": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
