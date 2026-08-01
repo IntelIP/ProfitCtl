@@ -56,7 +56,7 @@
         "service": { "type": "string" },
         "region": { "type": "string" },
         "tier": { "type": "string" },
-        "workload": { "type": "string", "minLength": 1 }
+        "workload": { "type": "string", "pattern": ".*\\S.*" }
       }
     },
     "distribution": {
@@ -127,7 +127,7 @@
             "legacy_scenario"
           ]
         },
-        "artifact_identity": { "type": "string", "minLength": 1 },
+        "artifact_identity": { "type": "string", "pattern": ".*\\S.*" },
         "url": { "type": "string", "format": "uri" },
         "captured_at": {
           "anyOf": [
@@ -136,8 +136,8 @@
           ],
           "description": "ISO date or RFC3339 timestamp."
         },
-        "refresh_owner": { "type": "string", "minLength": 1 },
-        "refresh_cadence": { "type": "string", "minLength": 1 },
+        "refresh_owner": { "type": "string", "pattern": ".*\\S.*" },
+        "refresh_cadence": { "type": "string", "pattern": ".*\\S.*" },
         "stale_after": {
           "anyOf": [
             { "type": "string", "format": "date" },
@@ -166,6 +166,66 @@
           "then": {
             "properties": {
               "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "measurement": { "const": "measured" }
+            },
+            "required": ["measurement"]
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "enum": ["telemetry", "runtime_ledger", "invoice"] }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "observed" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "enum": ["measured", "synthetic"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "predicted" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "enum": ["synthetic", "derived", "declared"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "user_supplied" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "user_supplied" }
+                }
+              }
             }
           }
         },
@@ -275,7 +335,7 @@
         },
         "source": { "$ref": "#/$defs/source" },
         "confidence": { "enum": ["low", "medium", "high"] },
-        "confidence_rationale": { "type": "string", "minLength": 1 }
+        "confidence_rationale": { "type": "string", "pattern": ".*\\S.*" }
       }
     }
   }

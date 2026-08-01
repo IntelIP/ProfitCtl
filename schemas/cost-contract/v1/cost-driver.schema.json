@@ -21,7 +21,7 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9._-]{0,127}$"
     },
-    "name": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "pattern": ".*\\S.*" },
     "kind": {
       "enum": ["fixed", "variable", "cadence", "concurrency", "uptime"]
     },

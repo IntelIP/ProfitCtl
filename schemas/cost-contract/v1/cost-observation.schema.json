@@ -51,13 +51,75 @@
       "required": ["quantity", "unit_price", "total_cost"],
       "properties": {
         "quantity": {
-          "$ref": "common.schema.json#/$defs/evidence"
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "telemetry",
+                        "runtime_ledger",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
         },
         "unit_price": {
-          "$ref": "common.schema.json#/$defs/evidence"
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "invoice",
+                        "provider_catalog",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
         },
         "total_cost": {
-          "$ref": "common.schema.json#/$defs/evidence"
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "invoice",
+                        "profitctl_derived",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     }
