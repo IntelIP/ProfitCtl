@@ -16,7 +16,7 @@ import (
 func TestRunDoctorPassesWithValidLocalInputs(t *testing.T) {
 	oldCatalog := doctorCatalog
 	defer func() { doctorCatalog = oldCatalog }()
-	doctorCatalog = filepath.Join("..", "provider_catalog", "ai_saas_defaults.yml")
+	doctorCatalog = filepath.Join("..", "test", "fixtures", "provider_catalog_valid.yml")
 
 	command := doctorTestCommand(filepath.Join("..", "examples", "valid_profit.yml"))
 	var output bytes.Buffer
@@ -24,10 +24,9 @@ func TestRunDoctorPassesWithValidLocalInputs(t *testing.T) {
 
 	err := runDoctor(command, nil)
 	require.NoError(t, err)
-	assert.Contains(t, output.String(), "[ok] binary:")
+	assert.Contains(t, output.String(), "[warn] binary:")
 	assert.Contains(t, output.String(), "[ok] config:")
-	assert.Contains(t, output.String(), "[warn] catalog:")
-	assert.Contains(t, output.String(), "stale catalog cannot support current-price claims")
+	assert.Contains(t, output.String(), "[ok] catalog:")
 	assert.Contains(t, output.String(), "doctor passed")
 }
 
@@ -63,16 +62,44 @@ func TestReadCatalogRejectsIncompleteEntry(t *testing.T) {
 	assert.Contains(t, err.Error(), "requires id, provider, service, and unit")
 }
 
+func TestReadCatalogRequiresProvenanceFields(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "catalog.yml")
+	err := os.WriteFile(path, []byte(`
+catalog_version: test-v1
+status: test
+entries:
+  - id: missing-provenance
+    provider: synthetic
+    service: test
+    unit: request
+`), 0644)
+	require.NoError(t, err)
+
+	_, err = readCatalog(path)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "requires value and currency")
+}
+
 func TestCatalogFreshness(t *testing.T) {
 	now := time.Date(2026, time.July, 31, 0, 0, 0, 0, time.UTC)
+	catalog, err := readCatalog(filepath.Join("..", "test", "fixtures", "provider_catalog_valid.yml"))
+	require.NoError(t, err)
 
-	fresh, detail := catalogFreshness("2026-07-15", now)
+	fresh, detail := catalogFreshness(catalog, now)
 	assert.True(t, fresh)
-	assert.Contains(t, detail, "16 days old")
+	assert.Contains(t, detail, "within declared stale-after dates")
 
-	fresh, detail = catalogFreshness("2026-05-29", now)
+	catalog.Entries[0].StaleAfter = "2026-07-01"
+	fresh, detail = catalogFreshness(catalog, now)
 	assert.False(t, fresh)
-	assert.Contains(t, detail, "30-day freshness window exceeded")
+	assert.Contains(t, detail, "1 of 1 entries are stale")
+}
+
+func TestSupportedExecutableName(t *testing.T) {
+	assert.True(t, supportedExecutableName("/tmp/profitctl", "linux"))
+	assert.True(t, supportedExecutableName(`C:\bin\profitctl.exe`, "windows"))
+	assert.False(t, supportedExecutableName("/tmp/ProfitCtl", "linux"))
+	assert.False(t, supportedExecutableName("/tmp/profitctl-old", "linux"))
 }
 
 func doctorTestCommand(configPath string) *cobra.Command {

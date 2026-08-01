@@ -90,7 +90,7 @@ jobs:
             HOME="${TEST_HOME}" \
             PATH="${INSTALL_DIR}:/usr/bin:/bin" \
             CONFIG_FILE="${GITHUB_WORKSPACE}/examples/mix_profit.yml" \
-            CATALOG_FILE="${GITHUB_WORKSPACE}/provider_catalog/ai_saas_defaults.yml" \
+            CATALOG_FILE="${GITHUB_WORKSPACE}/test/fixtures/provider_catalog_valid.yml" \
             sh -eu <<'EOF'
           test "$(command -v profitctl)" = "${PATH%%:*}/profitctl"
           test "$(profitctl --version)" = "profitctl v0.0.0-ci"

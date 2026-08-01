@@ -1,0 +1,19 @@
+catalog_version: test-v1
+status: synthetic_test_fixture
+entries:
+  - id: synthetic_request_cost
+    provider: synthetic
+    service: request_api
+    unit: request
+    value: 0.001
+    currency: USD
+    source:
+      type: user_supplied
+      artifact_identity: test/fixtures/provider_catalog_valid.yml
+      confidence: medium
+      captured_at: 2026-07-31
+    confidence_rationale: Deterministic local fixture for CLI validation only.
+    refresh_owner: test-fixture-maintainer
+    refresh_cadence: on_fixture_change
+    stale_after: 2099-01-01
+    note: Synthetic amount; excludes taxes, discounts, minimums, and live provider data.

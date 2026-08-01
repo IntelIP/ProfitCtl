@@ -55,7 +55,7 @@ git clone https://github.com/IntelIP/ProfitCtl.git
 cd ProfitCtl
 go build -o profitctl .
 ./profitctl --version
-./profitctl doctor -f examples/valid_profit.yml --catalog provider_catalog/ai_saas_defaults.yml
+./profitctl doctor -f examples/valid_profit.yml --catalog /path/to/provider-catalog.yml
 ```
 
 ### Developer install with Go

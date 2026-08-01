@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -13,16 +14,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultCatalogPath = "provider_catalog/ai_saas_defaults.yml"
-
 type catalogProbe struct {
 	CatalogVersion string `yaml:"catalog_version"`
 	Status         string `yaml:"status"`
 	Entries        []struct {
-		ID       string `yaml:"id"`
-		Provider string `yaml:"provider"`
-		Service  string `yaml:"service"`
-		Unit     string `yaml:"unit"`
+		ID                  string   `yaml:"id"`
+		Provider            string   `yaml:"provider"`
+		Service             string   `yaml:"service"`
+		Unit                string   `yaml:"unit"`
+		Value               *float64 `yaml:"value"`
+		Currency            string   `yaml:"currency"`
+		ConfidenceRationale string   `yaml:"confidence_rationale"`
+		RefreshOwner        string   `yaml:"refresh_owner"`
+		RefreshCadence      string   `yaml:"refresh_cadence"`
+		StaleAfter          string   `yaml:"stale_after"`
+		Note                string   `yaml:"note"`
+		Source              struct {
+			Type             string `yaml:"type"`
+			URL              string `yaml:"url"`
+			ArtifactIdentity string `yaml:"artifact_identity"`
+			Confidence       string `yaml:"confidence"`
+			CapturedAt       string `yaml:"captured_at"`
+		} `yaml:"source"`
 	} `yaml:"entries"`
 }
 
@@ -37,7 +50,7 @@ var doctorCmd = &cobra.Command{
 }
 
 func init() {
-	doctorCmd.Flags().StringVar(&doctorCatalog, "catalog", defaultCatalogPath, "Provider catalog file path")
+	doctorCmd.Flags().StringVar(&doctorCatalog, "catalog", "", "Provider catalog file path (required)")
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
@@ -64,6 +77,8 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	executable, executableErr := os.Executable()
 	if executableErr != nil {
 		report("fail", "binary", executableDetail(executable, executableErr))
+	} else if !supportedExecutableName(executable, runtime.GOOS) {
+		report("warn", "binary", fmt.Sprintf("%s has unexpected executable name; supported name is profitctl", executable))
 	} else {
 		report("ok", "binary", executable)
 	}
@@ -95,16 +110,20 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		report("ok", "config", cfgFile)
 	}
 
-	catalog, catalogErr := readCatalog(doctorCatalog)
-	if catalogErr != nil {
-		report("fail", "catalog", fmt.Sprintf("%s: %v; pass a readable catalog with `--catalog PATH`", doctorCatalog, catalogErr))
+	if strings.TrimSpace(doctorCatalog) == "" {
+		report("fail", "catalog", "catalog path is required; pass a provenance-complete catalog with `--catalog PATH`")
 	} else {
-		fresh, freshness := catalogFreshness(catalog.CatalogVersion, time.Now())
-		detail := fmt.Sprintf("%s (%s, %d entries; %s)", doctorCatalog, catalog.CatalogVersion, len(catalog.Entries), freshness)
-		if fresh {
-			report("ok", "catalog", detail)
+		catalog, catalogErr := readCatalog(doctorCatalog)
+		if catalogErr != nil {
+			report("fail", "catalog", fmt.Sprintf("%s: %v; pass a provenance-complete catalog with `--catalog PATH`", doctorCatalog, catalogErr))
 		} else {
-			report("warn", "catalog", detail+"; stale catalog cannot support current-price claims")
+			fresh, freshness := catalogFreshness(catalog, time.Now())
+			detail := fmt.Sprintf("%s (%s, %d entries; %s)", doctorCatalog, catalog.CatalogVersion, len(catalog.Entries), freshness)
+			if fresh {
+				report("ok", "catalog", detail)
+			} else {
+				report("warn", "catalog", detail+"; stale catalog cannot support current-price claims")
+			}
 		}
 	}
 
@@ -137,19 +156,29 @@ func supportedRuntime(goos, goarch string) bool {
 	}
 }
 
-func catalogFreshness(catalogVersion string, now time.Time) (bool, string) {
-	capturedAt, err := time.Parse("2006-01-02", catalogVersion)
-	if err != nil {
-		return false, "capture date is not YYYY-MM-DD"
+func supportedExecutableName(path, goos string) bool {
+	name := filepath.Base(strings.ReplaceAll(path, `\`, "/"))
+	if goos == "windows" {
+		return strings.EqualFold(name, "profitctl.exe")
 	}
-	ageDays := int(now.UTC().Sub(capturedAt).Hours() / 24)
-	if ageDays < 0 {
-		return false, "capture date is in the future"
+	return name == "profitctl"
+}
+
+func catalogFreshness(catalog *catalogProbe, now time.Time) (bool, string) {
+	staleEntries := 0
+	for _, entry := range catalog.Entries {
+		staleAfter, err := time.Parse("2006-01-02", entry.StaleAfter)
+		if err != nil {
+			return false, fmt.Sprintf("entry %s stale_after is not YYYY-MM-DD", entry.ID)
+		}
+		if now.UTC().After(staleAfter.Add(24*time.Hour - time.Nanosecond)) {
+			staleEntries++
+		}
 	}
-	if ageDays > 30 {
-		return false, fmt.Sprintf("%d days old; 30-day freshness window exceeded", ageDays)
+	if staleEntries > 0 {
+		return false, fmt.Sprintf("%d of %d entries are stale", staleEntries, len(catalog.Entries))
 	}
-	return true, fmt.Sprintf("%d days old", ageDays)
+	return true, fmt.Sprintf("%d entries within declared stale-after dates", len(catalog.Entries))
 }
 
 func readCatalog(path string) (*catalogProbe, error) {
@@ -175,6 +204,29 @@ func readCatalog(path string) (*catalogProbe, error) {
 		if strings.TrimSpace(entry.ID) == "" || strings.TrimSpace(entry.Provider) == "" ||
 			strings.TrimSpace(entry.Service) == "" || strings.TrimSpace(entry.Unit) == "" {
 			return nil, fmt.Errorf("entry %d requires id, provider, service, and unit", i+1)
+		}
+		if entry.Value == nil || strings.TrimSpace(entry.Currency) == "" {
+			return nil, fmt.Errorf("entry %s requires value and currency", entry.ID)
+		}
+		if strings.TrimSpace(entry.Source.Type) == "" || strings.TrimSpace(entry.Source.Confidence) == "" ||
+			strings.TrimSpace(entry.Source.CapturedAt) == "" {
+			return nil, fmt.Errorf("entry %s requires source type, confidence, and captured_at", entry.ID)
+		}
+		if strings.TrimSpace(entry.Source.URL) == "" && strings.TrimSpace(entry.Source.ArtifactIdentity) == "" {
+			return nil, fmt.Errorf("entry %s requires source url or artifact_identity", entry.ID)
+		}
+		if _, err := time.Parse("2006-01-02", entry.Source.CapturedAt); err != nil {
+			return nil, fmt.Errorf("entry %s source captured_at must be YYYY-MM-DD", entry.ID)
+		}
+		if strings.TrimSpace(entry.ConfidenceRationale) == "" || strings.TrimSpace(entry.Note) == "" {
+			return nil, fmt.Errorf("entry %s requires confidence_rationale and note", entry.ID)
+		}
+		if strings.TrimSpace(entry.RefreshOwner) == "" || strings.TrimSpace(entry.RefreshCadence) == "" ||
+			strings.TrimSpace(entry.StaleAfter) == "" {
+			return nil, fmt.Errorf("entry %s requires refresh_owner, refresh_cadence, and stale_after", entry.ID)
+		}
+		if _, err := time.Parse("2006-01-02", entry.StaleAfter); err != nil {
+			return nil, fmt.Errorf("entry %s stale_after must be YYYY-MM-DD", entry.ID)
 		}
 	}
 	return &catalog, nil
