@@ -233,6 +233,13 @@ func TestSyntheticFixtureEvidenceCannotClaimHighConfidence(t *testing.T) {
 	require.ErrorContains(t, evidence.Validate(), "synthetic_fixture evidence cannot claim high confidence")
 }
 
+func TestLegacyScenarioEvidenceCannotClaimHighConfidence(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Source.Type = v1.SourceLegacyScenario
+	evidence.Confidence = v1.ConfidenceHigh
+	require.ErrorContains(t, evidence.Validate(), "legacy_scenario evidence cannot claim high confidence")
+}
+
 func TestUserSuppliedEvidenceMustBeDeclared(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Kind = v1.EvidenceUserSupplied

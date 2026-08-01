@@ -287,6 +287,9 @@ func (e Evidence) Validate() error {
 	if e.Source.Type == SourceSyntheticFixture && e.Confidence == ConfidenceHigh {
 		return errors.New("synthetic_fixture evidence cannot claim high confidence")
 	}
+	if e.Source.Type == SourceLegacyScenario && e.Confidence == ConfidenceHigh {
+		return errors.New("legacy_scenario evidence cannot claim high confidence")
+	}
 	if e.Source.Type == SourceProfitCtlDerived && e.Measurement != MeasurementDerived {
 		return errors.New("profitctl_derived evidence must use derived measurement")
 	}

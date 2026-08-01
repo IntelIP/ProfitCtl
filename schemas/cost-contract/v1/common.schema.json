@@ -131,7 +131,7 @@
         "url": {
           "type": "string",
           "format": "uri",
-          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/\\s]+"
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#\\s]+"
         },
         "captured_at": {
           "anyOf": [
@@ -161,6 +161,24 @@
               "source": {
                 "properties": {
                   "type": { "const": "provider_catalog" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "legacy_scenario" }
                 },
                 "required": ["type"]
               }
