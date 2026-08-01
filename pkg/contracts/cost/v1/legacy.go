@@ -114,7 +114,7 @@ func legacyDistribution(cost types.VariableCost) *Distribution {
 	if cost.Distribution == "" {
 		return nil
 	}
-	return &Distribution{
+	distribution := &Distribution{
 		Type:   DistributionType(cost.Distribution),
 		Mean:   cost.Mean,
 		StdDev: cost.StdDev,
@@ -122,6 +122,11 @@ func legacyDistribution(cost types.VariableCost) *Distribution {
 		Max:    cost.Max,
 		Rate:   cost.Rate,
 	}
+	if cost.Distribution == types.DistNormal {
+		floor := 0.0
+		distribution.Floor = &floor
+	}
+	return distribution
 }
 
 func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
@@ -166,6 +171,11 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 	if evidence.Source.Type == SourceTemplate && evidence.Confidence == ConfidenceHigh {
 		evidence.Confidence = ConfidenceMedium
 		evidence.ConfidenceRationale += " Legacy template confidence capped at medium by v1."
+		evidence.ConfidenceRationale = strings.TrimSpace(evidence.ConfidenceRationale)
+	}
+	if evidence.Source.Type == SourceRepoDetected && evidence.Confidence == ConfidenceHigh {
+		evidence.Confidence = ConfidenceMedium
+		evidence.ConfidenceRationale += " Legacy repo-detected confidence capped at medium by v1."
 		evidence.ConfidenceRationale = strings.TrimSpace(evidence.ConfidenceRationale)
 	}
 	return evidence

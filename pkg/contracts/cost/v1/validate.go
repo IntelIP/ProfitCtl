@@ -99,6 +99,9 @@ func (d Distribution) Validate() error {
 	default:
 		return fmt.Errorf("unsupported distribution type %q", d.Type)
 	}
+	if d.Floor != nil && (math.IsNaN(*d.Floor) || math.IsInf(*d.Floor, 0) || *d.Floor < 0) {
+		return errors.New("floor must be a finite non-negative number")
+	}
 	return nil
 }
 
@@ -272,6 +275,9 @@ func (e Evidence) Validate() error {
 	}
 	if e.Source.Type == SourceTemplate && e.Confidence == ConfidenceHigh {
 		return errors.New("template evidence cannot claim high confidence")
+	}
+	if e.Source.Type == SourceRepoDetected && e.Confidence == ConfidenceHigh {
+		return errors.New("repo_detected evidence cannot claim high confidence")
 	}
 	if e.Measurement == MeasurementMeasured && e.Source.Type != SourceTelemetry &&
 		e.Source.Type != SourceRuntimeLedger && e.Source.Type != SourceInvoice {

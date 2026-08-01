@@ -204,6 +204,13 @@ func TestTemplateEvidenceCannotClaimHighConfidence(t *testing.T) {
 	require.ErrorContains(t, evidence.Validate(), "template evidence cannot claim high confidence")
 }
 
+func TestRepoDetectedEvidenceCannotClaimHighConfidence(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Source.Type = v1.SourceRepoDetected
+	evidence.Confidence = v1.ConfidenceHigh
+	require.ErrorContains(t, evidence.Validate(), "repo_detected evidence cannot claim high confidence")
+}
+
 func TestObservationRejectsDuplicateDriverIDs(t *testing.T) {
 	var fixture struct {
 		Observation v1.CostObservation `json:"observation"`

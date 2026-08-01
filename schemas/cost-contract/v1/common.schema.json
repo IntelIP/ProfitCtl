@@ -69,7 +69,8 @@
         "stddev": { "type": "number", "exclusiveMinimum": 0 },
         "min": { "type": "number", "minimum": 0 },
         "max": { "type": "number", "exclusiveMinimum": 0 },
-        "rate": { "type": "number", "exclusiveMinimum": 0 }
+        "rate": { "type": "number", "exclusiveMinimum": 0 },
+        "floor": { "type": "number", "minimum": 0 }
       },
       "allOf": [
         {
@@ -130,6 +131,7 @@
         "url": { "type": "string", "format": "uri" },
         "captured_at": {
           "type": "string",
+          "minLength": 1,
           "description": "ISO date or RFC3339 timestamp."
         },
         "refresh_owner": { "type": "string", "minLength": 1 },
@@ -150,6 +152,24 @@
               "source": {
                 "properties": {
                   "type": { "const": "provider_catalog" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "repo_detected" }
                 },
                 "required": ["type"]
               }

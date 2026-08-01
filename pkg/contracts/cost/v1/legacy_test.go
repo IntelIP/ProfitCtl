@@ -76,6 +76,30 @@ func TestLegacyMappingPreservesStochasticVariableBasis(t *testing.T) {
 	require.NotEqual(t, drivers[0].Quantity.Value, 1/rate)
 }
 
+func TestLegacyMappingPreservesNormalNonNegativeFloor(t *testing.T) {
+	mean, stddev := 1.0, 10.0
+	drivers, err := v1.MapLegacyCosts(nil, []types.VariableCost{{
+		Name:         "Bursty requests",
+		CostPerUnit:  0.01,
+		UnitsPerUser: 1,
+		Distribution: types.DistNormal,
+		Mean:         &mean,
+		StdDev:       &stddev,
+	}}, v1.LegacyMapping{
+		ArtifactIdentity: "normal.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+		VariableUnits: map[string]string{"Bursty requests": "request"},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, drivers[0].Distribution.Floor)
+	require.Zero(t, *drivers[0].Distribution.Floor)
+}
+
 func TestLegacyMappingUsesStableIDsAcrossReordering(t *testing.T) {
 	first := types.FixedCost{Name: "Database", Amount: 20, Period: types.PeriodMonthly}
 	second := types.FixedCost{Name: "Worker", Amount: 30, Period: types.PeriodMonthly}
@@ -116,6 +140,28 @@ func TestLegacyMappingCapsHighConfidenceTemplate(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, v1.SourceTemplate, drivers[0].Evidence.Source.Type)
+	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
+}
+
+func TestLegacyMappingCapsHighConfidenceRepoDetected(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts([]types.FixedCost{{
+		Name:   "Detected worker",
+		Amount: 20,
+		Period: types.PeriodMonthly,
+		Source: &types.CostSource{
+			Type:       types.CostSourceRepoDetected,
+			Confidence: types.CostSourceConfidenceHigh,
+		},
+	}}, nil, v1.LegacyMapping{
+		ArtifactIdentity: "detected.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+	})
+	require.NoError(t, err)
 	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
 }
 
