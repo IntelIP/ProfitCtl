@@ -116,17 +116,25 @@ func legacyDistribution(cost types.VariableCost) *Distribution {
 	}
 	distribution := &Distribution{
 		Type:   DistributionType(cost.Distribution),
-		Mean:   cost.Mean,
-		StdDev: cost.StdDev,
-		Min:    cost.Min,
-		Max:    cost.Max,
-		Rate:   cost.Rate,
+		Mean:   cloneFloat(cost.Mean),
+		StdDev: cloneFloat(cost.StdDev),
+		Min:    cloneFloat(cost.Min),
+		Max:    cloneFloat(cost.Max),
+		Rate:   cloneFloat(cost.Rate),
 	}
 	if cost.Distribution == types.DistNormal || cost.Distribution == types.DistUniform {
 		floor := 0.0
 		distribution.Floor = &floor
 	}
 	return distribution
+}
+
+func cloneFloat(value *float64) *float64 {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
 }
 
 func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {

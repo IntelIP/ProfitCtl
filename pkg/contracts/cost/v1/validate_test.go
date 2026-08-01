@@ -224,6 +224,22 @@ func TestRepoDetectedEvidenceCannotClaimHighConfidence(t *testing.T) {
 	require.ErrorContains(t, evidence.Validate(), "repo_detected evidence cannot claim high confidence")
 }
 
+func TestSyntheticFixtureEvidenceCannotClaimHighConfidence(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Kind = v1.EvidenceObserved
+	evidence.Measurement = v1.MeasurementSynthetic
+	evidence.Source.Type = v1.SourceSyntheticFixture
+	evidence.Confidence = v1.ConfidenceHigh
+	require.ErrorContains(t, evidence.Validate(), "synthetic_fixture evidence cannot claim high confidence")
+}
+
+func TestUserSuppliedEvidenceMustBeDeclared(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Kind = v1.EvidenceUserSupplied
+	evidence.Measurement = v1.MeasurementDerived
+	require.ErrorContains(t, evidence.Validate(), "must be declared")
+}
+
 func TestObservationRejectsDuplicateDriverIDs(t *testing.T) {
 	var fixture struct {
 		Observation v1.CostObservation `json:"observation"`

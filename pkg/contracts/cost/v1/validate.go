@@ -284,6 +284,9 @@ func (e Evidence) Validate() error {
 	if e.Source.Type == SourceRepoDetected && e.Confidence == ConfidenceHigh {
 		return errors.New("repo_detected evidence cannot claim high confidence")
 	}
+	if e.Source.Type == SourceSyntheticFixture && e.Confidence == ConfidenceHigh {
+		return errors.New("synthetic_fixture evidence cannot claim high confidence")
+	}
 	if e.Source.Type == SourceProfitCtlDerived && e.Measurement != MeasurementDerived {
 		return errors.New("profitctl_derived evidence must use derived measurement")
 	}
@@ -302,6 +305,9 @@ func (e Evidence) Validate() error {
 	}
 	if e.Kind == EvidenceUserSupplied && e.Source.Type != SourceUserSupplied {
 		return errors.New("user_supplied evidence requires user_supplied source")
+	}
+	if e.Kind == EvidenceUserSupplied && e.Measurement != MeasurementDeclared {
+		return errors.New("user_supplied evidence must be declared")
 	}
 	if e.Kind == EvidenceObserved && e.Measurement != MeasurementMeasured && e.Measurement != MeasurementSynthetic {
 		return errors.New("observed evidence must be measured or synthetic")

@@ -96,6 +96,8 @@ func TestLegacyMappingPreservesNormalNonNegativeFloor(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, drivers[0].Distribution.Floor)
 	require.Zero(t, *drivers[0].Distribution.Floor)
+	*drivers[0].Distribution.Mean = 99
+	require.Equal(t, 1.0, mean)
 }
 
 func TestLegacyMappingPreservesUniformNonNegativeFloor(t *testing.T) {
