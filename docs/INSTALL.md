@@ -65,7 +65,15 @@ go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 
 Source and Go installs are explicit developer fallbacks. The checksum-verified GitHub Release installer is the primary supported path; Homebrew is secondary.
 
-## Verify
+## Verify the Current Published Install
+
+```bash
+profitctl --help
+```
+
+## Verify a Release Candidate
+
+Use these checks for an artifact built from a commit containing the stable CLI identity contract. Publishing that artifact and updating Homebrew remain separate release actions.
 
 ```bash
 profitctl --version

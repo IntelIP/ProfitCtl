@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/IntelIP/ProfitCtl/internal/config"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -208,15 +210,28 @@ func readCatalog(path string) (*catalogProbe, error) {
 		if entry.Value == nil || strings.TrimSpace(entry.Currency) == "" {
 			return nil, fmt.Errorf("entry %s requires value and currency", entry.ID)
 		}
+		if *entry.Value < 0 || math.IsNaN(*entry.Value) || math.IsInf(*entry.Value, 0) {
+			return nil, fmt.Errorf("entry %s value must be finite and non-negative", entry.ID)
+		}
 		if strings.TrimSpace(entry.Source.Type) == "" || strings.TrimSpace(entry.Source.Confidence) == "" ||
 			strings.TrimSpace(entry.Source.CapturedAt) == "" {
 			return nil, fmt.Errorf("entry %s requires source type, confidence, and captured_at", entry.ID)
 		}
+		if !supportedSourceType(entry.Source.Type) {
+			return nil, fmt.Errorf("entry %s has unsupported source type %q", entry.ID, entry.Source.Type)
+		}
+		if !supportedSourceConfidence(entry.Source.Confidence) {
+			return nil, fmt.Errorf("entry %s has unsupported source confidence %q", entry.ID, entry.Source.Confidence)
+		}
 		if strings.TrimSpace(entry.Source.URL) == "" && strings.TrimSpace(entry.Source.ArtifactIdentity) == "" {
 			return nil, fmt.Errorf("entry %s requires source url or artifact_identity", entry.ID)
 		}
-		if _, err := time.Parse("2006-01-02", entry.Source.CapturedAt); err != nil {
+		capturedAt, err := time.Parse("2006-01-02", entry.Source.CapturedAt)
+		if err != nil {
 			return nil, fmt.Errorf("entry %s source captured_at must be YYYY-MM-DD", entry.ID)
+		}
+		if capturedAt.After(time.Now().UTC()) {
+			return nil, fmt.Errorf("entry %s source captured_at cannot be in the future", entry.ID)
 		}
 		if strings.TrimSpace(entry.ConfidenceRationale) == "" || strings.TrimSpace(entry.Note) == "" {
 			return nil, fmt.Errorf("entry %s requires confidence_rationale and note", entry.ID)
@@ -230,4 +245,29 @@ func readCatalog(path string) (*catalogProbe, error) {
 		}
 	}
 	return &catalog, nil
+}
+
+func supportedSourceType(value string) bool {
+	switch types.CostSourceType(value) {
+	case types.CostSourceTemplate,
+		types.CostSourceUserSupplied,
+		types.CostSourceRepoDetected,
+		types.CostSourceTelemetry,
+		types.CostSourceInvoice,
+		types.CostSourceProviderCatalog:
+		return true
+	default:
+		return false
+	}
+}
+
+func supportedSourceConfidence(value string) bool {
+	switch types.CostSourceConfidence(value) {
+	case types.CostSourceConfidenceLow,
+		types.CostSourceConfidenceMedium,
+		types.CostSourceConfidenceHigh:
+		return true
+	default:
+		return false
+	}
 }

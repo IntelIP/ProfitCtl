@@ -34,7 +34,6 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
-profitctl --version
 ```
 
 The installer downloads a GitHub Release archive, verifies it against that release's `SHA256SUMS`, and installs `profitctl` to `~/.local/bin` unless a custom prefix is selected.
