@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,14 +35,20 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 	}
 
 	drivers := make([]CostDriver, 0, len(fixed)+len(variable))
-	for i, cost := range fixed {
+	seenIDs := make(map[string]string, len(fixed)+len(variable))
+	for _, cost := range fixed {
 		quantity, periodUnit, err := legacyFixedBasis(cost.Period)
 		if err != nil {
 			return nil, fmt.Errorf("fixed cost %q: %w", cost.Name, err)
 		}
+		id := stableLegacyID("fixed", cost.Name)
+		if prior, exists := seenIDs[id]; exists {
+			return nil, fmt.Errorf("legacy costs %q and %q have ambiguous stable identity", prior, cost.Name)
+		}
+		seenIDs[id] = cost.Name
 		driver := CostDriver{
 			SchemaVersion: SchemaVersion,
-			ID:            fmt.Sprintf("legacy-fixed-%d", i+1),
+			ID:            id,
 			Name:          cost.Name,
 			Kind:          DriverFixed,
 			Quantity:      Quantity{Value: quantity, Unit: "commitment"},
@@ -60,7 +67,7 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 		drivers = append(drivers, driver)
 	}
 
-	for i, cost := range variable {
+	for _, cost := range variable {
 		unit := mapping.VariableUnits[cost.Name]
 		if err := validateUnit(unit); err != nil {
 			return nil, fmt.Errorf("variable cost %q unit: %w", cost.Name, err)
@@ -69,9 +76,14 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 		if types.NormalizeVariableCostUserScope(cost.UserScope) == types.UserScopePaidUsers {
 			subjectUnit = "paid_user"
 		}
+		id := stableLegacyID("variable", cost.Name)
+		if prior, exists := seenIDs[id]; exists {
+			return nil, fmt.Errorf("legacy costs %q and %q have ambiguous stable identity", prior, cost.Name)
+		}
+		seenIDs[id] = cost.Name
 		driver := CostDriver{
 			SchemaVersion: SchemaVersion,
-			ID:            fmt.Sprintf("legacy-variable-%d", i+1),
+			ID:            id,
 			Name:          cost.Name,
 			Kind:          DriverVariable,
 			Quantity:      Quantity{Value: cost.UnitsPerUser, Unit: unit},
@@ -91,6 +103,11 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 		drivers = append(drivers, driver)
 	}
 	return drivers, nil
+}
+
+func stableLegacyID(kind, name string) string {
+	digest := sha256.Sum256([]byte(kind + "\x00" + name))
+	return fmt.Sprintf("legacy-%s-%x", kind, digest[:8])
 }
 
 func legacyDistribution(cost types.VariableCost) *Distribution {
@@ -144,6 +161,11 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 	evidence.Confidence = Confidence(source.Confidence)
 	if strings.TrimSpace(source.Note) != "" {
 		evidence.ConfidenceRationale = source.Note
+	}
+	if evidence.Source.Type == SourceTemplate && evidence.Confidence == ConfidenceHigh {
+		evidence.Confidence = ConfidenceMedium
+		evidence.ConfidenceRationale += " Legacy template confidence capped at medium by v1."
+		evidence.ConfidenceRationale = strings.TrimSpace(evidence.ConfidenceRationale)
 	}
 	return evidence
 }

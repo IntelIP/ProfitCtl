@@ -76,6 +76,49 @@ func TestLegacyMappingPreservesStochasticVariableBasis(t *testing.T) {
 	require.NotEqual(t, drivers[0].Quantity.Value, 1/rate)
 }
 
+func TestLegacyMappingUsesStableIDsAcrossReordering(t *testing.T) {
+	first := types.FixedCost{Name: "Database", Amount: 20, Period: types.PeriodMonthly}
+	second := types.FixedCost{Name: "Worker", Amount: 30, Period: types.PeriodMonthly}
+	mapping := v1.LegacyMapping{
+		ArtifactIdentity: "stable.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+	}
+	original, err := v1.MapLegacyCosts([]types.FixedCost{first, second}, nil, mapping)
+	require.NoError(t, err)
+	reordered, err := v1.MapLegacyCosts([]types.FixedCost{second, first}, nil, mapping)
+	require.NoError(t, err)
+	require.Equal(t, original[0].ID, reordered[1].ID)
+	require.Equal(t, original[1].ID, reordered[0].ID)
+}
+
+func TestLegacyMappingCapsHighConfidenceTemplate(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts([]types.FixedCost{{
+		Name:   "Template database",
+		Amount: 20,
+		Period: types.PeriodMonthly,
+		Source: &types.CostSource{
+			Type:       types.CostSourceTemplate,
+			Confidence: types.CostSourceConfidenceHigh,
+		},
+	}}, nil, v1.LegacyMapping{
+		ArtifactIdentity: "template.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, v1.SourceTemplate, drivers[0].Evidence.Source.Type)
+	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
+}
+
 func TestLegacyMappingFailsClosedWithoutVariableUnit(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(repoRoot(t), "test", "fixtures", "valid_config.yml"))
 	require.NoError(t, err)

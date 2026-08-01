@@ -21,6 +21,9 @@ func TestAllDriverKindsValidate(t *testing.T) {
 		t.Run(string(kind), func(t *testing.T) {
 			driver := validDriver()
 			driver.Kind = kind
+			if kind == v1.DriverCadence {
+				driver.Per = &v1.Quantity{Value: 1, Unit: "minute"}
+			}
 			require.NoError(t, driver.Validate())
 		})
 	}
@@ -68,6 +71,27 @@ func TestEveryPresentPerBasisMustBePositive(t *testing.T) {
 		driver.Per = &v1.Quantity{Value: 0, Unit: "user"}
 		require.ErrorContains(t, driver.Validate(), "per.value must be greater than zero")
 	}
+}
+
+func TestCadenceRequiresTimeBasis(t *testing.T) {
+	driver := validDriver()
+	driver.Kind = v1.DriverCadence
+	driver.Per = &v1.Quantity{Value: 1, Unit: "user"}
+	require.ErrorContains(t, driver.Validate(), "canonical time unit")
+
+	driver.Per.Unit = "minute"
+	require.NoError(t, driver.Validate())
+}
+
+func TestUniformDistributionAllowsZeroMinimum(t *testing.T) {
+	minimum, maximum := 0.0, 10.0
+	driver := validDriver()
+	driver.Distribution = &v1.Distribution{
+		Type: v1.DistributionUniform,
+		Min:  &minimum,
+		Max:  &maximum,
+	}
+	require.NoError(t, driver.Validate())
 }
 
 func TestEvidenceDoesNotTreatProvenanceAsMeasurement(t *testing.T) {
@@ -137,6 +161,9 @@ func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
 
 	evidence.Confidence = v1.ConfidenceMedium
 	require.NoError(t, evidence.Validate())
+
+	evidence.Source.StaleAfter = "2026-07-31"
+	require.ErrorContains(t, evidence.Validate(), "must be after")
 }
 
 func TestTemplateEvidenceCannotClaimHighConfidence(t *testing.T) {

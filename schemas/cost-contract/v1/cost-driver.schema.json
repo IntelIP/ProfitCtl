@@ -64,6 +64,25 @@
     },
     {
       "if": {
+        "properties": {
+          "kind": { "const": "cadence" }
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "per": {
+            "properties": {
+              "unit": {
+                "enum": ["second", "minute", "hour", "day", "week", "month", "year"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "required": ["distribution"]
       },
       "then": {

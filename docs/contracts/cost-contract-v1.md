@@ -41,6 +41,8 @@ Every driver requires:
 driver cannot omit whether it scales per `user`, `paid_user`, or another
 canonical subject. A cadence driver cannot omit its time denominator.
 Every present `per` denominator must be greater than zero.
+Cadence denominators use `second`, `minute`, `hour`, `day`, `week`, `month`,
+or `year`.
 
 Variable drivers may carry an explicit `normal`, `uniform`, or `exponential`
 distribution. Distribution-specific parameters preserve the stochastic basis
@@ -136,6 +138,8 @@ Legacy normalization details:
   uses a fixed 30-day simulated month;
 - monthly fixed costs become one commitment per month;
 - yearly fixed costs become one commitment per year;
+- legacy driver IDs derive from cost kind and name, so harmless list reordering
+  does not break observation bindings;
 - `user_scope: paid_users` maps to `paid_user`; other legacy variable costs map
   to `user`.
 

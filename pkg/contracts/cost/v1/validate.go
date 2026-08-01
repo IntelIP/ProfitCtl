@@ -42,6 +42,9 @@ func (d CostDriver) Validate() error {
 		if d.Per.Value <= 0 {
 			return errors.New("per.value must be greater than zero")
 		}
+		if d.Kind == DriverCadence && !isTimeUnit(d.Per.Unit) {
+			return errors.New("cadence driver per.unit must be a canonical time unit")
+		}
 	}
 	if err := d.UnitPrice.Validate(); err != nil {
 		return fmt.Errorf("unit_price: %w", err)
@@ -79,8 +82,9 @@ func (d Distribution) Validate() error {
 			return errors.New("normal distribution requires positive mean and stddev")
 		}
 	case DistributionUniform:
-		if !validPositive(d.Min) || !validPositive(d.Max) || *d.Min >= *d.Max {
-			return errors.New("uniform distribution requires positive min less than max")
+		if d.Min == nil || math.IsNaN(*d.Min) || math.IsInf(*d.Min, 0) || *d.Min < 0 ||
+			!validPositive(d.Max) || *d.Min >= *d.Max {
+			return errors.New("uniform distribution requires non-negative min less than positive max")
 		}
 	case DistributionExponential:
 		if !validPositive(d.Rate) {
@@ -248,6 +252,11 @@ func (e Evidence) Validate() error {
 		if !validCaptureTime(e.Source.StaleAfter) {
 			return errors.New("source.stale_after must be an RFC3339 timestamp or ISO date")
 		}
+		capturedAt, _ := parseCaptureTime(e.Source.CapturedAt)
+		staleAfter, _ := parseCaptureTime(e.Source.StaleAfter)
+		if !capturedAt.Before(staleAfter) {
+			return errors.New("source.stale_after must be after source.captured_at")
+		}
 		if e.Confidence == ConfidenceHigh {
 			return errors.New("provider_catalog evidence cannot claim high confidence")
 		}
@@ -329,11 +338,24 @@ func validateID(id string) error {
 }
 
 func validCaptureTime(value string) bool {
-	if _, err := time.Parse(time.RFC3339, value); err == nil {
-		return true
-	}
-	_, err := time.Parse(time.DateOnly, value)
+	_, err := parseCaptureTime(value)
 	return err == nil
+}
+
+func parseCaptureTime(value string) (time.Time, error) {
+	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
+		return parsed, nil
+	}
+	return time.Parse(time.DateOnly, value)
+}
+
+func isTimeUnit(unit string) bool {
+	switch unit {
+	case "second", "minute", "hour", "day", "week", "month", "year":
+		return true
+	default:
+		return false
+	}
 }
 
 func validDriverKind(value DriverKind) bool {

@@ -67,7 +67,7 @@
         "type": { "enum": ["normal", "uniform", "exponential"] },
         "mean": { "type": "number", "exclusiveMinimum": 0 },
         "stddev": { "type": "number", "exclusiveMinimum": 0 },
-        "min": { "type": "number", "exclusiveMinimum": 0 },
+        "min": { "type": "number", "minimum": 0 },
         "max": { "type": "number", "exclusiveMinimum": 0 },
         "rate": { "type": "number", "exclusiveMinimum": 0 }
       },
