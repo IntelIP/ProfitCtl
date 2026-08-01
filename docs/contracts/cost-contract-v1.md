@@ -34,8 +34,8 @@ Every driver requires:
 - explicit RFC3339 start and end;
 - price amount, ISO 4217 currency, and price basis;
 - workload dimension;
-- evidence class, measurement status, source identity, capture time,
-  confidence, and rationale.
+- separate quantity and unit-price evidence, each with evidence class,
+  measurement status, source identity, capture time, confidence, and rationale.
 
 `variable` and `cadence` drivers also require a `per` scale basis. A variable
 driver cannot omit whether it scales per `user`, `paid_user`, or another

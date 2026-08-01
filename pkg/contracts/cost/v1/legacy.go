@@ -59,7 +59,7 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 			},
 			Window:     mapping.Window,
 			Dimensions: Dimensions{Workload: cost.Name},
-			Evidence:   legacyEvidence(cost.Source, mapping),
+			Evidence:   legacyDriverEvidence(cost.Source, mapping),
 		}
 		if err := driver.Validate(); err != nil {
 			return nil, fmt.Errorf("fixed cost %q: %w", cost.Name, err)
@@ -94,7 +94,7 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 			},
 			Window:       mapping.Window,
 			Dimensions:   Dimensions{Workload: cost.Name},
-			Evidence:     legacyEvidence(cost.Source, mapping),
+			Evidence:     legacyDriverEvidence(cost.Source, mapping),
 			Distribution: legacyDistribution(cost),
 		}
 		if err := driver.Validate(); err != nil {
@@ -135,6 +135,20 @@ func cloneFloat(value *float64) *float64 {
 	}
 	copy := *value
 	return &copy
+}
+
+func legacyDriverEvidence(source *types.CostSource, mapping LegacyMapping) DriverEvidence {
+	quantity := legacyEvidence(source, mapping)
+	unitPrice := legacyEvidence(source, mapping)
+	if err := validateClaimAuthority("quantity", quantity.Source.Type); err != nil {
+		quantity = legacyEvidence(nil, mapping)
+		quantity.ConfidenceRationale = "Legacy source was not authoritative for quantity; mapped as an unmeasured scenario assumption."
+	}
+	if err := validateClaimAuthority("unit_price", unitPrice.Source.Type); err != nil {
+		unitPrice = legacyEvidence(nil, mapping)
+		unitPrice.ConfidenceRationale = "Legacy source was not authoritative for unit price; mapped as an unmeasured scenario assumption."
+	}
+	return DriverEvidence{Quantity: quantity, UnitPrice: unitPrice}
 }
 
 func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {

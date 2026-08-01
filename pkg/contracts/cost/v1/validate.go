@@ -61,11 +61,23 @@ func (d CostDriver) Validate() error {
 	if err := d.Dimensions.Validate(); err != nil {
 		return fmt.Errorf("dimensions: %w", err)
 	}
-	if err := d.Evidence.Validate(); err != nil {
-		return fmt.Errorf("evidence: %w", err)
+	driverClaims := []struct {
+		name     string
+		evidence Evidence
+	}{
+		{"quantity", d.Evidence.Quantity},
+		{"unit_price", d.Evidence.UnitPrice},
 	}
-	if err := validateEvidenceFreshForWindow(d.Evidence, d.Window); err != nil {
-		return fmt.Errorf("evidence: %w", err)
+	for _, claim := range driverClaims {
+		if err := claim.evidence.Validate(); err != nil {
+			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
+		if err := validateClaimAuthority(claim.name, claim.evidence.Source.Type); err != nil {
+			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
+		if err := validateEvidenceFreshForWindow(claim.evidence, d.Window); err != nil {
+			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
 	}
 	if d.Distribution != nil {
 		if d.Kind != DriverVariable {
@@ -172,6 +184,9 @@ func (o CostObservation) Validate() error {
 	}
 	if o.Evidence.TotalCost.Measurement == MeasurementDerived {
 		expected := o.Quantity.Value * o.UnitPrice.Amount.Amount / o.UnitPrice.Per.Value
+		if math.IsNaN(expected) || math.IsInf(expected, 0) {
+			return errors.New("derived total_cost calculation must remain finite")
+		}
 		tolerance := math.Max(1e-9, math.Abs(expected)*1e-9)
 		if math.Abs(o.TotalCost.Amount-expected) > tolerance {
 			return fmt.Errorf("derived total_cost amount %.12g must equal quantity times unit price %.12g", o.TotalCost.Amount, expected)

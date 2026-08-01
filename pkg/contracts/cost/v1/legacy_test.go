@@ -164,8 +164,8 @@ func TestLegacyMappingCapsHighConfidenceTemplate(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, v1.SourceTemplate, drivers[0].Evidence.Source.Type)
-	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
+	require.Equal(t, v1.SourceTemplate, drivers[0].Evidence.Quantity.Source.Type)
+	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Quantity.Confidence)
 }
 
 func TestLegacyMappingCapsHighConfidenceRepoDetected(t *testing.T) {
@@ -187,7 +187,7 @@ func TestLegacyMappingCapsHighConfidenceRepoDetected(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Confidence)
+	require.Equal(t, v1.ConfidenceMedium, drivers[0].Evidence.Quantity.Confidence)
 }
 
 func TestLegacyMappingFallsBackFromFreeFormCaptureText(t *testing.T) {
@@ -210,8 +210,8 @@ func TestLegacyMappingFallsBackFromFreeFormCaptureText(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, "2026-08-01", drivers[0].Evidence.Source.CapturedAt)
-	require.Contains(t, drivers[0].Evidence.ConfidenceRationale, "May 2026")
+	require.Equal(t, "2026-08-01", drivers[0].Evidence.Quantity.Source.CapturedAt)
+	require.Contains(t, drivers[0].Evidence.Quantity.ConfidenceRationale, "May 2026")
 }
 
 func TestLegacyMappingFailsClosedWithoutVariableUnit(t *testing.T) {
@@ -297,10 +297,10 @@ func TestLegacyMappingDowngradesIncompleteProviderCatalogProvenance(t *testing.T
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, v1.SourceLegacyScenario, drivers[0].Evidence.Source.Type)
-	require.Equal(t, "https://example.com/pricing", drivers[0].Evidence.Source.URL)
-	require.Equal(t, v1.ConfidenceLow, drivers[0].Evidence.Confidence)
-	require.Contains(t, drivers[0].Evidence.ConfidenceRationale, "without v1 refresh policy")
+	require.Equal(t, v1.SourceLegacyScenario, drivers[0].Evidence.Quantity.Source.Type)
+	require.Equal(t, "https://example.com/pricing", drivers[0].Evidence.Quantity.Source.URL)
+	require.Equal(t, v1.ConfidenceLow, drivers[0].Evidence.Quantity.Confidence)
+	require.Contains(t, drivers[0].Evidence.Quantity.ConfidenceRationale, "without v1 refresh policy")
 }
 
 func TestCompatibilityFixtureIsStableJSON(t *testing.T) {

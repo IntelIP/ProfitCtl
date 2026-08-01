@@ -124,17 +124,22 @@ type Evidence struct {
 }
 
 type CostDriver struct {
-	SchemaVersion string        `json:"schema_version" yaml:"schema_version"`
-	ID            string        `json:"id" yaml:"id"`
-	Name          string        `json:"name" yaml:"name"`
-	Kind          DriverKind    `json:"kind" yaml:"kind"`
-	Quantity      Quantity      `json:"quantity" yaml:"quantity"`
-	Per           *Quantity     `json:"per,omitempty" yaml:"per,omitempty"`
-	UnitPrice     UnitPrice     `json:"unit_price" yaml:"unit_price"`
-	Window        TimeWindow    `json:"window" yaml:"window"`
-	Dimensions    Dimensions    `json:"dimensions" yaml:"dimensions"`
-	Evidence      Evidence      `json:"evidence" yaml:"evidence"`
-	Distribution  *Distribution `json:"distribution,omitempty" yaml:"distribution,omitempty"`
+	SchemaVersion string         `json:"schema_version" yaml:"schema_version"`
+	ID            string         `json:"id" yaml:"id"`
+	Name          string         `json:"name" yaml:"name"`
+	Kind          DriverKind     `json:"kind" yaml:"kind"`
+	Quantity      Quantity       `json:"quantity" yaml:"quantity"`
+	Per           *Quantity      `json:"per,omitempty" yaml:"per,omitempty"`
+	UnitPrice     UnitPrice      `json:"unit_price" yaml:"unit_price"`
+	Window        TimeWindow     `json:"window" yaml:"window"`
+	Dimensions    Dimensions     `json:"dimensions" yaml:"dimensions"`
+	Evidence      DriverEvidence `json:"evidence" yaml:"evidence"`
+	Distribution  *Distribution  `json:"distribution,omitempty" yaml:"distribution,omitempty"`
+}
+
+type DriverEvidence struct {
+	Quantity  Evidence `json:"quantity" yaml:"quantity"`
+	UnitPrice Evidence `json:"unit_price" yaml:"unit_price"`
 }
 
 type ClaimEvidence struct {

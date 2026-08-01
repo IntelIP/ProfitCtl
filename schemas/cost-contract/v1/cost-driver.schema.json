@@ -44,7 +44,59 @@
       "$ref": "common.schema.json#/$defs/dimensions"
     },
     "evidence": {
-      "$ref": "common.schema.json#/$defs/evidence"
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantity", "unit_price"],
+      "properties": {
+        "quantity": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "telemetry",
+                        "runtime_ledger",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "unit_price": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "invoice",
+                        "provider_catalog",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
     },
     "distribution": {
       "$ref": "common.schema.json#/$defs/distribution"

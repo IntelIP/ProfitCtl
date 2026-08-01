@@ -179,6 +179,19 @@ func TestProfitCtlDerivedEvidenceRequiresDerivedMeasurement(t *testing.T) {
 	require.ErrorContains(t, fixture.Observation.Validate(), "must use derived measurement")
 }
 
+func TestObservationRejectsOverflowingDerivedTotal(t *testing.T) {
+	var fixture struct {
+		Observation v1.CostObservation `json:"observation"`
+	}
+	decodeFixture(t, "upstash_idle_polling.json", &fixture)
+	fixture.Observation.Quantity.Value = 1e308
+	fixture.Observation.UnitPrice.Amount.Amount = 1e308
+	fixture.Observation.TotalCost.Amount = 0
+	fixture.Observation.Evidence.TotalCost.Source.Type = v1.SourceProfitCtlDerived
+	fixture.Observation.Evidence.TotalCost.Source.ArtifactIdentity = "profitctl://derived/overflow"
+	require.ErrorContains(t, fixture.Observation.Validate(), "must remain finite")
+}
+
 func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Source.Type = v1.SourceProviderCatalog
@@ -199,15 +212,28 @@ func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
 
 func TestDriverRejectsCatalogStaleBeforeWindow(t *testing.T) {
 	driver := validDriver()
-	driver.Evidence.Source.Type = v1.SourceProviderCatalog
-	driver.Evidence.Source.RefreshOwner = "catalog-maintainer"
-	driver.Evidence.Source.RefreshCadence = "30d"
-	driver.Evidence.Source.CapturedAt = "2026-07-01"
-	driver.Evidence.Source.StaleAfter = "2026-07-31"
+	driver.Evidence.UnitPrice.Source.Type = v1.SourceProviderCatalog
+	driver.Evidence.UnitPrice.Source.RefreshOwner = "catalog-maintainer"
+	driver.Evidence.UnitPrice.Source.RefreshCadence = "30d"
+	driver.Evidence.UnitPrice.Source.CapturedAt = "2026-07-01"
+	driver.Evidence.UnitPrice.Source.StaleAfter = "2026-07-31"
 	require.ErrorContains(t, driver.Validate(), "stale before window start")
 
-	driver.Evidence.Source.StaleAfter = "2026-08-15"
+	driver.Evidence.UnitPrice.Source.StaleAfter = "2026-08-15"
 	require.NoError(t, driver.Validate())
+}
+
+func TestDriverEnforcesClaimSpecificAuthority(t *testing.T) {
+	driver := validDriver()
+	driver.Evidence.UnitPrice.Source.Type = v1.SourceTelemetry
+	require.ErrorContains(t, driver.Validate(), "not authoritative for unit_price")
+
+	driver = validDriver()
+	driver.Evidence.Quantity.Source.Type = v1.SourceProviderCatalog
+	driver.Evidence.Quantity.Source.RefreshOwner = "catalog-maintainer"
+	driver.Evidence.Quantity.Source.RefreshCadence = "30d"
+	driver.Evidence.Quantity.Source.StaleAfter = "2026-08-15"
+	require.ErrorContains(t, driver.Validate(), "not authoritative for quantity")
 }
 
 func TestTemplateEvidenceCannotClaimHighConfidence(t *testing.T) {
@@ -308,7 +334,10 @@ func validDriver() v1.CostDriver {
 			End:   "2026-09-01T00:00:00Z",
 		},
 		Dimensions: v1.Dimensions{Workload: "api_requests"},
-		Evidence:   validEvidence(),
+		Evidence: v1.DriverEvidence{
+			Quantity:  validEvidence(),
+			UnitPrice: validEvidence(),
+		},
 	}
 }
 
