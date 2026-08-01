@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -235,8 +236,14 @@ func readCatalog(path string) (*catalogProbe, error) {
 		if !supportedSourceConfidence(entry.Source.Confidence) {
 			return nil, fmt.Errorf("entry %s has unsupported source confidence %q", entry.ID, entry.Source.Confidence)
 		}
+		if entry.Source.Type == string(types.CostSourceTemplate) && entry.Source.Confidence == "high" {
+			return nil, fmt.Errorf("entry %s template source cannot use high confidence", entry.ID)
+		}
 		if strings.TrimSpace(entry.Source.URL) == "" && strings.TrimSpace(entry.Source.ArtifactIdentity) == "" {
 			return nil, fmt.Errorf("entry %s requires source url or artifact_identity", entry.ID)
+		}
+		if strings.TrimSpace(entry.Source.URL) != "" && !validSourceURI(entry.Source.URL) {
+			return nil, fmt.Errorf("entry %s source url must be an absolute URI", entry.ID)
 		}
 		capturedAt, err := parseCapturedAt(entry.Source.CapturedAt)
 		if err != nil {
@@ -257,6 +264,17 @@ func readCatalog(path string) (*catalogProbe, error) {
 		}
 	}
 	return &catalog, nil
+}
+
+func validSourceURI(value string) bool {
+	parsed, err := url.ParseRequestURI(strings.TrimSpace(value))
+	if err != nil || !parsed.IsAbs() {
+		return false
+	}
+	if (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Host == "" {
+		return false
+	}
+	return true
 }
 
 func parseCapturedAt(value string) (time.Time, error) {

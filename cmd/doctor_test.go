@@ -121,6 +121,30 @@ func TestReadCatalogRejectsInvalidProvenanceEnums(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported source confidence")
 }
 
+func TestReadCatalogRejectsHighConfidenceTemplateSource(t *testing.T) {
+	path := writeCatalogVariant(t, "type: user_supplied", "type: template")
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	err = os.WriteFile(path, []byte(strings.Replace(string(data), "confidence: medium", "confidence: high", 1)), 0644)
+	require.NoError(t, err)
+
+	_, err = readCatalog(path)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "template source cannot use high confidence")
+}
+
+func TestReadCatalogRejectsMalformedSourceURL(t *testing.T) {
+	path := writeCatalogVariant(
+		t,
+		"artifact_identity: test/fixtures/provider_catalog_valid.yml",
+		"url: https//example.invalid/pricing",
+	)
+
+	_, err := readCatalog(path)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "source url must be an absolute URI")
+}
+
 func TestReadCatalogRejectsFutureCaptureDate(t *testing.T) {
 	path := writeCatalogVariant(t, "captured_at: 2026-07-31", "captured_at: 2099-01-01")
 
