@@ -19,7 +19,7 @@ The script installs to `~/.local/bin` by default. If that directory is not on yo
 ## Pin a Version
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.2 bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=<tag> bash
 ```
 
 ## Homebrew
@@ -48,27 +48,32 @@ curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/inst
   PROFITCTL_DOWNLOAD_BASE_URL=https://downloads.intelip.co/profitctl bash
 ```
 
-## Install from Source
+## Developer Build from Source
 
 ```bash
 git clone https://github.com/IntelIP/ProfitCtl.git
 cd ProfitCtl
 go build -o profitctl .
-./profitctl --help
+./profitctl --version
 ```
 
-## Install via go install
+## Developer Install via go install
 
 ```bash
-go install github.com/IntelIP/ProfitCtl@latest
+go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 ```
+
+Source and Go installs are explicit developer fallbacks. The checksum-verified GitHub Release installer is the primary supported path; Homebrew is secondary.
 
 ## Verify
 
 ```bash
+profitctl --version
 profitctl --help
-profitctl validate -f examples/mix_profit.yml
+profitctl doctor -f /path/to/profit.yml --catalog /path/to/provider-catalog.yml
 ```
+
+`doctor` checks the current executable identity, injected version, supported runtime, selected config, and selected provider catalog. Missing required inputs produce an actionable message and exit code `2`; the command does not select another binary, create config, or mutate machine-global state.
 
 ## Verify Release Integrity
 

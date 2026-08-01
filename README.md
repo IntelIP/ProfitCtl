@@ -16,6 +16,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `calibrate`: normalize YAML, JSON, or CSV calibration exports into ProfitCtl calibration artifacts
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
+- `doctor`: check local binary, runtime, config, and catalog readiness without changing local state
 - pricing modes: `tiered`, `mix`, and `hybrid`
 - workspace-aware pricing and minimum-floor scenario modeling
 - payment-fee modeling with monthly vs annual billing mix
@@ -33,7 +34,10 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
+profitctl --version
 ```
+
+The installer downloads a GitHub Release archive, verifies it against that release's `SHA256SUMS`, and installs `profitctl` to `~/.local/bin` unless a custom prefix is selected.
 
 ### Homebrew
 
@@ -44,20 +48,23 @@ brew install profitctl
 
 See [Install Guide](docs/INSTALL.md) for pinned versions, Homebrew, custom prefixes, and source-based installs.
 
-### Build from source
+### Developer build from source
 
 ```bash
 git clone https://github.com/IntelIP/ProfitCtl.git
 cd ProfitCtl
 go build -o profitctl .
-./profitctl --help
+./profitctl --version
+./profitctl doctor -f examples/valid_profit.yml --catalog provider_catalog/ai_saas_defaults.yml
 ```
 
-### Go install
+### Developer install with Go
 
 ```bash
-go install github.com/IntelIP/ProfitCtl@latest
+go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 ```
+
+Go-based paths are explicit developer fallbacks. GitHub Release installation is the supported user path; Homebrew is secondary.
 
 ## Quick Usage
 

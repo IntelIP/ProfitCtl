@@ -38,6 +38,14 @@ jobs:
       - name: Run tests
         run: go test ./...
 
+      - name: Verify Go developer fallback identity
+        run: |
+          GOBIN="${RUNNER_TEMP}/go-bin"
+          mkdir -p "${GOBIN}"
+          GOBIN="${GOBIN}" go install ./cmd/profitctl
+          test -x "${GOBIN}/profitctl"
+          test "$("${GOBIN}/profitctl" --version)" = "profitctl dev"
+
   verify-install-smoke:
     runs-on: ubuntu-latest
     steps:
@@ -71,13 +79,36 @@ jobs:
       - name: Run installer smoke test
         run: |
           INSTALL_DIR="${RUNNER_TEMP}/profitctl-bin"
+          TEST_HOME="${RUNNER_TEMP}/profitctl-home"
           mkdir -p "${INSTALL_DIR}"
+          mkdir -p "${TEST_HOME}"
           PROFITCTL_DOWNLOAD_BASE_URL="${PROFITCTL_TEST_MIRROR}" \
           PROFITCTL_VERSION=v0.0.0-ci \
           PROFITCTL_INSTALL_DIR="${INSTALL_DIR}" \
           bash scripts/install.sh
-          "${INSTALL_DIR}/profitctl" --help >/dev/null
-          "${INSTALL_DIR}/profitctl" validate -f examples/mix_profit.yml >/dev/null
+          env -i \
+            HOME="${TEST_HOME}" \
+            PATH="${INSTALL_DIR}:/usr/bin:/bin" \
+            CONFIG_FILE="${GITHUB_WORKSPACE}/examples/mix_profit.yml" \
+            CATALOG_FILE="${GITHUB_WORKSPACE}/provider_catalog/ai_saas_defaults.yml" \
+            sh -eu <<'EOF'
+          test "$(command -v profitctl)" = "${PATH%%:*}/profitctl"
+          test "$(profitctl --version)" = "profitctl v0.0.0-ci"
+          test "$(profitctl version)" = "profitctl v0.0.0-ci"
+          profitctl --help >/dev/null
+          profitctl validate -f "${CONFIG_FILE}" >/dev/null
+          profitctl doctor -f "${CONFIG_FILE}" --catalog "${CATALOG_FILE}" >/dev/null
+
+          set +e
+          doctor_output="$(profitctl doctor -f "${HOME}/missing-profit.yml" --catalog "${HOME}/missing-catalog.yml" 2>&1)"
+          doctor_status=$?
+          set -e
+          test "${doctor_status}" -eq 2
+          printf '%s\n' "${doctor_output}" | grep -F "[fail] config:" >/dev/null
+          printf '%s\n' "${doctor_output}" | grep -F "profitctl init --file" >/dev/null
+          printf '%s\n' "${doctor_output}" | grep -F "[fail] catalog:" >/dev/null
+          printf '%s\n' "${doctor_output}" | grep -F "no fallback or local state change was performed" >/dev/null
+          EOF
 
   security-scan:
     runs-on: ubuntu-latest
