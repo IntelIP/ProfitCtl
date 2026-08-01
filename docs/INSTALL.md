@@ -19,7 +19,7 @@ The script installs to `~/.local/bin` by default. If that directory is not on yo
 ## Pin a Version
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.1.2 bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=<tag> bash
 ```
 
 ## Homebrew
@@ -48,27 +48,43 @@ curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/inst
   PROFITCTL_DOWNLOAD_BASE_URL=https://downloads.intelip.co/profitctl bash
 ```
 
-## Install from Source
+## Developer Build from Source
 
 ```bash
 git clone https://github.com/IntelIP/ProfitCtl.git
 cd ProfitCtl
 go build -o profitctl .
-./profitctl --help
+./profitctl --version
 ```
 
-## Install via go install
+## Developer Install via go install
 
 ```bash
-go install github.com/IntelIP/ProfitCtl@latest
+go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 ```
 
-## Verify
+Choose a commit or future tag that contains `cmd/profitctl`; the current published
+`v0.2.0` tag predates this package. Source and Go installs are explicit developer
+fallbacks. The checksum-verified GitHub Release installer is the primary supported
+path; Homebrew is secondary.
+
+## Verify the Current Published Install
 
 ```bash
 profitctl --help
-profitctl validate -f examples/mix_profit.yml
 ```
+
+## Verify a Release Candidate
+
+Use these checks for an artifact built from a commit containing the stable CLI identity contract. Publishing that artifact and updating Homebrew remain separate release actions.
+
+```bash
+profitctl --version
+profitctl --help
+profitctl doctor -f /path/to/profit.yml --catalog /path/to/provider-catalog.yml
+```
+
+`doctor` checks the current executable identity, injected version, supported runtime, selected config, and selected provider catalog. Missing required inputs produce an actionable message and exit code `2`; the command does not select another binary, create config, or mutate machine-global state.
 
 ## Verify Release Integrity
 
