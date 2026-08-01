@@ -37,6 +37,10 @@ Every driver requires:
 - evidence class, measurement status, source identity, capture time,
   confidence, and rationale.
 
+`variable` and `cadence` drivers also require a `per` scale basis. A variable
+driver cannot omit whether it scales per `user`, `paid_user`, or another
+canonical subject. A cadence driver cannot omit its time denominator.
+
 Units use lowercase canonical identifiers such as `request`, `command`,
 `token`, `gibibyte`, `user`, `worker`, `hour`, or `month`. Ambiguous storage
 units such as `GB`/`gb`, free-text ratios, and generic `unit`/`units` fail
@@ -56,6 +60,19 @@ An observation binds one or more driver IDs to:
 Claim-level evidence matters. Telemetry may own quantity while a provider
 catalog owns a planning rate and an invoice owns billed total. One source must
 not silently stand in for all three claims.
+
+Claim authority is validated:
+
+- quantity: template, user input, repo detection, telemetry, runtime ledger,
+  synthetic fixture, or legacy scenario;
+- unit price: template, user input, repo detection, invoice, provider catalog,
+  synthetic fixture, or legacy scenario;
+- total cost: template, user input, invoice, ProfitCtl-derived artifact,
+  synthetic fixture, or legacy scenario.
+
+Telemetry and runtime-ledger sources cannot silently become price or total-cost
+evidence. Provider catalogs cannot silently become usage or billed-total
+evidence.
 
 ## Evidence Semantics
 
@@ -79,8 +96,13 @@ Rules:
 - `billed` requires invoice source;
 - `user_supplied` requires user-supplied source;
 - synthetic observations stay visibly synthetic;
+- derived totals must equal quantity multiplied by unit price and divided by
+  price-basis quantity within floating-point tolerance;
 - missing source identity, capture time, confidence rationale, units, time
   windows, or currency fails closed.
+
+Provider-catalog evidence additionally requires `refresh_owner`,
+`refresh_cadence`, and `stale_after`, and cannot claim high confidence.
 
 ## Current Scenario Compatibility
 
@@ -93,12 +115,21 @@ Mapping rules:
 | Legacy field | v1 mapping |
 | --- | --- |
 | `fixed_costs[].amount` | unit price per `commitment` |
-| `fixed_costs[].period` | driver `per` unit: `day`, `month`, or `year` |
+| `fixed_costs[].period` | explicit legacy-normalized commitment count and time basis |
 | `variable_costs[].cost_per_unit` | unit-price amount |
 | `variable_costs[].units_per_user` | quantity per one `user` |
 | absent variable unit | caller must supply explicit name-to-unit mapping |
 | absent scenario currency/window | caller must supply both |
 | absent source | low-confidence `legacy_scenario`; never measured |
+
+Legacy normalization details:
+
+- daily fixed costs become 30 commitments per month because the current engine
+  uses a fixed 30-day simulated month;
+- monthly fixed costs become one commitment per month;
+- yearly fixed costs become one commitment per year;
+- `user_scope: paid_users` maps to `paid_user`; other legacy variable costs map
+  to `user`.
 
 The compatibility fixture
 `test/fixtures/cost_contract/v1/legacy_valid_config_mapping.json` maps the

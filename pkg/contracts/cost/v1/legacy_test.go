@@ -9,6 +9,7 @@ import (
 	"github.com/IntelIP/ProfitCtl/internal/config"
 	"github.com/IntelIP/ProfitCtl/internal/cost"
 	v1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
+	"github.com/IntelIP/ProfitCtl/pkg/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,6 +68,46 @@ func TestLegacyMappingFailsClosedWithoutVariableUnit(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "variable cost")
 	require.ErrorContains(t, err, "unit")
+}
+
+func TestLegacyMappingPreservesPaidUserScope(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts(nil, []types.VariableCost{{
+		Name:         "Payment processing",
+		CostPerUnit:  0.30,
+		UnitsPerUser: 1,
+		UserScope:    types.UserScopePaidUsers,
+	}}, v1.LegacyMapping{
+		ArtifactIdentity: "paid.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-08-01T00:00:00Z",
+			End:   "2026-09-01T00:00:00Z",
+		},
+		VariableUnits: map[string]string{"Payment processing": "payment"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "paid_user", drivers[0].Per.Unit)
+}
+
+func TestLegacyMappingPreservesThirtyDayDailyNormalization(t *testing.T) {
+	drivers, err := v1.MapLegacyCosts([]types.FixedCost{{
+		Name:   "Daily worker",
+		Amount: 2,
+		Period: types.PeriodDaily,
+	}}, nil, v1.LegacyMapping{
+		ArtifactIdentity: "daily.yml",
+		CapturedAt:       "2026-08-01",
+		Currency:         "USD",
+		Window: v1.TimeWindow{
+			Start: "2026-07-01T00:00:00Z",
+			End:   "2026-08-01T00:00:00Z",
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, float64(30), drivers[0].Quantity.Value)
+	require.Equal(t, "month", drivers[0].Per.Unit)
+	require.Equal(t, float64(60), drivers[0].Quantity.Value*drivers[0].UnitPrice.Amount.Amount)
 }
 
 func TestCompatibilityFixtureIsStableJSON(t *testing.T) {

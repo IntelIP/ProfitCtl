@@ -35,7 +35,7 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 
 	drivers := make([]CostDriver, 0, len(fixed)+len(variable))
 	for i, cost := range fixed {
-		periodUnit, err := legacyPeriodUnit(cost.Period)
+		quantity, periodUnit, err := legacyFixedBasis(cost.Period)
 		if err != nil {
 			return nil, fmt.Errorf("fixed cost %q: %w", cost.Name, err)
 		}
@@ -44,7 +44,7 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 			ID:            fmt.Sprintf("legacy-fixed-%d", i+1),
 			Name:          cost.Name,
 			Kind:          DriverFixed,
-			Quantity:      Quantity{Value: 1, Unit: "commitment"},
+			Quantity:      Quantity{Value: quantity, Unit: "commitment"},
 			Per:           &Quantity{Value: 1, Unit: periodUnit},
 			UnitPrice: UnitPrice{
 				Amount: Money{Amount: cost.Amount, Currency: mapping.Currency},
@@ -65,13 +65,17 @@ func MapLegacyCosts(fixed []types.FixedCost, variable []types.VariableCost, mapp
 		if err := validateUnit(unit); err != nil {
 			return nil, fmt.Errorf("variable cost %q unit: %w", cost.Name, err)
 		}
+		subjectUnit := "user"
+		if types.NormalizeVariableCostUserScope(cost.UserScope) == types.UserScopePaidUsers {
+			subjectUnit = "paid_user"
+		}
 		driver := CostDriver{
 			SchemaVersion: SchemaVersion,
 			ID:            fmt.Sprintf("legacy-variable-%d", i+1),
 			Name:          cost.Name,
 			Kind:          DriverVariable,
 			Quantity:      Quantity{Value: cost.UnitsPerUser, Unit: unit},
-			Per:           &Quantity{Value: 1, Unit: "user"},
+			Per:           &Quantity{Value: 1, Unit: subjectUnit},
 			UnitPrice: UnitPrice{
 				Amount: Money{Amount: cost.CostPerUnit, Currency: mapping.Currency},
 				Per:    Quantity{Value: 1, Unit: unit},
@@ -117,15 +121,15 @@ func legacyEvidence(source *types.CostSource, mapping LegacyMapping) Evidence {
 	return evidence
 }
 
-func legacyPeriodUnit(period types.CostPeriod) (string, error) {
+func legacyFixedBasis(period types.CostPeriod) (float64, string, error) {
 	switch period {
 	case types.PeriodDaily:
-		return "day", nil
+		return 30, "month", nil
 	case types.PeriodMonthly:
-		return "month", nil
+		return 1, "month", nil
 	case types.PeriodYearly:
-		return "year", nil
+		return 1, "year", nil
 	default:
-		return "", fmt.Errorf("unsupported period %q", period)
+		return 0, "", fmt.Errorf("unsupported period %q", period)
 	}
 }

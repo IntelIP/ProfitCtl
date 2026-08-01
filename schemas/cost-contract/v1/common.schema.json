@@ -63,6 +63,23 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "captured_at"],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "const": "provider_catalog" }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": [
+              "refresh_owner",
+              "refresh_cadence",
+              "stale_after"
+            ]
+          }
+        }
+      ],
       "anyOf": [
         { "required": ["artifact_identity"] },
         { "required": ["url"] }
@@ -77,6 +94,7 @@
             "runtime_ledger",
             "invoice",
             "provider_catalog",
+            "profitctl_derived",
             "synthetic_fixture",
             "legacy_scenario"
           ]
@@ -86,12 +104,38 @@
         "captured_at": {
           "type": "string",
           "description": "ISO date or RFC3339 timestamp."
+        },
+        "refresh_owner": { "type": "string", "minLength": 1 },
+        "refresh_cadence": { "type": "string", "minLength": 1 },
+        "stale_after": {
+          "type": "string",
+          "description": "ISO date or RFC3339 timestamp."
         }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "provider_catalog" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        }
+      ],
       "required": [
         "kind",
         "measurement",

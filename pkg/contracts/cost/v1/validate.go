@@ -29,6 +29,9 @@ func (d CostDriver) Validate() error {
 	if !validDriverKind(d.Kind) {
 		return fmt.Errorf("unsupported driver kind %q", d.Kind)
 	}
+	if (d.Kind == DriverVariable || d.Kind == DriverCadence) && d.Per == nil {
+		return fmt.Errorf("%s driver requires per scale basis", d.Kind)
+	}
 	if err := d.Quantity.Validate(); err != nil {
 		return fmt.Errorf("quantity: %w", err)
 	}
@@ -107,6 +110,16 @@ func (o CostObservation) Validate() error {
 	for _, claim := range claims {
 		if err := claim.evidence.Validate(); err != nil {
 			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
+		if err := validateClaimAuthority(claim.name, claim.evidence.Source.Type); err != nil {
+			return fmt.Errorf("evidence.%s: %w", claim.name, err)
+		}
+	}
+	if o.Evidence.TotalCost.Measurement == MeasurementDerived {
+		expected := o.Quantity.Value * o.UnitPrice.Amount.Amount / o.UnitPrice.Per.Value
+		tolerance := math.Max(1e-9, math.Abs(expected)*1e-9)
+		if math.Abs(o.TotalCost.Amount-expected) > tolerance {
+			return fmt.Errorf("derived total_cost amount %.12g must equal quantity times unit price %.12g", o.TotalCost.Amount, expected)
 		}
 	}
 	return nil
@@ -192,6 +205,19 @@ func (e Evidence) Validate() error {
 	if !validCaptureTime(e.Source.CapturedAt) {
 		return errors.New("source.captured_at must be an RFC3339 timestamp or ISO date")
 	}
+	if e.Source.Type == SourceProviderCatalog {
+		if strings.TrimSpace(e.Source.RefreshOwner) == "" ||
+			strings.TrimSpace(e.Source.RefreshCadence) == "" ||
+			strings.TrimSpace(e.Source.StaleAfter) == "" {
+			return errors.New("provider_catalog source requires refresh_owner, refresh_cadence, and stale_after")
+		}
+		if !validCaptureTime(e.Source.StaleAfter) {
+			return errors.New("source.stale_after must be an RFC3339 timestamp or ISO date")
+		}
+		if e.Confidence == ConfidenceHigh {
+			return errors.New("provider_catalog evidence cannot claim high confidence")
+		}
+	}
 	if e.Measurement == MeasurementMeasured && e.Source.Type != SourceTelemetry &&
 		e.Source.Type != SourceRuntimeLedger && e.Source.Type != SourceInvoice {
 		return errors.New("measured evidence requires telemetry, runtime_ledger, or invoice source")
@@ -210,6 +236,36 @@ func (e Evidence) Validate() error {
 	}
 	if e.Kind == EvidencePredicted && e.Measurement == MeasurementMeasured {
 		return errors.New("predicted evidence cannot claim measured status")
+	}
+	return nil
+}
+
+func validateClaimAuthority(claim string, source SourceType) error {
+	var allowed bool
+	switch claim {
+	case "quantity":
+		switch source {
+		case SourceTemplate, SourceUserSupplied, SourceRepoDetected, SourceTelemetry,
+			SourceRuntimeLedger, SourceSyntheticFixture, SourceLegacyScenario:
+			allowed = true
+		}
+	case "unit_price":
+		switch source {
+		case SourceTemplate, SourceUserSupplied, SourceRepoDetected, SourceInvoice,
+			SourceProviderCatalog, SourceSyntheticFixture, SourceLegacyScenario:
+			allowed = true
+		}
+	case "total_cost":
+		switch source {
+		case SourceTemplate, SourceUserSupplied, SourceInvoice,
+			SourceProfitCtlDerived, SourceSyntheticFixture, SourceLegacyScenario:
+			allowed = true
+		}
+	default:
+		return fmt.Errorf("unsupported claim %q", claim)
+	}
+	if !allowed {
+		return fmt.Errorf("source type %q is not authoritative for %s claim", source, claim)
 	}
 	return nil
 }
@@ -271,7 +327,7 @@ func validSourceType(value SourceType) bool {
 	switch value {
 	case SourceTemplate, SourceUserSupplied, SourceRepoDetected, SourceTelemetry,
 		SourceRuntimeLedger, SourceInvoice, SourceProviderCatalog,
-		SourceSyntheticFixture, SourceLegacyScenario:
+		SourceProfitCtlDerived, SourceSyntheticFixture, SourceLegacyScenario:
 		return true
 	default:
 		return false

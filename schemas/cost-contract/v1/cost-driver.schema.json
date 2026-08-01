@@ -43,5 +43,18 @@
     "evidence": {
       "$ref": "common.schema.json#/$defs/evidence"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": { "enum": ["variable", "cadence"] }
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["per"]
+      }
+    }
+  ]
 }

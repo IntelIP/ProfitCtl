@@ -42,6 +42,7 @@ const (
 	SourceRuntimeLedger    SourceType = "runtime_ledger"
 	SourceInvoice          SourceType = "invoice"
 	SourceProviderCatalog  SourceType = "provider_catalog"
+	SourceProfitCtlDerived SourceType = "profitctl_derived"
 	SourceSyntheticFixture SourceType = "synthetic_fixture"
 	SourceLegacyScenario   SourceType = "legacy_scenario"
 )
@@ -87,6 +88,9 @@ type SourceReference struct {
 	ArtifactIdentity string     `json:"artifact_identity,omitempty" yaml:"artifact_identity,omitempty"`
 	URL              string     `json:"url,omitempty" yaml:"url,omitempty"`
 	CapturedAt       string     `json:"captured_at" yaml:"captured_at"`
+	RefreshOwner     string     `json:"refresh_owner,omitempty" yaml:"refresh_owner,omitempty"`
+	RefreshCadence   string     `json:"refresh_cadence,omitempty" yaml:"refresh_cadence,omitempty"`
+	StaleAfter       string     `json:"stale_after,omitempty" yaml:"stale_after,omitempty"`
 }
 
 // Evidence classifies a claim separately from its provenance. A source label

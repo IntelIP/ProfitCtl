@@ -43,10 +43,22 @@ func TestDriverRejectsMissingTimeWindow(t *testing.T) {
 	require.ErrorContains(t, driver.Validate(), "window")
 }
 
+func TestScalingDriversRequirePerBasis(t *testing.T) {
+	for _, kind := range []v1.DriverKind{v1.DriverVariable, v1.DriverCadence} {
+		driver := validDriver()
+		driver.Kind = kind
+		driver.Per = nil
+		require.ErrorContains(t, driver.Validate(), "requires per scale basis")
+	}
+}
+
 func TestEvidenceDoesNotTreatProvenanceAsMeasurement(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Measurement = v1.MeasurementMeasured
 	evidence.Source.Type = v1.SourceProviderCatalog
+	evidence.Source.RefreshOwner = "catalog-maintainer"
+	evidence.Source.RefreshCadence = "30d"
+	evidence.Source.StaleAfter = "2026-09-01"
 	require.ErrorContains(t, evidence.Validate(), "measured evidence requires")
 }
 
@@ -54,6 +66,52 @@ func TestBilledEvidenceRequiresInvoice(t *testing.T) {
 	evidence := validEvidence()
 	evidence.Kind = v1.EvidenceBilled
 	require.ErrorContains(t, evidence.Validate(), "invoice")
+}
+
+func TestObservationEnforcesClaimSpecificAuthority(t *testing.T) {
+	var fixture struct {
+		Observation v1.CostObservation `json:"observation"`
+	}
+	decodeFixture(t, "upstash_idle_polling.json", &fixture)
+	fixture.Observation.Evidence.UnitPrice = v1.Evidence{
+		Kind:        v1.EvidenceObserved,
+		Measurement: v1.MeasurementMeasured,
+		Source: v1.SourceReference{
+			Type:             v1.SourceTelemetry,
+			ArtifactIdentity: "telemetry",
+			CapturedAt:       "2026-08-01",
+		},
+		Confidence:          v1.ConfidenceHigh,
+		ConfidenceRationale: "Measured usage only.",
+	}
+	require.ErrorContains(t, fixture.Observation.Validate(), "not authoritative for unit_price")
+}
+
+func TestObservationValidatesDerivedTotalArithmetic(t *testing.T) {
+	var fixture struct {
+		Observation v1.CostObservation `json:"observation"`
+	}
+	decodeFixture(t, "upstash_idle_polling.json", &fixture)
+	fixture.Observation.Evidence.TotalCost.Source.Type = v1.SourceProfitCtlDerived
+	fixture.Observation.Evidence.TotalCost.Source.ArtifactIdentity = "profitctl://derived/upstash-total"
+	require.NoError(t, fixture.Observation.Validate())
+	fixture.Observation.TotalCost.Amount = 999
+	require.ErrorContains(t, fixture.Observation.Validate(), "derived total_cost")
+}
+
+func TestProviderCatalogRequiresStalePolicyAndCapsConfidence(t *testing.T) {
+	evidence := validEvidence()
+	evidence.Source.Type = v1.SourceProviderCatalog
+	require.ErrorContains(t, evidence.Validate(), "refresh_owner")
+
+	evidence.Source.RefreshOwner = "catalog-maintainer"
+	evidence.Source.RefreshCadence = "30d"
+	evidence.Source.StaleAfter = "2026-09-01"
+	evidence.Confidence = v1.ConfidenceHigh
+	require.ErrorContains(t, evidence.Validate(), "cannot claim high confidence")
+
+	evidence.Confidence = v1.ConfidenceMedium
+	require.NoError(t, evidence.Validate())
 }
 
 func TestObservationRejectsDuplicateDriverIDs(t *testing.T) {
