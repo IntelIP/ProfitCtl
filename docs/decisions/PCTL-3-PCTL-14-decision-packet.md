@@ -158,6 +158,7 @@ PCTL-20 should add a source-backed Upstash catalog entry only after policy accep
 - Primary install: checksum-verified GitHub Release install script into a user-selected or temporary prefix.
 - Secondary install: Homebrew formula pinned to the same release.
 - Development fallback: explicit `go run .` or `go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>`; never silent. The command package path is required because installing the mixed-case module root would create a `ProfitCtl` binary instead of the supported `profitctl` identity.
+- Go-install availability: select a commit or future tag containing `cmd/profitctl`; the current published `v0.2.0` tag predates that package.
 - Version behavior: `profitctl version` and `profitctl --version` report injected package tag; development builds report an explicit development identity.
 - Doctor behavior: inspect current executable identity, configuration, provider catalog presence/age, and command prerequisites; explain failures; exit nonzero on missing required dependency; never switch binaries or mutate machine-global installation.
 - Release number, publication, merge, and deployment remain separate decisions.

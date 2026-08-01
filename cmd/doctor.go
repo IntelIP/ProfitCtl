@@ -106,9 +106,11 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		report("ok", "runtime", runtimeDetail)
 	}
 
-	_, configErr := config.ParseConfig(cfgFile)
+	parsedConfig, configErr := config.ParseConfig(cfgFile)
 	if configErr != nil {
 		report("fail", "config", fmt.Sprintf("%s: %v; create or select one with `profitctl init --file %s`", cfgFile, configErr, cfgFile))
+	} else if parsedConfig.Simulation == nil {
+		report("fail", "config", fmt.Sprintf("%s: simulation configuration is required", cfgFile))
 	} else {
 		report("ok", "config", cfgFile)
 	}

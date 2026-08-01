@@ -63,7 +63,9 @@ go build -o profitctl .
 go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 ```
 
-Go-based paths are explicit developer fallbacks. GitHub Release installation is the supported user path; Homebrew is secondary.
+Choose a commit or future tag that contains `cmd/profitctl`; the current published
+`v0.2.0` tag predates this package. Go-based paths are explicit developer fallbacks.
+GitHub Release installation is the supported user path; Homebrew is secondary.
 
 ## Quick Usage
 

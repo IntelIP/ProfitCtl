@@ -83,7 +83,12 @@ BIN_PATH="$(find "${EXTRACT_DIR}" -type f -name profitctl -perm -111 | head -n 1
 }
 
 "${BIN_PATH}" --help >/dev/null
+test "$("${BIN_PATH}" --version)" = "profitctl ${TAG}"
+test "$("${BIN_PATH}" version)" = "profitctl ${TAG}"
 "${BIN_PATH}" validate -f "${ROOT}/examples/mix_profit.yml" >/dev/null
+"${BIN_PATH}" doctor \
+  -f "${ROOT}/examples/mix_profit.yml" \
+  --catalog "${ROOT}/test/fixtures/provider_catalog_valid.yml" >/dev/null
 "${BIN_PATH}" compare \
   "${ROOT}/benchmark_scenarios/open_core_tiered.yml" \
   "${ROOT}/benchmark_scenarios/open_core_mix.yml" >/dev/null

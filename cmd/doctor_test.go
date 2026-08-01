@@ -53,6 +53,25 @@ func TestRunDoctorReportsMissingInputsWithoutFallback(t *testing.T) {
 	assert.Contains(t, output.String(), "no fallback or local state change was performed")
 }
 
+func TestRunDoctorRejectsConfigWithoutSimulation(t *testing.T) {
+	oldCatalog := doctorCatalog
+	defer func() { doctorCatalog = oldCatalog }()
+	doctorCatalog = filepath.Join("..", "test", "fixtures", "provider_catalog_valid.yml")
+
+	configPath := filepath.Join(t.TempDir(), "profit.yml")
+	require.NoError(t, os.WriteFile(configPath, []byte("{}\n"), 0644))
+
+	command := doctorTestCommand(configPath)
+	var output bytes.Buffer
+	command.SetOut(&output)
+
+	err := runDoctor(command, nil)
+	require.Error(t, err)
+	assert.Equal(t, 2, ExitCode(err))
+	assert.Contains(t, output.String(), "[fail] config:")
+	assert.Contains(t, output.String(), "simulation configuration is required")
+}
+
 func TestRunDoctorFailsStaleCatalog(t *testing.T) {
 	oldCatalog := doctorCatalog
 	defer func() { doctorCatalog = oldCatalog }()
