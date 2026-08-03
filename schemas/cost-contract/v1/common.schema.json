@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IntelIP/ProfitCtl/schemas/cost-contract/v1/common.schema.json",
+  "$defs": {
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,62}$",
+          "not": { "enum": ["unit", "units", "gb", "mb", "kb"] }
+        }
+      }
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "unit_price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "per"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/money" },
+        "per": {
+          "allOf": [
+            { "$ref": "#/$defs/quantity" },
+            { "properties": { "value": { "exclusiveMinimum": 0 } } }
+          ]
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workload"],
+      "properties": {
+        "provider": { "type": "string" },
+        "service": { "type": "string" },
+        "region": { "type": "string" },
+        "tier": { "type": "string" },
+        "workload": { "type": "string", "pattern": ".*\\S.*" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["normal", "uniform", "exponential"] },
+        "mean": { "type": "number", "exclusiveMinimum": 0 },
+        "stddev": { "type": "number", "exclusiveMinimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "rate": { "type": "number", "exclusiveMinimum": 0 },
+        "floor": { "type": "number", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "normal" } } },
+          "then": { "required": ["mean", "stddev"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "uniform" } } },
+          "then": { "required": ["min", "max", "floor"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "exponential" } } },
+          "then": { "required": ["rate"] }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "captured_at"],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "const": "provider_catalog" }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": [
+              "refresh_owner",
+              "refresh_cadence",
+              "stale_after"
+            ]
+          }
+        }
+      ],
+      "anyOf": [
+        { "required": ["artifact_identity"] },
+        { "required": ["url"] }
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "template",
+            "user_supplied",
+            "repo_detected",
+            "telemetry",
+            "runtime_ledger",
+            "invoice",
+            "provider_catalog",
+            "profitctl_derived",
+            "synthetic_fixture",
+            "legacy_scenario"
+          ]
+        },
+        "artifact_identity": { "type": "string", "pattern": ".*\\S.*" },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#\\s]+[^\\s]*$"
+        },
+        "captured_at": {
+          "anyOf": [
+            { "type": "string", "format": "date" },
+            { "type": "string", "format": "date-time" }
+          ],
+          "description": "ISO date or RFC3339 timestamp."
+        },
+        "refresh_owner": { "type": "string", "pattern": ".*\\S.*" },
+        "refresh_cadence": { "type": "string", "pattern": ".*\\S.*" },
+        "stale_after": {
+          "anyOf": [
+            { "type": "string", "format": "date" },
+            { "type": "string", "format": "date-time" }
+          ],
+          "description": "ISO date or RFC3339 timestamp."
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "provider_catalog" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "legacy_scenario" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "synthetic_fixture" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "measurement": { "const": "measured" }
+            },
+            "required": ["measurement"]
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "enum": ["telemetry", "runtime_ledger", "invoice"] }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "observed" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "enum": ["measured", "synthetic"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "predicted" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "enum": ["synthetic", "derived", "declared"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "user_supplied" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "const": "declared" },
+              "source": {
+                "properties": {
+                  "type": { "const": "user_supplied" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "measurement": { "const": "synthetic" }
+            },
+            "required": ["measurement"]
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "synthetic_fixture" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "profitctl_derived" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "const": "derived" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "repo_detected" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "type": { "const": "template" }
+                },
+                "required": ["type"]
+              }
+            },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "confidence": { "enum": ["low", "medium"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "billed" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "measurement": { "const": "measured" },
+              "source": {
+                "properties": {
+                  "type": { "const": "invoice" }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "kind",
+        "measurement",
+        "source",
+        "confidence",
+        "confidence_rationale"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["predicted", "observed", "billed", "user_supplied"]
+        },
+        "measurement": {
+          "enum": ["measured", "synthetic", "derived", "declared"]
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "confidence_rationale": { "type": "string", "pattern": ".*\\S.*" }
+      }
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "fixture_status": "synthetic_historical_shape",
+  "note": "Deterministic local fixture. Quantities mirror the accepted idle-polling case; rate is explicitly user-supplied and is not a current Upstash price.",
+  "drivers": [
+    {
+      "schema_version": "profitctl.cost/v1",
+      "id": "upstash-idle-poll-cadence",
+      "name": "Idle worker polling commands",
+      "kind": "cadence",
+      "quantity": {
+        "value": 1386000,
+        "unit": "command"
+      },
+      "per": {
+        "value": 1,
+        "unit": "month"
+      },
+      "unit_price": {
+        "amount": {
+          "amount": 0.000001,
+          "currency": "USD"
+        },
+        "per": {
+          "value": 1,
+          "unit": "command"
+        }
+      },
+      "window": {
+        "start": "2026-07-01T00:00:00Z",
+        "end": "2026-08-01T00:00:00Z"
+      },
+      "dimensions": {
+        "provider": "upstash",
+        "service": "redis",
+        "tier": "synthetic",
+        "workload": "idle_worker_polling"
+      },
+      "evidence": {
+        "quantity": {
+          "kind": "predicted",
+          "measurement": "declared",
+          "source": {
+            "type": "user_supplied",
+            "artifact_identity": "test/fixtures/cost_contract/v1/upstash_idle_polling.json",
+            "captured_at": "2026-08-01"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Historical command quantity supplied for a compatibility fixture; no runtime measurement claim."
+        },
+        "unit_price": {
+          "kind": "predicted",
+          "measurement": "declared",
+          "source": {
+            "type": "user_supplied",
+            "artifact_identity": "test/fixtures/cost_contract/v1/upstash_idle_polling.json",
+            "captured_at": "2026-08-01"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Synthetic user-supplied unit rate; no current provider price or billing claim."
+        }
+      }
+    }
+  ],
+  "observation": {
+    "schema_version": "profitctl.cost/v1",
+    "id": "upstash-idle-polling-synthetic-observation",
+    "driver_ids": [
+      "upstash-idle-poll-cadence"
+    ],
+    "window": {
+      "start": "2026-07-01T00:00:00Z",
+      "end": "2026-08-01T00:00:00Z"
+    },
+    "quantity": {
+      "value": 1386000,
+      "unit": "command"
+    },
+    "unit_price": {
+      "amount": {
+        "amount": 0.000001,
+        "currency": "USD"
+      },
+      "per": {
+        "value": 1,
+        "unit": "command"
+      }
+    },
+    "total_cost": {
+      "amount": 1.386,
+      "currency": "USD"
+    },
+    "dimensions": {
+      "provider": "upstash",
+      "service": "redis",
+      "tier": "synthetic",
+      "workload": "idle_worker_polling"
+    },
+    "evidence": {
+      "quantity": {
+        "kind": "observed",
+        "measurement": "synthetic",
+        "source": {
+          "type": "synthetic_fixture",
+          "artifact_identity": "test/fixtures/cost_contract/v1/upstash_idle_polling.json#observation.quantity",
+          "captured_at": "2026-08-01"
+        },
+        "confidence": "low",
+        "confidence_rationale": "Synthetic fixture preserves historical shape but does not prove runtime measurement."
+      },
+      "unit_price": {
+        "kind": "user_supplied",
+        "measurement": "declared",
+        "source": {
+          "type": "user_supplied",
+          "artifact_identity": "test/fixtures/cost_contract/v1/upstash_idle_polling.json#observation.unit_price",
+          "captured_at": "2026-08-01"
+        },
+        "confidence": "low",
+        "confidence_rationale": "Synthetic rate for contract validation; not current provider pricing."
+      },
+      "total_cost": {
+        "kind": "predicted",
+        "measurement": "derived",
+        "source": {
+          "type": "synthetic_fixture",
+          "artifact_identity": "test/fixtures/cost_contract/v1/upstash_idle_polling.json#observation.total_cost",
+          "captured_at": "2026-08-01"
+        },
+        "confidence": "low",
+        "confidence_rationale": "Derived deterministically from synthetic quantity and user-supplied rate."
+      }
+    }
+  }
+}

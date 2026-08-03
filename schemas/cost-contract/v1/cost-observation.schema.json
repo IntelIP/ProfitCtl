@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IntelIP/ProfitCtl/schemas/cost-contract/v1/cost-observation.schema.json",
+  "title": "ProfitCtl Cost Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "driver_ids",
+    "window",
+    "quantity",
+    "unit_price",
+    "total_cost",
+    "dimensions",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": "profitctl.cost/v1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+    },
+    "driver_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+      }
+    },
+    "window": {
+      "$ref": "common.schema.json#/$defs/window"
+    },
+    "quantity": {
+      "$ref": "common.schema.json#/$defs/quantity"
+    },
+    "unit_price": {
+      "$ref": "common.schema.json#/$defs/unit_price"
+    },
+    "total_cost": {
+      "$ref": "common.schema.json#/$defs/money"
+    },
+    "dimensions": {
+      "$ref": "common.schema.json#/$defs/dimensions"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantity", "unit_price", "total_cost"],
+      "properties": {
+        "quantity": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "telemetry",
+                        "runtime_ledger",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "unit_price": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "repo_detected",
+                        "invoice",
+                        "provider_catalog",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "total_cost": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/evidence" },
+            {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "template",
+                        "user_supplied",
+                        "invoice",
+                        "profitctl_derived",
+                        "synthetic_fixture",
+                        "legacy_scenario"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "source_scenario": "test/fixtures/valid_config.yml",
+  "mapping": {
+    "artifact_identity": "test/fixtures/valid_config.yml",
+    "captured_at": "2026-08-01",
+    "currency": "USD",
+    "window": {
+      "start": "2026-08-01T00:00:00Z",
+      "end": "2026-09-01T00:00:00Z"
+    },
+    "variable_units": {
+      "API Calls": "request",
+      "Storage (S3)": "gibibyte",
+      "LLM Tokens": "token"
+    }
+  },
+  "expected": [
+    { "name": "AWS EC2", "kind": "fixed", "unit": "commitment", "per_unit": "month" },
+    { "name": "Database (RDS)", "kind": "fixed", "unit": "commitment", "per_unit": "month" },
+    { "name": "Auth Service (Auth0)", "kind": "fixed", "unit": "commitment", "per_unit": "month" },
+    { "name": "Dev Team Tools", "kind": "fixed", "unit": "commitment", "per_unit": "month" },
+    { "name": "API Calls", "kind": "variable", "unit": "request", "per_unit": "user" },
+    { "name": "Storage (S3)", "kind": "variable", "unit": "gibibyte", "per_unit": "user" },
+    { "name": "LLM Tokens", "kind": "variable", "unit": "token", "per_unit": "user" }
+  ]
+}
