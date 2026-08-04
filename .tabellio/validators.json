@@ -26,12 +26,12 @@
       "summary": "CLI simulation, comparison, calibration, and output workflows"
     },
     "operational": {
-      "commands": [["go", "run", "scripts/judge_cost_standards.go", "benchmark_scenarios", "skills/profitctl-cost-aware/references/templates"]],
+      "commands": [["go", "run", "scripts/judge_cost_standards.go", "skills/profitctl-cost-aware/references/templates"]],
       "metrics": [
-        {"name": "benchmark_cost_standards_pass", "unit": "boolean", "passValue": 1, "failValue": 0}
+        {"name": "reference_cost_standards_pass", "unit": "boolean", "passValue": 1, "failValue": 0}
       ],
       "cost": {"telemetry": "available", "usd": 0, "modelCalls": 0, "toolCalls": 0},
-      "summary": "Executable benchmark cost standards with no provider calls"
+      "summary": "Executable reference-template cost standards with no provider calls"
     },
     "security": {
       "commands": [["go", "test", "./internal/scanner/...", "./internal/scanner/llm/..."]],

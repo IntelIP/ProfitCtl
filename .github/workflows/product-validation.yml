@@ -13,7 +13,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-        with: {fetch-depth: 0}
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with: {node-version: 22}
       - uses: actions/setup-go@v5
@@ -23,12 +25,14 @@ jobs:
           set -o pipefail
           npm exec --yes --package=github:IntelIP/Tabellio#3440575b59178dd0ae902e6363211f459bb7248b -- \
             tabellio-validate gate --repo . --repo-id IntelIP/ProfitCtl \
-            --base origin/main --commit HEAD --manifest tabellio.validation.json | tee tabellio-validation-result.json
+            --base "${{ github.event.pull_request.base.sha || 'origin/main' }}" \
+            --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --manifest tabellio.validation.json | tee tabellio-validation-result.json
       - name: Upload validation result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tabellio-validation-${{ github.sha }}
+          name: tabellio-validation-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             tabellio-validation-result.json
             refs/tabellio/validations/
