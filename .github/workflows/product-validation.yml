@@ -32,9 +32,9 @@ jobs:
           set -o pipefail
           runner_bin="$RUNNER_TEMP/tabellio-bin"
           mkdir -p "$runner_bin"
-          cat > "$runner_bin/tabellio-validator" <<'EOF'
+          cat > "$runner_bin/tabellio-validator" <<EOF
           #!/usr/bin/env bash
-          exec node "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "$@"
+          exec node "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "\$@"
           EOF
           chmod +x "$runner_bin/tabellio-validator"
           export PATH="$runner_bin:$PATH"
