@@ -16,6 +16,13 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/checkout@v5
+        with:
+          repository: IntelIP/Tabellio
+          ref: 3440575b59178dd0ae902e6363211f459bb7248b
+          path: .tabellio-runner
+          fetch-depth: 1
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with: {node-version: 22}
       - uses: actions/setup-go@v5
@@ -23,8 +30,11 @@ jobs:
       - name: Validate exact candidate
         run: |
           set -o pipefail
-          npm exec --yes --package=github:IntelIP/Tabellio#3440575b59178dd0ae902e6363211f459bb7248b -- \
-            tabellio-validate gate --repo . --repo-id IntelIP/ProfitCtl \
+          runner_bin="$RUNNER_TEMP/tabellio-bin"
+          mkdir -p "$runner_bin"
+          ln -s "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "$runner_bin/tabellio-validator"
+          export PATH="$runner_bin:$PATH"
+          node .tabellio-runner/scripts/tabellio-validate.mjs gate --repo . --repo-id IntelIP/ProfitCtl \
             --base "${{ github.event.pull_request.base.sha || 'origin/main' }}" \
             --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
             --manifest tabellio.validation.json | tee tabellio-validation-result.json
