@@ -32,7 +32,11 @@ jobs:
           set -o pipefail
           runner_bin="$RUNNER_TEMP/tabellio-bin"
           mkdir -p "$runner_bin"
-          ln -s "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "$runner_bin/tabellio-validator"
+          cat > "$runner_bin/tabellio-validator" <<'EOF'
+          #!/usr/bin/env bash
+          exec node "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "$@"
+          EOF
+          chmod +x "$runner_bin/tabellio-validator"
           export PATH="$runner_bin:$PATH"
           node .tabellio-runner/scripts/tabellio-validate.mjs gate --repo . --repo-id IntelIP/ProfitCtl \
             --base "${{ github.event.pull_request.base.sha || 'origin/main' }}" \
