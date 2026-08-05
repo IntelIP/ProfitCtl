@@ -11,14 +11,17 @@
       "Cost configuration and provenance contracts reject malformed or unsupported inputs.",
       "Pricing, margin, covenant, and simulation results match executable oracles.",
       "CLI simulate, compare, calibrate, and output workflows remain correct.",
-      "Maintained reference cost templates satisfy declared cost-model standards."
+      "Maintained reference cost templates satisfy declared cost-model standards.",
+      "Source-backed assessment and recommendation fixtures satisfy receipt, inference, arithmetic, and decision standards."
     ],
     "invariants": [
       "Validation is deterministic and makes no live provider call.",
-      "Provider-derived and telemetry-derived costs retain explicit provenance and confidence."
+      "Provider-derived and telemetry-derived costs retain explicit provenance and confidence.",
+      "Assessment validation reports zero model calls, zero tool calls, and zero provider cost."
     ],
     "forbiddenOutcomes": [
       "A malformed structured provider response is accepted.",
+      "An unofficial receipt URL, unsupported price, incorrect cost equation, or unlabeled inference is accepted.",
       "Validation invokes OpenRouter, publishes a release, deploys, or mutates billing.",
       "Unknown validation cost is treated as zero."
     ],
