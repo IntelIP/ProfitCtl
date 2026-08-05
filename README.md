@@ -14,6 +14,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `simulate`: run 12-month scale + Monte Carlo stress simulations
 - `compare`: evaluate multiple pricing scenarios side by side
 - `calibrate`: normalize YAML, JSON, or CSV calibration exports into ProfitCtl calibration artifacts
+- `ledger`: ingest deterministic cost-contract fixtures into a local normalized ledger and query stable JSON
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
 - `doctor`: check local binary, runtime, config, and catalog readiness without changing local state
@@ -84,6 +85,10 @@ profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
 
 # normalize a calibration export
 profitctl calibrate --input examples/calibration_exports/hybrid_profit_calibration.csv
+
+# ingest and query a deterministic cost observation locally
+profitctl ledger ingest --ledger /tmp/profitctl-ledger.json --input test/fixtures/cost_contract/v1/upstash_idle_polling.json
+profitctl ledger query --ledger /tmp/profitctl-ledger.json --workload idle_worker_polling
 
 # strict config validation
 profitctl validate -f examples/valid_profit.yml
