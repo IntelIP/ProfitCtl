@@ -348,6 +348,29 @@ func TestJudgeRecommendationFileRejectsKeywordOnlyArtifact(t *testing.T) {
 	}
 }
 
+func TestJudgeRecommendationFileRejectsNegatedSections(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	body := `Recommendation: no recommendation provided
+Assumptions: no assumptions provided
+Economics: no fixed cost, variable cost, margin, p95, cost per user, covenant, source, or confidence provided
+Alternative: no alternative provided
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if report.Passed {
+		t.Fatal("expected negated recommendation sections to fail")
+	}
+	for _, section := range []string{"recommendation", "assumptions", "economics", "alternative"} {
+		if !issuesContain(report.Issues, "labeled "+section+" section") {
+			t.Fatalf("expected %s placeholder failure, got %v", section, report.Issues)
+		}
+	}
+}
+
 func TestCollectStandardsFilesDirectoryOnlyCollectsYAML(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "note.md"), []byte("Recommendation: no"), 0o600); err != nil {

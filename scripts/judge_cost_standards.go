@@ -777,19 +777,29 @@ func recommendationSections(body string) map[string]string {
 func requireRecommendationSection(report *FileReport, sections map[string]string, label string) {
 	value, exists := sections[label]
 	normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), "."))
-	placeholders := map[string]struct{}{
-		"n/a":           {},
-		"no":            {},
-		"no " + label:   {},
-		"none":          {},
-		"not available": {},
-		"not provided":  {},
-		"unknown":       {},
-	}
-	_, placeholder := placeholders[normalized]
-	if !exists || placeholder || len(strings.Fields(value)) < 2 {
+	if !exists || recommendationSectionPlaceholder(label, normalized) || len(strings.Fields(value)) < 2 {
 		report.Issues = append(report.Issues, fmt.Sprintf("recommendation artifact needs a labeled %s section with a non-placeholder value", label))
 	}
+}
+
+func recommendationSectionPlaceholder(label, value string) bool {
+	for _, placeholder := range []string{"n/a", "no", "none", "not available", "not provided", "unknown"} {
+		if value == placeholder || strings.HasPrefix(value, placeholder+" ") {
+			return true
+		}
+	}
+	labels := []string{label}
+	if label == "assumptions" {
+		labels = append(labels, "assumption")
+	}
+	for _, candidate := range labels {
+		for _, suffix := range []string{"", " available", " identified", " provided"} {
+			if value == "no "+candidate+suffix {
+				return true
+			}
+		}
+	}
+	return label == "economics" && strings.HasPrefix(value, "no fixed cost")
 }
 
 func requireAny(report *FileReport, issue string, body string, terms ...string) {
