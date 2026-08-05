@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "tabellio-adapter/v0.1",
+  "profiles": {
+    "static": {
+      "commands": [["go", "vet", "./..."], ["go", "test", "./..."]],
+      "metrics": [],
+      "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
+      "summary": "Go vet and complete repository tests"
+    },
+    "schema": {
+      "commands": [["go", "test", "./internal/config/...", "./pkg/..."]],
+      "metrics": [{"name": "cost_config_contracts_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
+      "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
+      "summary": "Cost configuration parsing, provenance, and validation contracts"
+    },
+    "semantic": {
+      "commands": [["go", "test", "./internal/cost/...", "./internal/pricing/...", "./internal/simulation/...", "./internal/covenant/..."]],
+      "metrics": [{"name": "pricing_and_simulation_oracles_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
+      "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
+      "summary": "Pricing, margin, cost, covenant, and Monte Carlo oracles"
+    },
+    "workflow": {
+      "commands": [["go", "test", "./cmd/...", "./internal/output/...", "./test/integration/..."]],
+      "metrics": [{"name": "cli_simulation_workflows_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
+      "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
+      "summary": "CLI simulation, comparison, calibration, and output workflows"
+    },
+    "operational": {
+      "commands": [["go", "run", "scripts/judge_cost_standards.go", "skills/profitctl-cost-aware/references/templates"]],
+      "metrics": [
+        {"name": "reference_cost_standards_pass", "unit": "boolean", "passValue": 1, "failValue": 0}
+      ],
+      "cost": {"telemetry": "available", "usd": 0, "modelCalls": 0, "toolCalls": 0},
+      "summary": "Executable reference-template cost standards with no provider calls"
+    },
+    "security": {
+      "commands": [["go", "test", "./internal/scanner/...", "./internal/scanner/llm/..."]],
+      "metrics": [{"name": "structured_detection_boundaries_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
+      "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
+      "summary": "Bounded source collection and structured LLM-output rejection"
+    }
+  }
+}

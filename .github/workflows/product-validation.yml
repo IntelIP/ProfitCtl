@@ -1,0 +1,62 @@
+name: product-validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/checkout@v5
+        with:
+          repository: IntelIP/Tabellio
+          ref: 3440575b59178dd0ae902e6363211f459bb7248b
+          path: .tabellio-runner
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - name: Validate exact candidate
+        run: |
+          set -o pipefail
+          runner_bin="$RUNNER_TEMP/tabellio-bin"
+          mkdir -p "$runner_bin"
+          cat > "$runner_bin/tabellio-validator" <<EOF
+          #!/usr/bin/env bash
+          exec node "$GITHUB_WORKSPACE/.tabellio-runner/scripts/tabellio-validator.mjs" "\$@"
+          EOF
+          chmod +x "$runner_bin/tabellio-validator"
+          export PATH="$runner_bin:$PATH"
+          node .tabellio-runner/scripts/tabellio-validate.mjs gate --repo . --repo-id IntelIP/ProfitCtl \
+            --base "${{ github.event.pull_request.base.sha || 'origin/main' }}" \
+            --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --manifest tabellio.validation.json | tee tabellio-validation-result.json
+      - name: Export validation ledger
+        if: always()
+        run: |
+          if git show-ref --verify --quiet refs/tabellio/validations; then
+            git bundle create tabellio-validation-ledger.bundle refs/tabellio/validations
+          else
+            printf 'Validation ledger ref unavailable.\n' > tabellio-validation-ledger-unavailable.txt
+          fi
+      - name: Upload validation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabellio-validation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            tabellio-validation-result.json
+            tabellio-validation-ledger.bundle
+            tabellio-validation-ledger-unavailable.txt
+          if-no-files-found: warn
