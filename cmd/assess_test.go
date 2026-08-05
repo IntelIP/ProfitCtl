@@ -71,7 +71,7 @@ func TestRunAssess_WritesSourceBackedCostDraft(t *testing.T) {
 
 	provider := &sequenceProvider{responses: []string{
 		`{"providers":[{"name":"OpenRouter","provider":"openrouter","official_domain":"openrouter.ai","evidence_files":["go.mod"]}]}`,
-		`{"assumptions":[{"name":"assessments_per_month","value":"1","source":"inferred","rationale":"starter scale"}],"cost_lines":[{"name":"GPT-5.6 Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 / $6 per 1M tokens","confidence":"medium"},{"name":"Exa pricing searches","provider":"exa","unit":"search request","price_per_unit_usd":0.005,"units_per_month":2,"monthly_cost_usd":0.01,"source_url":"https://exa.ai/pricing","source_excerpt":"$0.005 per search","confidence":"medium"}],"recommendation":{"summary":"Use this as a starter scenario.","next_steps":["Review it."]}}`,
+		`{"assumptions":[{"name":"assessments_per_month","value":"1","source":"inferred","rationale":"starter scale"}],"cost_lines":[{"name":"GPT-5.6 Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per 1M input tokens","confidence":"medium"},{"name":"Exa pricing searches","provider":"exa","unit":"search","price_per_unit_usd":0.005,"units_per_month":2,"monthly_cost_usd":0.01,"source_url":"https://exa.ai/pricing","source_excerpt":"$0.005 per search","confidence":"medium"}],"recommendation":{"summary":"Use this as a starter scenario.","next_steps":["Review it."]}}`,
 	}}
 	searcher := &fakeExaSearcher{response: exa.SearchResponse{
 		RequestID: "exa-request",
@@ -79,7 +79,7 @@ func TestRunAssess_WritesSourceBackedCostDraft(t *testing.T) {
 			{
 				Title:      "GPT-5.6 Terra",
 				URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
-				Highlights: []string{"$1 / $6 per 1M tokens"},
+				Highlights: []string{"$1 per 1M input tokens"},
 			},
 			{
 				Title:      "Exa pricing",
@@ -137,6 +137,7 @@ func TestPricingSearchTarget_BindsOpenRouterToAssessmentModel(t *testing.T) {
 
 	result, ok := firstOfficialResult([]exa.SearchResult{
 		{URL: "https://openrouter.ai/pricing"},
+		{URL: "https://openrouter.ai/openai/gpt-5.6-terra-pro"},
 		{URL: "https://openrouter.ai/openai/gpt-5.6-terra"},
 	}, "openrouter.ai", requiredPath)
 	assert.True(t, ok)
@@ -145,6 +146,14 @@ func TestPricingSearchTarget_BindsOpenRouterToAssessmentModel(t *testing.T) {
 	query, requiredPath = pricingSearchTarget(llm.ProviderCandidate{Name: "Exa", Provider: "exa"}, defaultAssessModel)
 	assert.Equal(t, "Exa pricing", query)
 	assert.Equal(t, "/pricing", requiredPath)
+}
+
+func TestFirstOfficialResult_RejectsPrefixModelSlug(t *testing.T) {
+	_, ok := firstOfficialResult([]exa.SearchResult{
+		{URL: "https://openrouter.ai/openai/gpt-5.6-terra-pro"},
+	}, "openrouter.ai", "/openai/gpt-5.6-terra")
+
+	assert.False(t, ok)
 }
 
 func TestFirstOfficialResult_RejectsLookalikeDomains(t *testing.T) {
@@ -186,6 +195,20 @@ func TestEnsureAssessmentRuntimeReceipts_AddsModelAndResearchReceipts(t *testing
 	assert.Equal(t, "assessment_research", receipts[2].Role)
 	assert.Equal(t, "OpenRouter openai/gpt-5.6-terra pricing", searcher.requests[0].Query)
 	assert.Equal(t, "Exa pricing", searcher.requests[1].Query)
+}
+
+func TestRetrievePricingReceipt_RejectsUntrustedDomain(t *testing.T) {
+	searcher := &fakeExaSearcher{}
+
+	_, err := retrievePricingReceipt(context.Background(), searcher, llm.ProviderCandidate{
+		Name:           "OpenRouter",
+		Provider:       "openrouter",
+		OfficialDomain: "openrouter.example",
+	}, defaultAssessModel, "assessment_model")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `trusted official domain "openrouter.ai"`)
+	assert.Empty(t, searcher.requests)
 }
 
 func TestRunAssess_RequiresBothKeys(t *testing.T) {

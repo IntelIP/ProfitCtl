@@ -207,6 +207,14 @@ func ensureAssessmentRuntimeReceipts(ctx context.Context, searcher exa.Searcher,
 }
 
 func retrievePricingReceipt(ctx context.Context, searcher exa.Searcher, provider llm.ProviderCandidate, assessmentModel, role string) (llm.PricingReceipt, error) {
+	trustedDomain, supported := llm.TrustedOfficialDomain(provider.Provider)
+	if !supported {
+		return llm.PricingReceipt{}, fmt.Errorf("provider %q is not in the trusted provider registry", provider.Provider)
+	}
+	if !strings.EqualFold(strings.TrimSpace(provider.OfficialDomain), trustedDomain) {
+		return llm.PricingReceipt{}, fmt.Errorf("provider %q must use trusted official domain %q", provider.Provider, trustedDomain)
+	}
+	provider.OfficialDomain = trustedDomain
 	query, requiredPath := pricingSearchTarget(provider, assessmentModel)
 	response, err := searcher.Search(ctx, exa.SearchRequest{
 		Query:          query,
@@ -230,7 +238,7 @@ func retrievePricingReceipt(ctx context.Context, searcher exa.Searcher, provider
 		CapturedAt: assessNow().UTC().Format(time.RFC3339),
 		Title:      result.Title,
 		URL:        result.URL,
-		Highlights: result.Highlights,
+		Highlights: llm.NormalizePricingHighlights(result.Highlights),
 	}, nil
 }
 
@@ -253,11 +261,17 @@ func firstOfficialResult(results []exa.SearchResult, domain, requiredPath string
 		}
 		host := strings.ToLower(parsed.Hostname())
 		if host == domain || strings.HasSuffix(host, "."+domain) {
-			if requiredPath != "" && !strings.Contains(strings.ToLower(parsed.Path), strings.ToLower(requiredPath)) {
+			if requiredPath != "" && !exactPathMatch(parsed.Path, requiredPath) {
 				continue
 			}
 			return result, true
 		}
 	}
 	return exa.SearchResult{}, false
+}
+
+func exactPathMatch(actual, required string) bool {
+	actual = strings.Trim(strings.ToLower(strings.TrimSpace(actual)), "/")
+	required = strings.Trim(strings.ToLower(strings.TrimSpace(required)), "/")
+	return actual == required
 }

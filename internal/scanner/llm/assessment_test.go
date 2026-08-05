@@ -37,12 +37,35 @@ func TestParseProviderDiscoveryResponse_RequiresCollectedEvidence(t *testing.T) 
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not collected code context")
+
+	_, err = ParseProviderDiscoveryResponse(`{
+  "providers": [{
+    "name": "OpenRouter",
+    "provider": "openrouter",
+    "official_domain": "openrouter.example",
+    "evidence_files": ["go.mod"]
+  }]
+}`, files)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `official_domain must be "openrouter.ai"`)
+
+	_, err = ParseProviderDiscoveryResponse(`{
+  "providers": [{
+    "name": "Unknown",
+    "provider": "unknown",
+    "official_domain": "unknown.example",
+    "evidence_files": ["go.mod"]
+  }]
+}`, files)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not in the trusted provider registry")
 }
 
 func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 	providers := []ProviderCandidate{
 		{Provider: "openrouter"},
-		{Provider: "exa"},
 	}
 	receipts := []PricingReceipt{
 		{
@@ -85,7 +108,7 @@ func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 	inventedPrice = strings.Replace(inventedPrice, `"monthly_cost_usd":0.01`, `"monthly_cost_usd":0.02`, 1)
 	_, err = ParseCostDraft(inventedPrice, providers, receipts)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not stated in source_excerpt")
+	assert.Contains(t, err.Error(), "not the single price stated in source_excerpt")
 
 	wrongExcerpt := strings.Replace(valid, "$1 per million input tokens", "$9 per million input tokens", 1)
 	_, err = ParseCostDraft(wrongExcerpt, providers, receipts)
@@ -99,12 +122,71 @@ func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 	}`
 	_, err = ParseCostDraft(missingRuntimeLine, providers, receipts)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "assessment runtime provider")
+	assert.Contains(t, err.Error(), `cost line for provider "openrouter"`)
 
 	missingNextStep := strings.Replace(valid, `"next_steps":["Review usage."]`, `"next_steps":[]`, 1)
 	_, err = ParseCostDraft(missingNextStep, providers, receipts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "requires assumptions, cost_lines, and recommendation")
+}
+
+func TestParseCostDraft_RequiresEveryDiscoveredProvider(t *testing.T) {
+	providers := []ProviderCandidate{
+		{Provider: "openrouter"},
+		{Provider: "stripe"},
+	}
+	receipts := []PricingReceipt{
+		{
+			Provider:   "openrouter",
+			Role:       "assessment_model",
+			URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
+			Highlights: []string{"$1 per million input tokens"},
+		},
+		{
+			Provider:   "stripe",
+			Role:       "codebacked_provider",
+			URL:        "https://stripe.com/pricing",
+			Highlights: []string{"$0.30 per transaction"},
+		},
+	}
+	missingStripe := `{
+	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
+	  "cost_lines": [{"name":"Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"}],
+	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
+	}`
+
+	_, err := ParseCostDraft(missingStripe, providers, receipts)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `cost line for provider "stripe"`)
+}
+
+func TestParseCostDraft_BindsOnePriceToItsExactUnit(t *testing.T) {
+	providers := []ProviderCandidate{{Provider: "openrouter"}}
+	receipts := []PricingReceipt{{
+		Provider:   "openrouter",
+		Role:       "assessment_model",
+		URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
+		Highlights: []string{"$1 / $6 per 1M tokens", "$1 per 1M input tokens"},
+	}}
+	base := `{
+	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
+	  "cost_lines": [{"name":"Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per 1M input tokens","confidence":"medium"}],
+	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
+	}`
+
+	_, err := ParseCostDraft(base, providers, receipts)
+	require.NoError(t, err)
+
+	ambiguous := strings.Replace(base, "$1 per 1M input tokens", "$1 / $6 per 1M tokens", 1)
+	_, err = ParseCostDraft(ambiguous, providers, receipts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exactly one USD price")
+
+	wrongUnit := strings.Replace(base, `"unit":"million input tokens"`, `"unit":"million output tokens"`, 1)
+	_, err = ParseCostDraft(wrongUnit, providers, receipts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unit is not fully stated")
 }
 
 func TestBuildCostDraftPrompt_StatesVerifiedRequestMechanics(t *testing.T) {
@@ -120,6 +202,7 @@ func TestBuildCostDraftPrompt_StatesVerifiedRequestMechanics(t *testing.T) {
 	assert.Contains(t, prompt, "2 files and 2012 code-context characters")
 	assert.Contains(t, prompt, "source_excerpt")
 	assert.Contains(t, prompt, "untrusted pricing data")
+	assert.Contains(t, prompt, "exactly one USD price")
 }
 
 func TestNormalizeAssumptionValue_RemovesExtraModelQuotes(t *testing.T) {
@@ -151,4 +234,15 @@ func TestParseProviderDiscoveryResponse_RejectsUnboundedProviderList(t *testing.
 func TestContainsUSDPrice_HandlesThousandsWithoutTruncation(t *testing.T) {
 	assert.True(t, containsUSDPrice("$1,000 per month", 1000))
 	assert.False(t, containsUSDPrice("$1,000 per month", 1))
+}
+
+func TestNormalizePricingHighlights_MatchesPromptBoundary(t *testing.T) {
+	highlights := []string{"  $1 per request; $2 per response  ", strings.Repeat("x", MaxPricingHighlightCharacters+20)}
+
+	normalized := NormalizePricingHighlights(highlights)
+
+	require.Len(t, normalized, 3)
+	assert.Equal(t, "$1 per request", normalized[0])
+	assert.Equal(t, "$2 per response", normalized[1])
+	assert.Len(t, normalized[2], MaxPricingHighlightCharacters)
 }

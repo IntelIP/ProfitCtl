@@ -51,7 +51,7 @@ OPENROUTER_API_KEY=... profitctl detect --path . --out detect-report.json
 OPENROUTER_API_KEY=... EXA_API_KEY=... profitctl assess --path . --out cost-assessment.json
 ```
 
-`assess` scans active configuration, finds code-backed providers with GPT-5.6 Terra, retrieves official-domain pricing through Exa, and emits a labeled starter cost model. Repository facts and inferred scale assumptions stay separate. Every cost line must reproduce an exact pricing excerpt, and the output includes the OpenRouter and Exa execution cost plus an estimated monthly total.
+`assess` scans active configuration, finds code-backed providers with GPT-5.6 Terra, resolves their domains from ProfitCtl's trusted registry, retrieves pricing through Exa, and emits a labeled starter cost model. Repository facts and inferred scale assumptions stay separate. Every provider needs a cost line whose one stated price and unit match an exact pricing excerpt. The output also includes the OpenRouter and Exa execution cost plus an estimated monthly total.
 
 ## 5. Output modes
 
