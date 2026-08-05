@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -298,6 +299,36 @@ require github.com/stripe/stripe-go/v76 v76.15.0
 	}
 }
 
+func TestDetectCodeBackedProvidersIgnoresGenericMockNames(t *testing.T) {
+	files := map[string]string{
+		"go.mod":      "module example.com/app\n\nrequire example.com/stripe-test v1.0.0\n",
+		"config.yaml": "aws-sdk-mock: true\nopenai-compatible: false\n",
+	}
+
+	if detected := detectCodeBackedProviders(files); len(detected) != 0 {
+		t.Fatalf("expected generic mock names to be ignored, got %v", detected)
+	}
+}
+
+func TestPricedUnitScaleNormalizesExaRequestBundles(t *testing.T) {
+	tests := []struct {
+		unit  string
+		units float64
+		want  float64
+	}{
+		{unit: "search", units: 4, want: 4},
+		{unit: "thousand searches", units: 0.004, want: 4},
+		{unit: "1,000 searches", units: 0.004, want: 4},
+		{unit: "million searches", units: 0.000004, want: 4},
+	}
+
+	for _, test := range tests {
+		if got := test.units * pricedUnitScale(test.unit); math.Abs(got-test.want) > 0.000001 {
+			t.Fatalf("expected %q to normalize to %v requests, got %v", test.unit, test.want, got)
+		}
+	}
+}
+
 func TestProviderDetectionContentPreservesSingleLineGoRequirement(t *testing.T) {
 	content := `module example.com/app
 
@@ -470,6 +501,25 @@ func TestJudgeRecommendationFileAcceptsAffirmedMeasuredEvidence(t *testing.T) {
 
 	if !report.Passed {
 		t.Fatalf("expected affirmed telemetry evidence to support high certainty, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsNegatedHighCertaintyTerms(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := string(data) + "\nConfidence note: This result is not guaranteed and is not invoice-grade.\n"
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected cautious certainty language to pass, issues: %v", report.Issues)
 	}
 }
 

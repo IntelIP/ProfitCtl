@@ -421,7 +421,7 @@ func judgeAssessmentFile(file string) FileReport {
 				codeBackedUnits[line.Provider] += line.UnitsPerMonth
 			}
 			if line.Provider == "exa" && line.Role == llm.CostRoleAssessmentResearch {
-				exaRuntimeUnits += line.UnitsPerMonth
+				exaRuntimeUnits += line.UnitsPerMonth * pricedUnitScale(line.Unit)
 			}
 			if line.Provider == "openrouter" && line.Role == llm.CostRoleAssessmentModel {
 				unit := strings.ToLower(line.Unit)
@@ -608,28 +608,28 @@ type providerSignature struct {
 }
 
 var codeBackedProviderSignatures = []providerSignature{
-	{Provider: "anthropic", Aliases: []string{"anthropic"}, Markers: []string{"anthropic"}},
-	{Provider: "aws", Aliases: []string{"aws"}, Markers: []string{"github.com/aws/", "@aws-sdk/", "aws-sdk", "boto3", "botocore", "amazonaws.com", `provider "aws"`}},
-	{Provider: "azure", Aliases: []string{"azure"}, Markers: []string{"github.com/azure/", "@azure/", "azurerm", "azure.microsoft.com"}},
-	{Provider: "buildkite", Aliases: []string{"buildkite"}, Markers: []string{"buildkite"}},
+	{Provider: "anthropic", Aliases: []string{"anthropic"}, Markers: []string{"api.anthropic.com", "anthropic_api_key", "@anthropic-ai/", "github.com/anthropics/"}},
+	{Provider: "aws", Aliases: []string{"aws"}, Markers: []string{"github.com/aws/", "@aws-sdk/", "aws_access_key_id", "amazonaws.com", `provider "aws"`}},
+	{Provider: "azure", Aliases: []string{"azure"}, Markers: []string{"github.com/azure/", "@azure/", "azure.microsoft.com", "azure_client_id", `provider "azurerm"`}},
+	{Provider: "buildkite", Aliases: []string{"buildkite"}, Markers: []string{"api.buildkite.com", "buildkite_agent_token", "@buildkite/", "github.com/buildkite/"}},
 	{Provider: "clerk", Aliases: []string{"clerk"}, Markers: []string{"@clerk/", "clerk.com", "github.com/clerk/"}},
-	{Provider: "cloudflare", Aliases: []string{"cloudflare"}, Markers: []string{"cloudflare", "wrangler", "workers.dev"}},
-	{Provider: "datadog", Aliases: []string{"datadog"}, Markers: []string{"datadog", "dd_api_key"}},
+	{Provider: "cloudflare", Aliases: []string{"cloudflare"}, Markers: []string{"api.cloudflare.com", "cloudflare_api_token", "@cloudflare/", "github.com/cloudflare/", "workers.dev", `provider "cloudflare"`}},
+	{Provider: "datadog", Aliases: []string{"datadog"}, Markers: []string{"api.datadoghq.com", "datadog_api_key", "dd_api_key", "@datadog/", "github.com/datadog/"}},
 	{Provider: "exa", Aliases: []string{"exa"}, Markers: []string{"exa.ai", "exa_api_key", "exa-py", "exa-js", "github.com/exa-labs/"}},
 	{Provider: "gcp", Aliases: []string{"gcp", "google-cloud"}, Markers: []string{"cloud.google.com", "google.golang.org/api", "@google-cloud/", "google-cloud-", `provider "google"`, "google_application_credentials"}},
 	{Provider: "github", Aliases: []string{"github"}, Markers: []string{"api.github.com", "github_token", "github_app", "github_repository", "google/go-github", "@octokit/", "@actions/"}},
 	{Provider: "mongodb-atlas", Aliases: []string{"mongodb-atlas"}, Markers: []string{"mongodb+srv", "mongodb-atlas", "mongodbatlas", "go.mongodb.org/mongo-driver", "@mongodb-js/"}},
 	{Provider: "neon", Aliases: []string{"neon"}, Markers: []string{"neon.tech", "@neondatabase/", "neon_database", "neon_api_key"}},
-	{Provider: "openai", Aliases: []string{"openai"}, Markers: []string{"openai"}},
-	{Provider: "openrouter", Aliases: []string{"openrouter"}, Markers: []string{"openrouter"}},
-	{Provider: "pinecone", Aliases: []string{"pinecone"}, Markers: []string{"pinecone"}},
-	{Provider: "resend", Aliases: []string{"resend"}, Markers: []string{"resend"}},
-	{Provider: "sentry", Aliases: []string{"sentry"}, Markers: []string{"sentry"}},
-	{Provider: "stripe", Aliases: []string{"stripe"}, Markers: []string{"stripe"}},
-	{Provider: "supabase", Aliases: []string{"supabase"}, Markers: []string{"supabase"}},
-	{Provider: "twilio", Aliases: []string{"twilio"}, Markers: []string{"twilio"}},
-	{Provider: "upstash", Aliases: []string{"upstash"}, Markers: []string{"upstash"}},
-	{Provider: "vercel", Aliases: []string{"vercel"}, Markers: []string{"vercel"}},
+	{Provider: "openai", Aliases: []string{"openai"}, Markers: []string{"api.openai.com", "openai_api_key", "@openai/", "github.com/openai/", "github.com/sashabaranov/go-openai"}},
+	{Provider: "openrouter", Aliases: []string{"openrouter"}, Markers: []string{"openrouter.ai", "openrouter_api_key", "github.com/revrost/go-openrouter", "@openrouter/"}},
+	{Provider: "pinecone", Aliases: []string{"pinecone"}, Markers: []string{"api.pinecone.io", "pinecone_api_key", "@pinecone-database/", "github.com/pinecone-io/"}},
+	{Provider: "resend", Aliases: []string{"resend"}, Markers: []string{"api.resend.com", "resend_api_key", "@resend/", "github.com/resend/"}},
+	{Provider: "sentry", Aliases: []string{"sentry"}, Markers: []string{"sentry.io", "sentry_dsn", "@sentry/", "github.com/getsentry/"}},
+	{Provider: "stripe", Aliases: []string{"stripe"}, Markers: []string{"api.stripe.com", "stripe_api_key", "stripe_secret_key", "@stripe/", "github.com/stripe/"}},
+	{Provider: "supabase", Aliases: []string{"supabase"}, Markers: []string{"supabase.co", "supabase_url", "supabase_key", "@supabase/", "github.com/supabase/"}},
+	{Provider: "twilio", Aliases: []string{"twilio"}, Markers: []string{"api.twilio.com", "twilio_account_sid", "@twilio/", "github.com/twilio/"}},
+	{Provider: "upstash", Aliases: []string{"upstash"}, Markers: []string{"upstash.com", "upstash_redis_rest_url", "@upstash/", "github.com/upstash/"}},
+	{Provider: "vercel", Aliases: []string{"vercel"}, Markers: []string{"api.vercel.com", "vercel_url", "vercel_token", "@vercel/", "github.com/vercel/"}},
 }
 
 func detectCodeBackedProviders(files map[string]string) []detectedProvider {
@@ -742,7 +742,7 @@ func judgeRecommendationFile(file string) FileReport {
 	if (strings.Contains(body, "$") || strings.Contains(body, "%")) && (!hasAny(body, "source", "provenance") || !hasAny(body, "confidence")) {
 		report.Issues = append(report.Issues, "precise cost or margin claims need provenance and confidence")
 	}
-	if hasAny(body, "guaranteed", "always", "invoice-grade") && !hasMeasuredRecommendationEvidence(body) {
+	if hasAffirmedHighCertaintyClaim(body) && !hasMeasuredRecommendationEvidence(body) {
 		report.Issues = append(report.Issues, "high-certainty recommendation language needs telemetry or invoice evidence")
 	}
 	if !hasAny(body, "template", "repo_detected", "user_supplied", "provider_catalog", "telemetry", "invoice") {
@@ -805,6 +805,30 @@ func recommendationSectionPlaceholder(label, value string) bool {
 	return label == "economics" && strings.HasPrefix(value, "no fixed cost")
 }
 
+func hasAffirmedHighCertaintyClaim(body string) bool {
+	for _, line := range strings.Split(strings.ToLower(body), "\n") {
+		for _, term := range []string{"guaranteed", "always", "invoice-grade"} {
+			if !strings.Contains(line, term) {
+				continue
+			}
+			if hasAny(
+				line,
+				"not "+term,
+				"never "+term,
+				"no longer "+term,
+				"isn't "+term,
+				"is not "+term,
+				"cannot be "+term,
+				"can't be "+term,
+			) {
+				continue
+			}
+			return true
+		}
+	}
+	return false
+}
+
 func hasMeasuredRecommendationEvidence(body string) bool {
 	for _, line := range strings.Split(strings.ToLower(body), "\n") {
 		for _, sourceType := range []string{"telemetry", "invoice"} {
@@ -860,6 +884,18 @@ func recommendationEvidenceIsNegated(line, sourceType string) bool {
 		sourceType+" absent",
 		sourceType+" missing",
 	)
+}
+
+func pricedUnitScale(unit string) float64 {
+	unit = strings.ToLower(strings.TrimSpace(unit))
+	switch {
+	case hasAny(unit, "million", "1,000,000", "1000000"):
+		return 1_000_000
+	case hasAny(unit, "thousand", "1,000", "1000"):
+		return 1_000
+	default:
+		return 1
+	}
 }
 
 func requireAny(report *FileReport, issue string, body string, terms ...string) {
