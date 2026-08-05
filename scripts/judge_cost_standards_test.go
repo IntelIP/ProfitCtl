@@ -310,6 +310,25 @@ func TestDetectCodeBackedProvidersIgnoresGenericMockNames(t *testing.T) {
 	}
 }
 
+func TestDetectCodeBackedProvidersFindsDirectNPMProviderPackage(t *testing.T) {
+	files := map[string]string{
+		"package.json": `{
+			"dependencies": {
+				"stripe": "^18.0.0",
+				"stripe-test": "^1.0.0"
+			},
+			"devDependencies": {
+				"openai": "^5.0.0"
+			}
+		}`,
+	}
+
+	detected := detectCodeBackedProviders(files)
+	if len(detected) != 1 || detected[0].Provider != "stripe" {
+		t.Fatalf("expected only direct runtime Stripe dependency, got %v", detected)
+	}
+}
+
 func TestPricedUnitScaleNormalizesExaRequestBundles(t *testing.T) {
 	tests := []struct {
 		unit  string
@@ -520,6 +539,63 @@ func TestJudgeRecommendationFileAcceptsNegatedHighCertaintyTerms(t *testing.T) {
 
 	if !report.Passed {
 		t.Fatalf("expected cautious certainty language to pass, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileRejectsAffirmedClaimAfterNegatedOccurrence(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := string(data) + "\nConfidence note: This option is not always cheaper, but it is always profitable.\n"
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if report.Passed || !issuesContain(report.Issues, "high-certainty recommendation language") {
+		t.Fatalf("expected affirmed certainty occurrence to fail, got passed=%v issues=%v", report.Passed, report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsCostPerActiveUserWording(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := strings.Replace(string(data), "cost/user is $9.40", "cost per active user is $9.40", 1)
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected active-user cost wording to pass, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileRequiresGrossMarginApartFromP95(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := strings.Replace(string(data), "Modeled gross margin is 78 percent, ", "", 1)
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if report.Passed || !issuesContain(report.Issues, "gross margin evidence") {
+		t.Fatalf("expected missing gross margin to fail, got passed=%v issues=%v", report.Passed, report.Issues)
 	}
 }
 

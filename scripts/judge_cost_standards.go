@@ -632,6 +632,13 @@ var codeBackedProviderSignatures = []providerSignature{
 	{Provider: "vercel", Aliases: []string{"vercel"}, Markers: []string{"api.vercel.com", "vercel_url", "vercel_token", "@vercel/", "github.com/vercel/"}},
 }
 
+var directNPMProviderPackages = map[string][]string{
+	"openai": {"openai"},
+	"resend": {"resend"},
+	"stripe": {"stripe"},
+	"twilio": {"twilio"},
+}
+
 func detectCodeBackedProviders(files map[string]string) []detectedProvider {
 	paths := make([]string, 0, len(files))
 	for path := range files {
@@ -643,7 +650,12 @@ func detectCodeBackedProviders(files map[string]string) []detectedProvider {
 	for _, signature := range codeBackedProviderSignatures {
 		foundFile := ""
 		for _, path := range paths {
-			content := strings.ToLower(providerDetectionContent(path, files[path]))
+			rawContent := files[path]
+			if packageManifestDeclaresProvider(path, rawContent, signature.Provider) {
+				foundFile = path
+				break
+			}
+			content := strings.ToLower(providerDetectionContent(path, rawContent))
 			for _, marker := range signature.Markers {
 				if strings.Contains(content, marker) {
 					foundFile = path
@@ -663,6 +675,32 @@ func detectCodeBackedProviders(files map[string]string) []detectedProvider {
 		}
 	}
 	return detected
+}
+
+func packageManifestDeclaresProvider(path, content, provider string) bool {
+	if strings.ToLower(filepath.Base(path)) != "package.json" {
+		return false
+	}
+	packageNames := directNPMProviderPackages[provider]
+	if len(packageNames) == 0 {
+		return false
+	}
+	var manifest struct {
+		Dependencies         map[string]json.RawMessage `json:"dependencies"`
+		OptionalDependencies map[string]json.RawMessage `json:"optionalDependencies"`
+	}
+	if err := json.Unmarshal([]byte(content), &manifest); err != nil {
+		return false
+	}
+	for _, packageName := range packageNames {
+		if _, exists := manifest.Dependencies[packageName]; exists {
+			return true
+		}
+		if _, exists := manifest.OptionalDependencies[packageName]; exists {
+			return true
+		}
+	}
+	return false
 }
 
 func providerDetectionContent(path, content string) string {
@@ -731,9 +769,9 @@ func judgeRecommendationFile(file string) FileReport {
 	requireAny(&report, "recommendation artifact needs explicit assumptions", body, "assumption", "assumptions")
 	requireAny(&report, "recommendation artifact needs monthly fixed cost", body, "fixed cost", "fixed_cost")
 	requireAny(&report, "recommendation artifact needs variable cost drivers", body, "variable cost", "variable_cost", "cost driver")
-	requireAny(&report, "recommendation artifact needs margin evidence", body, "margin")
+	requireAny(&report, "recommendation artifact needs gross margin evidence", body, "gross margin", "modeled margin", "modelled margin")
 	requireAny(&report, "recommendation artifact needs p95 stress evidence", body, "p95")
-	requireAny(&report, "recommendation artifact needs cost per user evidence", body, "cost/user", "cost per user", "cost_per_user")
+	requireAny(&report, "recommendation artifact needs cost per user evidence", body, "cost/user", "cost per user", "cost_per_user", "cost/active user", "cost per active user", "cost_per_active_user")
 	requireAny(&report, "recommendation artifact needs covenant status", body, "covenant")
 	requireAny(&report, "recommendation artifact needs cheaper alternative analysis", body, "alternative", "tradeoff")
 	requireAny(&report, "recommendation artifact needs source provenance", body, "source", "provenance")
@@ -808,22 +846,29 @@ func recommendationSectionPlaceholder(label, value string) bool {
 func hasAffirmedHighCertaintyClaim(body string) bool {
 	for _, line := range strings.Split(strings.ToLower(body), "\n") {
 		for _, term := range []string{"guaranteed", "always", "invoice-grade"} {
-			if !strings.Contains(line, term) {
-				continue
+			for offset := 0; offset < len(line); {
+				index := strings.Index(line[offset:], term)
+				if index < 0 {
+					break
+				}
+				index += offset
+				prefixStart := index - 24
+				if prefixStart < 0 {
+					prefixStart = 0
+				}
+				prefix := strings.TrimSpace(line[prefixStart:index])
+				negated := false
+				for _, phrase := range []string{"not", "never", "no longer", "isn't", "is not", "cannot be", "can't be"} {
+					if prefix == phrase || strings.HasSuffix(prefix, " "+phrase) {
+						negated = true
+						break
+					}
+				}
+				if !negated {
+					return true
+				}
+				offset = index + len(term)
 			}
-			if hasAny(
-				line,
-				"not "+term,
-				"never "+term,
-				"no longer "+term,
-				"isn't "+term,
-				"is not "+term,
-				"cannot be "+term,
-				"can't be "+term,
-			) {
-				continue
-			}
-			return true
 		}
 	}
 	return false
