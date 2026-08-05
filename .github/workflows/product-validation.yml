@@ -42,6 +42,14 @@ jobs:
             --base "${{ github.event.pull_request.base.sha || 'origin/main' }}" \
             --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
             --manifest tabellio.validation.json | tee tabellio-validation-result.json
+      - name: Export validation ledger
+        if: always()
+        run: |
+          if git show-ref --verify --quiet refs/tabellio/validations; then
+            git bundle create tabellio-validation-ledger.bundle refs/tabellio/validations
+          else
+            printf 'Validation ledger ref unavailable.\n' > tabellio-validation-ledger-unavailable.txt
+          fi
       - name: Upload validation result
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,5 +57,6 @@ jobs:
           name: tabellio-validation-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             tabellio-validation-result.json
-            refs/tabellio/validations/
+            tabellio-validation-ledger.bundle
+            tabellio-validation-ledger-unavailable.txt
           if-no-files-found: warn
