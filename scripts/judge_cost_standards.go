@@ -282,8 +282,8 @@ func judgeAssessmentFile(file string) FileReport {
 	declaredProviders := make(map[string]struct{}, len(artifact.Providers))
 	for index, provider := range artifact.Providers {
 		providerKey := strings.ToLower(strings.TrimSpace(provider.Provider))
-		if providerKey == "" || strings.TrimSpace(provider.OfficialDomain) == "" || len(provider.Evidence) == 0 {
-			report.Issues = append(report.Issues, fmt.Sprintf("providers[%d] requires provider, official_domain, and exact evidence", index))
+		if strings.TrimSpace(provider.Name) == "" || providerKey == "" || strings.TrimSpace(provider.OfficialDomain) == "" || len(provider.Evidence) == 0 {
+			report.Issues = append(report.Issues, fmt.Sprintf("providers[%d] requires name, provider, official_domain, and exact evidence", index))
 			continue
 		}
 		trustedDomain, supported := llm.TrustedOfficialDomain(providerKey)
@@ -325,6 +325,12 @@ func judgeAssessmentFile(file string) FileReport {
 			if artifact.AnalyzedFiles != len(files) {
 				report.Issues = append(report.Issues, "analyzed_files must equal the recollected supported file count")
 			}
+			discoveryJSON, err := json.Marshal(llm.ProviderDiscoveryResponse{Providers: artifact.Providers})
+			if err != nil {
+				report.Issues = append(report.Issues, fmt.Sprintf("assessment providers cannot be encoded: %v", err))
+			} else if _, err := llm.ParseProviderDiscoveryResponse(string(discoveryJSON), files); err != nil {
+				report.Issues = append(report.Issues, fmt.Sprintf("assessment providers do not match provider-discovery rules: %v", err))
+			}
 			for _, detected := range detectCodeBackedProviders(files) {
 				if !declaresAnyProvider(declaredProviders, detected.Aliases) {
 					report.Issues = append(report.Issues, fmt.Sprintf(
@@ -345,6 +351,12 @@ func judgeAssessmentFile(file string) FileReport {
 		roles, rolesValid := receiptRoleTokens(receipt.Role)
 		if !rolesValid {
 			report.Issues = append(report.Issues, fmt.Sprintf("pricing_receipts[%d].role is invalid", index))
+		}
+		if hasReceiptRole(roles, llm.CostRoleAssessmentModel) && providerKey != "openrouter" {
+			report.Issues = append(report.Issues, fmt.Sprintf("pricing_receipts[%d].assessment_model role requires provider \"openrouter\"", index))
+		}
+		if hasReceiptRole(roles, llm.CostRoleAssessmentResearch) && providerKey != "exa" {
+			report.Issues = append(report.Issues, fmt.Sprintf("pricing_receipts[%d].assessment_research role requires provider \"exa\"", index))
 		}
 		receiptProviders[providerKey] = struct{}{}
 		isAssessmentModelReceipt := hasReceiptRole(roles, llm.CostRoleAssessmentModel) && providerKey == "openrouter"

@@ -41,6 +41,14 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 			wantIssue: "official_domain does not match the trusted provider registry",
 		},
 		{
+			name: "provider name is missing",
+			mutate: func(artifact map[string]any) {
+				providers := artifact["providers"].([]any)
+				providers[0].(map[string]any)["name"] = ""
+			},
+			wantIssue: "requires name, provider, official_domain, and exact evidence",
+		},
+		{
 			name: "provider evidence does not identify provider",
 			mutate: func(artifact map[string]any) {
 				providers := artifact["providers"].([]any)
@@ -132,6 +140,14 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 				receipts[0].(map[string]any)["role"] = "not_assessment_model"
 			},
 			wantIssue: "role is invalid",
+		},
+		{
+			name: "assessment model role uses code-backed provider",
+			mutate: func(artifact map[string]any) {
+				receipts := artifact["pricing_receipts"].([]any)
+				receipts[2].(map[string]any)["role"] = "assessment_model_and_codebacked_provider"
+			},
+			wantIssue: `assessment_model role requires provider "openrouter"`,
 		},
 		{
 			name: "assessment research understates request count",
