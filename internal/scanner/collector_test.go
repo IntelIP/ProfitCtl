@@ -120,6 +120,38 @@ func TestCollector_Collect_FileSizeLimit(t *testing.T) {
 	assert.NotContains(t, files, "config.yaml")
 }
 
+func TestCollector_Collect_SkipsNonRuntimeDirectories(t *testing.T) {
+	tempDir := t.TempDir()
+	testFiles := map[string]string{
+		"go.mod":                          "module test\n",
+		"deploy/runtime.yml":              "service: runtime\n",
+		"benchmark_scenarios/example.yml": "service: hypothetical\n",
+		"docs/architecture.yml":           "service: documented\n",
+		"examples/example.yml":            "service: example\n",
+		"fixtures/provider.yml":           "service: fixture\n",
+		"provider_catalog/catalog.yml":    "service: catalog\n",
+		"tests/detection_test.yml":        "service: test\n",
+	}
+
+	for path, content := range testFiles {
+		fullPath := filepath.Join(tempDir, path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0755))
+		require.NoError(t, os.WriteFile(fullPath, []byte(content), 0644))
+	}
+
+	files, err := NewCollector().Collect(tempDir)
+
+	require.NoError(t, err)
+	assert.Contains(t, files, "go.mod")
+	assert.Contains(t, files, "deploy/runtime.yml")
+	assert.NotContains(t, files, "benchmark_scenarios/example.yml")
+	assert.NotContains(t, files, "docs/architecture.yml")
+	assert.NotContains(t, files, "examples/example.yml")
+	assert.NotContains(t, files, "fixtures/provider.yml")
+	assert.NotContains(t, files, "provider_catalog/catalog.yml")
+	assert.NotContains(t, files, "tests/detection_test.yml")
+}
+
 func TestCollector_Collect_NonExistentDirectory(t *testing.T) {
 	collector := NewCollector()
 	files, err := collector.Collect("/non/existent/path")

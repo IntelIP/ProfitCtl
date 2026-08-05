@@ -113,3 +113,7 @@ func TestRunDetect_WritesReport(t *testing.T) {
 	assert.Contains(t, string(contents), `"provider": "openrouter"`)
 	assert.Contains(t, string(contents), `"analysis"`)
 }
+
+func TestDefaultDetectModel_UsesTerra(t *testing.T) {
+	assert.Equal(t, "openai/gpt-5.6-terra", defaultDetectModel)
+}

@@ -18,6 +18,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `upstash reconcile`: reconcile synthetic Redis polling fixtures into the local ledger with a machine-readable variance artifact
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
+- `assess`: detect code-backed providers, retrieve official pricing through Exa, and create a GPT-5.6 Terra starter cost model that includes its own OpenRouter and Exa execution cost
 - `doctor`: check local binary, runtime, config, and catalog readiness without changing local state
 - pricing modes: `tiered`, `mix`, and `hybrid`
 - workspace-aware pricing and minimum-floor scenario modeling
@@ -99,7 +100,12 @@ profitctl validate -f examples/valid_profit.yml
 
 # detect services/dependencies from repo files
 OPENROUTER_API_KEY=... profitctl detect --path . --out detect-report.json
+
+# build a source-backed starter cost model from the codebase
+OPENROUTER_API_KEY=... EXA_API_KEY=... profitctl assess --path . --out cost-assessment.json
 ```
+
+`assess` makes two Terra requests and one bounded official-domain Exa pricing lookup per distinct receipt. Its JSON separates repository evidence, inferred scale, exact source excerpts, cost-line math, the estimated monthly total, and the recommendation. It does not claim forecast values are actual billing.
 
 ## Release Downloads
 

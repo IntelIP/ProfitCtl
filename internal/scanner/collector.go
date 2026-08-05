@@ -8,6 +8,22 @@ import (
 	"strings"
 )
 
+var excludedConfigDirectories = map[string]struct{}{
+	".codex":              {},
+	".entire":             {},
+	".git":                {},
+	"benchmark_scenarios": {},
+	"docs":                {},
+	"examples":            {},
+	"fixtures":            {},
+	"graphify-out":        {},
+	"node_modules":        {},
+	"provider_catalog":    {},
+	"test":                {},
+	"tests":               {},
+	"vendor":              {},
+}
+
 // Collector gathers configuration files from a project directory
 type Collector struct {
 	MaxFileSize int64 // Maximum file size in bytes (default 1MB)
@@ -38,8 +54,10 @@ func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 			return nil
 		}
 
-		// Skip directories
 		if d.IsDir() {
+			if path != rootPath && c.shouldSkipDirectory(d.Name()) {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
@@ -67,6 +85,11 @@ func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 	}
 
 	return files, nil
+}
+
+func (c *Collector) shouldSkipDirectory(name string) bool {
+	_, excluded := excludedConfigDirectories[name]
+	return excluded
 }
 
 // isConfigFile checks if the filename matches our target configuration files
