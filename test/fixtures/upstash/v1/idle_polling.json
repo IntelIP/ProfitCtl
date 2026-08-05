@@ -1,0 +1,71 @@
+{
+  "schema_version": "profitctl.upstash-fixture/v1",
+  "fixture_status": "synthetic",
+  "scenario_id": "idle-polling",
+  "source": {
+    "artifact_identity": "test/fixtures/upstash/v1/idle_polling.json",
+    "captured_at": "2026-08-01"
+  },
+  "window": {
+    "start": "2026-07-01T00:00:00Z",
+    "end": "2026-08-01T00:00:00Z"
+  },
+  "workload": "idle_worker_polling",
+  "pricing": {
+    "unit_price": {
+      "amount": {
+        "amount": 0.000001,
+        "currency": "USD"
+      },
+      "per": {
+        "value": 1,
+        "unit": "command"
+      }
+    }
+  },
+  "polling": {
+    "interval_seconds": 5,
+    "worker_replicas": 3,
+    "active_seconds": 86400,
+    "commands_per_poll": 2,
+    "misses_per_poll": 1,
+    "declared_driver": "idle_polling"
+  },
+  "telemetry": [
+    {
+      "record_id": "idle-polling-telemetry-a",
+      "window": {
+        "start": "2026-07-01T00:00:00Z",
+        "end": "2026-08-01T00:00:00Z"
+      },
+      "commands": 51840,
+      "misses": 25920,
+      "artifact_identity": "test/fixtures/upstash/v1/idle_polling.json#telemetry-a",
+      "captured_at": "2026-08-01"
+    },
+    {
+      "record_id": "idle-polling-telemetry-b",
+      "window": {
+        "start": "2026-07-01T00:00:00Z",
+        "end": "2026-08-01T00:00:00Z"
+      },
+      "commands": 51840,
+      "misses": 25920,
+      "artifact_identity": "test/fixtures/upstash/v1/idle_polling.json#telemetry-b",
+      "captured_at": "2026-08-01"
+    }
+  ],
+  "billing": {
+    "export_id": "idle-polling-billing",
+    "window": {
+      "start": "2026-07-01T00:00:00Z",
+      "end": "2026-08-01T00:00:00Z"
+    },
+    "total_cost": {
+      "amount": 0.10368,
+      "currency": "USD"
+    },
+    "artifact_identity": "test/fixtures/upstash/v1/idle_polling.json#billing",
+    "captured_at": "2026-08-01"
+  }
+}

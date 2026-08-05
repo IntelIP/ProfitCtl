@@ -1,0 +1,71 @@
+{
+  "schema_version": "profitctl.upstash-fixture/v1",
+  "fixture_status": "synthetic",
+  "scenario_id": "normal-load",
+  "source": {
+    "artifact_identity": "test/fixtures/upstash/v1/normal_load.json",
+    "captured_at": "2026-08-01"
+  },
+  "window": {
+    "start": "2026-07-01T00:00:00Z",
+    "end": "2026-08-01T00:00:00Z"
+  },
+  "workload": "worker_processing",
+  "pricing": {
+    "unit_price": {
+      "amount": {
+        "amount": 0.000001,
+        "currency": "USD"
+      },
+      "per": {
+        "value": 1,
+        "unit": "command"
+      }
+    }
+  },
+  "polling": {
+    "interval_seconds": 60,
+    "worker_replicas": 2,
+    "active_seconds": 3600,
+    "commands_per_poll": 3,
+    "misses_per_poll": 0,
+    "declared_driver": "active_workload"
+  },
+  "telemetry": [
+    {
+      "record_id": "normal-load-telemetry-a",
+      "window": {
+        "start": "2026-07-01T00:00:00Z",
+        "end": "2026-08-01T00:00:00Z"
+      },
+      "commands": 180,
+      "misses": 0,
+      "artifact_identity": "test/fixtures/upstash/v1/normal_load.json#telemetry-a",
+      "captured_at": "2026-08-01"
+    },
+    {
+      "record_id": "normal-load-telemetry-b",
+      "window": {
+        "start": "2026-07-01T00:00:00Z",
+        "end": "2026-08-01T00:00:00Z"
+      },
+      "commands": 180,
+      "misses": 0,
+      "artifact_identity": "test/fixtures/upstash/v1/normal_load.json#telemetry-b",
+      "captured_at": "2026-08-01"
+    }
+  ],
+  "billing": {
+    "export_id": "normal-load-billing",
+    "window": {
+      "start": "2026-07-01T00:00:00Z",
+      "end": "2026-08-01T00:00:00Z"
+    },
+    "total_cost": {
+      "amount": 0.00036,
+      "currency": "USD"
+    },
+    "artifact_identity": "test/fixtures/upstash/v1/normal_load.json#billing",
+    "captured_at": "2026-08-01"
+  }
+}
