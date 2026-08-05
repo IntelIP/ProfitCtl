@@ -15,6 +15,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `compare`: evaluate multiple pricing scenarios side by side
 - `calibrate`: normalize YAML, JSON, or CSV calibration exports into ProfitCtl calibration artifacts
 - `ledger`: ingest deterministic cost-contract fixtures into a local normalized ledger and query stable JSON
+- `upstash reconcile`: reconcile synthetic Redis polling fixtures into the local ledger with a machine-readable variance artifact
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
 - `doctor`: check local binary, runtime, config, and catalog readiness without changing local state
@@ -90,6 +91,9 @@ profitctl calibrate --input examples/calibration_exports/hybrid_profit_calibrati
 profitctl ledger ingest --ledger /tmp/profitctl-ledger.json --input test/fixtures/cost_contract/v1/upstash_idle_polling.json
 profitctl ledger query --ledger /tmp/profitctl-ledger.json --workload idle_worker_polling
 
+# reconcile synthetic Redis polling telemetry without a provider call
+profitctl upstash reconcile --input test/fixtures/upstash/v1/idle_polling.json --ledger /tmp/profitctl-ledger.json --output /tmp/upstash-reconciliation.json
+
 # strict config validation
 profitctl validate -f examples/valid_profit.yml
 
@@ -135,6 +139,7 @@ The repo now includes IntelIP-specific economics scenario packs for conservative
 - [Architecture](docs/ARCHITECTURE.md)
 - [Open-Core Packaging](docs/OPEN_CORE_PACKAGING.md)
 - [Open-Core Roadmap](docs/OPEN_CORE_ROADMAP.md)
+- [Upstash Reconciliation v1](docs/contracts/upstash-reconciliation-v1.md)
 - [Benchmark Scenarios](benchmark_scenarios/README.md)
 - [Full Economics Cost Layers](docs/full-economics-cost-layers.md)
 - [IntelIP Ops Pricing Pack](benchmark_scenarios/intelip_ops_pricing_pack.md)
