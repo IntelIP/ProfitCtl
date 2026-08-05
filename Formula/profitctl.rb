@@ -1,26 +1,26 @@
 class Profitctl < Formula
   desc "CLI for profit-first unit economics simulations"
   homepage "https://github.com/IntelIP/ProfitCtl"
-  version "0.1.3"
+  version "0.3.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/IntelIP/ProfitCtl/releases/download/v#{version}/profitctl_v#{version}_darwin_arm64.tar.gz"
-      sha256 "fa4734c0ef5e2111f6d2a7b024ec10d01675fd27e56c932bd14fcec61ec16999"
+      sha256 "de05841ba1499cfcce8ff873d212d8077ee5c078899d2c6ee3976e79fc3a0878"
     else
       url "https://github.com/IntelIP/ProfitCtl/releases/download/v#{version}/profitctl_v#{version}_darwin_amd64.tar.gz"
-      sha256 "287e883308c2793fb12ff9e3c9d9c09bce69522925555e034bfdd31805295f8c"
+      sha256 "0b3a5c83a68efd06efbfd249b34d970c23eab65f53ee9b29ea8a488c7fc688a4"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
       url "https://github.com/IntelIP/ProfitCtl/releases/download/v#{version}/profitctl_v#{version}_linux_arm64.tar.gz"
-      sha256 "aeb904b5fe0b9e124a8073e6ea542852f7aefcf423fff6896965bd33f7365fd3"
+      sha256 "14d7a6f432ea28256f3f6f7916e87199a293f99ae3c93ae951f1384bf8726e12"
     else
       url "https://github.com/IntelIP/ProfitCtl/releases/download/v#{version}/profitctl_v#{version}_linux_amd64.tar.gz"
-      sha256 "4d3ecef622d3876665c8cc20a30b4dcb8515c3abc13ebe7014945fa9172fa7f8"
+      sha256 "cffd2fdf888198891e476109871f80300772f2f84c7654f9c9a1ec2d5049c71f"
     end
   end
 
