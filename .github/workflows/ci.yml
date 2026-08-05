@@ -71,6 +71,7 @@ jobs:
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/agents/openai.yaml"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/bin/profitctl"
+          tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/bin/profitctl-standards"
 
       - name: Build local mirror layout
         run: |
@@ -97,10 +98,15 @@ jobs:
           test -f "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/agents/openai.yaml"
           test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
           test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/bin/profitctl"
+          test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/bin/profitctl-standards"
           PATH="/usr/bin:/bin" \
             python3 "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py" \
               --template cloud-run-ai-saas > "${RUNNER_TEMP}/skill-result.json"
           python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["status"] == "ok"; assert len(data["scenarios"]) == 1' "${RUNNER_TEMP}/skill-result.json"
+          "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/bin/profitctl-standards" \
+            "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/references/templates/cloud-run-ai-saas.yml" \
+            > "${RUNNER_TEMP}/standards-result.json"
+          python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["passed"] is True' "${RUNNER_TEMP}/standards-result.json"
           env -i \
             HOME="${TEST_HOME}" \
             PATH="${INSTALL_DIR}:/usr/bin:/bin" \

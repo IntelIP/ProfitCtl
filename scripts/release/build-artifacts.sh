@@ -30,11 +30,13 @@ for entry in "${MATRIX[@]}"; do
   GOARCH="${entry##* }"
 
   BIN_NAME="profitctl"
+  STANDARDS_BIN_NAME="profitctl-standards"
   ARCHIVE_EXT="tar.gz"
   PKG_DIR="${OUT_DIR}/profitctl_${TAG}_${GOOS}_${GOARCH}"
 
   if [[ "${GOOS}" == "windows" ]]; then
     BIN_NAME="profitctl.exe"
+    STANDARDS_BIN_NAME="profitctl-standards.exe"
     ARCHIVE_EXT="zip"
   fi
 
@@ -47,9 +49,14 @@ for entry in "${MATRIX[@]}"; do
   cp -R "${SKILL_SOURCE}" "${PKG_DIR}/skills/profitctl-cost-aware"
   mkdir -p "${PKG_DIR}/skills/profitctl-cost-aware/bin"
   cp "${PKG_DIR}/${BIN_NAME}" "${PKG_DIR}/skills/profitctl-cost-aware/bin/${BIN_NAME}"
+  GOOS="${GOOS}" GOARCH="${GOARCH}" CGO_ENABLED=0 \
+    go build -trimpath -ldflags="-s -w" \
+      -o "${PKG_DIR}/skills/profitctl-cost-aware/bin/${STANDARDS_BIN_NAME}" \
+      "${ROOT}/scripts/judge_cost_standards.go"
   chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
   if [[ "${GOOS}" != "windows" ]]; then
     chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/bin/${BIN_NAME}"
+    chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/bin/${STANDARDS_BIN_NAME}"
   fi
 
   if [[ "${ARCHIVE_EXT}" == "zip" ]]; then

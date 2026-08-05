@@ -203,6 +203,9 @@ if [[ -n "$SKILL_SOURCE" ]]; then
   if [[ -f "${SKILL_TARGET}/bin/${BIN_NAME}" ]]; then
     chmod 755 "${SKILL_TARGET}/bin/${BIN_NAME}"
   fi
+  if [[ -f "${SKILL_TARGET}/bin/profitctl-standards" ]]; then
+    chmod 755 "${SKILL_TARGET}/bin/profitctl-standards"
+  fi
   log "Installed profitctl-cost-aware skill to ${SKILL_TARGET}"
 else
   log "Release ${VERSION} predates the bundled Codex skill; installed CLI only."

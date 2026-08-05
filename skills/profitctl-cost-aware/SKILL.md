@@ -42,11 +42,13 @@ For a material cost decision:
 5. When a scenario exists, copy the nearest file from `references/templates/` to a temporary directory. Apply user evidence first, then repository facts, then clearly labeled inference.
 6. Run `profitctl validate`, followed by `profitctl simulate --json` or `profitctl compare`.
 7. Keep `source.type`, `source.confidence`, `captured_at`, and `note` on every scenario cost line. Keep confidence below `high` without telemetry, invoices, contracts, or explicit user confirmation.
-8. From the ProfitCtl package root, run the standards judge before calling a scenario decision-grade:
+8. Run the version-matched standards judge before calling a scenario decision-grade:
 
    ```bash
-   go run scripts/judge_cost_standards.go /path/to/scenario.yml
+   <this-skill-directory>/bin/profitctl-standards /path/to/scenario.yml
    ```
+
+   In a source checkout before release artifacts exist, use `go run scripts/judge_cost_standards.go /path/to/scenario.yml` from the ProfitCtl package root.
 
 ## Portability and Failures
 

@@ -41,6 +41,17 @@ class PortableSkillTests(unittest.TestCase):
                 msg=f"machine-specific path in {path.relative_to(SKILL_DIR)}",
             )
 
+    def test_skill_uses_portable_standards_judge(self) -> None:
+        body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "<this-skill-directory>/bin/profitctl-standards",
+            body,
+        )
+        self.assertIn(
+            "go run scripts/judge_cost_standards.go",
+            body,
+        )
+
     def test_resolve_profitctl_from_installed_skill(self) -> None:
         with tempfile.TemporaryDirectory() as temp_raw:
             skill_dir = Path(temp_raw) / "profitctl-cost-aware"
