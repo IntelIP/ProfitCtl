@@ -143,6 +143,34 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 			wantIssue: "must cover exa_requests_per_assessment",
 		},
 		{
+			name: "assessment model reports zero runtime units",
+			mutate: func(artifact map[string]any) {
+				draft := artifact["draft"].(map[string]any)
+				lines := draft["cost_lines"].([]any)
+				lines[1].(map[string]any)["units_per_month"] = 0
+				lines[1].(map[string]any)["monthly_cost_usd"] = 0
+				lines[2].(map[string]any)["units_per_month"] = 0
+				lines[2].(map[string]any)["monthly_cost_usd"] = 0
+				artifact["estimated_monthly_cost_usd"] = 6.02
+			},
+			wantIssue: "assessment_model input and output units_per_month must be positive",
+		},
+		{
+			name: "code-backed provider is omitted",
+			mutate: func(artifact map[string]any) {
+				providers := artifact["providers"].([]any)
+				artifact["providers"] = providers[:1]
+				receipts := artifact["pricing_receipts"].([]any)
+				artifact["pricing_receipts"] = receipts[:3]
+				draft := artifact["draft"].(map[string]any)
+				lines := draft["cost_lines"].([]any)
+				draft["cost_lines"] = lines[:4]
+				artifact["exa_requests_per_assessment"] = 3
+				artifact["estimated_monthly_cost_usd"] = 1.042
+			},
+			wantIssue: `assessed files contain code-backed provider "stripe"`,
+		},
+		{
 			name: "missing assessment model output line",
 			mutate: func(artifact map[string]any) {
 				draft := artifact["draft"].(map[string]any)
@@ -215,6 +243,23 @@ func TestJudgeRecommendationFileFailsMissingEvidence(t *testing.T) {
 	}
 	if len(report.Issues) == 0 {
 		t.Fatalf("expected failure issues")
+	}
+}
+
+func TestJudgeRecommendationFileRejectsKeywordOnlyArtifact(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	body := "No recommendation, assumptions, fixed cost, variable cost, margin, p95, cost per user, covenant, alternative, source, confidence."
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if report.Passed {
+		t.Fatal("expected keyword-only recommendation artifact to fail")
+	}
+	if !issuesContain(report.Issues, "labeled recommendation section") {
+		t.Fatalf("expected labeled-section failure, got %v", report.Issues)
 	}
 }
 

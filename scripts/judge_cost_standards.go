@@ -9,10 +9,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/IntelIP/ProfitCtl/internal/config"
+	"github.com/IntelIP/ProfitCtl/internal/scanner"
 	"github.com/IntelIP/ProfitCtl/internal/scanner/llm"
 	"github.com/IntelIP/ProfitCtl/pkg/types"
 )
@@ -274,6 +276,7 @@ func judgeAssessmentFile(file string) FileReport {
 	}
 
 	providerDomains := make(map[string]string, len(artifact.Providers))
+	declaredProviders := make(map[string]struct{}, len(artifact.Providers))
 	for index, provider := range artifact.Providers {
 		providerKey := strings.ToLower(strings.TrimSpace(provider.Provider))
 		if providerKey == "" || strings.TrimSpace(provider.OfficialDomain) == "" || len(provider.Evidence) == 0 {
@@ -306,6 +309,23 @@ func judgeAssessmentFile(file string) FileReport {
 			}
 		}
 		providerDomains[providerKey] = trustedDomain
+		declaredProviders[providerKey] = struct{}{}
+	}
+	if assessmentRootErr == nil {
+		files, err := scanner.NewCollector().Collect(assessmentRoot)
+		if err != nil {
+			report.Issues = append(report.Issues, fmt.Sprintf("assessed files cannot be recollected: %v", err))
+		} else {
+			for _, detected := range detectCodeBackedProviders(files) {
+				if !declaresAnyProvider(declaredProviders, detected.Aliases) {
+					report.Issues = append(report.Issues, fmt.Sprintf(
+						"assessed files contain code-backed provider %q in %s but the assessment omits it",
+						detected.Provider,
+						detected.File,
+					))
+				}
+			}
+		}
 	}
 
 	receiptProviders := make(map[string]struct{}, len(artifact.PricingReceipts))
@@ -368,11 +388,22 @@ func judgeAssessmentFile(file string) FileReport {
 		lineProviders := make(map[string]struct{}, len(draft.CostLines))
 		total := 0.0
 		exaRuntimeUnits := 0.0
+		modelInputUnits := 0.0
+		modelOutputUnits := 0.0
 		for _, line := range draft.CostLines {
 			lineProviders[line.Provider] = struct{}{}
 			total += line.MonthlyCostUSD
 			if line.Provider == "exa" && line.Role == llm.CostRoleAssessmentResearch {
 				exaRuntimeUnits += line.UnitsPerMonth
+			}
+			if line.Provider == "openrouter" && line.Role == llm.CostRoleAssessmentModel {
+				unit := strings.ToLower(line.Unit)
+				if strings.Contains(unit, "input") {
+					modelInputUnits += line.UnitsPerMonth
+				}
+				if strings.Contains(unit, "output") {
+					modelOutputUnits += line.UnitsPerMonth
+				}
 			}
 		}
 		for _, provider := range artifact.Providers {
@@ -385,6 +416,9 @@ func judgeAssessmentFile(file string) FileReport {
 		}
 		if exaRuntimeUnits+0.000001 < float64(artifact.ExaRequestsPerAssessment) {
 			report.Issues = append(report.Issues, "assessment_research units_per_month must cover exa_requests_per_assessment")
+		}
+		if artifact.ModelRequestsPerAssessment > 0 && (modelInputUnits <= 0 || modelOutputUnits <= 0) {
+			report.Issues = append(report.Issues, "assessment_model input and output units_per_month must be positive when model requests are recorded")
 		}
 	}
 
@@ -531,6 +565,85 @@ func urlMatchesDomain(rawURL, domain string) bool {
 	return domain != "" && (host == domain || strings.HasSuffix(host, "."+domain))
 }
 
+type detectedProvider struct {
+	Provider string
+	Aliases  []string
+	File     string
+}
+
+type providerSignature struct {
+	Provider string
+	Aliases  []string
+	Markers  []string
+}
+
+var codeBackedProviderSignatures = []providerSignature{
+	{Provider: "anthropic", Aliases: []string{"anthropic"}, Markers: []string{"anthropic"}},
+	{Provider: "aws", Aliases: []string{"aws"}, Markers: []string{"github.com/aws/", "@aws-sdk/", "aws-sdk", "boto3", "botocore", "amazonaws.com", `provider "aws"`}},
+	{Provider: "azure", Aliases: []string{"azure"}, Markers: []string{"github.com/azure/", "@azure/", "azurerm", "azure.microsoft.com"}},
+	{Provider: "buildkite", Aliases: []string{"buildkite"}, Markers: []string{"buildkite"}},
+	{Provider: "clerk", Aliases: []string{"clerk"}, Markers: []string{"@clerk/", "clerk.com", "github.com/clerk/"}},
+	{Provider: "cloudflare", Aliases: []string{"cloudflare"}, Markers: []string{"cloudflare", "wrangler", "workers.dev"}},
+	{Provider: "datadog", Aliases: []string{"datadog"}, Markers: []string{"datadog", "dd_api_key"}},
+	{Provider: "exa", Aliases: []string{"exa"}, Markers: []string{"exa.ai", "exa_api_key", "exa-py", "exa-js", "github.com/exa-labs/"}},
+	{Provider: "gcp", Aliases: []string{"gcp", "google-cloud"}, Markers: []string{"cloud.google.com", "google.golang.org/api", "@google-cloud/", "google-cloud-", `provider "google"`, "google_application_credentials"}},
+	{Provider: "github", Aliases: []string{"github"}, Markers: []string{"api.github.com", "github_token", "github_app", "github_repository", "google/go-github", "@octokit/", "@actions/"}},
+	{Provider: "mongodb-atlas", Aliases: []string{"mongodb-atlas"}, Markers: []string{"mongodb+srv", "mongodb-atlas", "mongodbatlas", "go.mongodb.org/mongo-driver", "@mongodb-js/"}},
+	{Provider: "neon", Aliases: []string{"neon"}, Markers: []string{"neon.tech", "@neondatabase/", "neon_database", "neon_api_key"}},
+	{Provider: "openai", Aliases: []string{"openai"}, Markers: []string{"openai"}},
+	{Provider: "openrouter", Aliases: []string{"openrouter"}, Markers: []string{"openrouter"}},
+	{Provider: "pinecone", Aliases: []string{"pinecone"}, Markers: []string{"pinecone"}},
+	{Provider: "resend", Aliases: []string{"resend"}, Markers: []string{"resend"}},
+	{Provider: "sentry", Aliases: []string{"sentry"}, Markers: []string{"sentry"}},
+	{Provider: "stripe", Aliases: []string{"stripe"}, Markers: []string{"stripe"}},
+	{Provider: "supabase", Aliases: []string{"supabase"}, Markers: []string{"supabase"}},
+	{Provider: "twilio", Aliases: []string{"twilio"}, Markers: []string{"twilio"}},
+	{Provider: "upstash", Aliases: []string{"upstash"}, Markers: []string{"upstash"}},
+	{Provider: "vercel", Aliases: []string{"vercel"}, Markers: []string{"vercel"}},
+}
+
+func detectCodeBackedProviders(files map[string]string) []detectedProvider {
+	paths := make([]string, 0, len(files))
+	for path := range files {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+
+	var detected []detectedProvider
+	for _, signature := range codeBackedProviderSignatures {
+		foundFile := ""
+		for _, path := range paths {
+			content := strings.ToLower(files[path])
+			for _, marker := range signature.Markers {
+				if strings.Contains(content, marker) {
+					foundFile = path
+					break
+				}
+			}
+			if foundFile != "" {
+				break
+			}
+		}
+		if foundFile != "" {
+			detected = append(detected, detectedProvider{
+				Provider: signature.Provider,
+				Aliases:  signature.Aliases,
+				File:     foundFile,
+			})
+		}
+	}
+	return detected
+}
+
+func declaresAnyProvider(declared map[string]struct{}, aliases []string) bool {
+	for _, alias := range aliases {
+		if _, exists := declared[alias]; exists {
+			return true
+		}
+	}
+	return false
+}
+
 func judgeRecommendationFile(file string) FileReport {
 	report := FileReport{File: file, Passed: true}
 	data, err := os.ReadFile(file)
@@ -541,6 +654,11 @@ func judgeRecommendationFile(file string) FileReport {
 	}
 
 	body := strings.ToLower(string(data))
+	sections := recommendationSections(string(data))
+	requireRecommendationSection(&report, sections, "recommendation")
+	requireRecommendationSection(&report, sections, "assumptions")
+	requireRecommendationSection(&report, sections, "economics")
+	requireRecommendationSection(&report, sections, "alternative")
 	requireAny(&report, "recommendation artifact needs an explicit recommendation", body, "recommendation")
 	requireAny(&report, "recommendation artifact needs explicit assumptions", body, "assumption", "assumptions")
 	requireAny(&report, "recommendation artifact needs monthly fixed cost", body, "fixed cost", "fixed_cost")
@@ -567,6 +685,43 @@ func judgeRecommendationFile(file string) FileReport {
 		report.Passed = false
 	}
 	return report
+}
+
+func recommendationSections(body string) map[string]string {
+	sections := make(map[string]string)
+	for _, line := range strings.Split(body, "\n") {
+		line = strings.TrimSpace(line)
+		line = strings.TrimLeft(line, "#-* \t")
+		line = strings.ReplaceAll(line, "**", "")
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		label := strings.ToLower(strings.TrimSpace(parts[0]))
+		value := strings.TrimSpace(parts[1])
+		if label != "" && value != "" {
+			sections[label] = value
+		}
+	}
+	return sections
+}
+
+func requireRecommendationSection(report *FileReport, sections map[string]string, label string) {
+	value, exists := sections[label]
+	normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), "."))
+	placeholders := map[string]struct{}{
+		"n/a":           {},
+		"no":            {},
+		"no " + label:   {},
+		"none":          {},
+		"not available": {},
+		"not provided":  {},
+		"unknown":       {},
+	}
+	_, placeholder := placeholders[normalized]
+	if !exists || placeholder || len(strings.Fields(value)) < 2 {
+		report.Issues = append(report.Issues, fmt.Sprintf("recommendation artifact needs a labeled %s section with a non-placeholder value", label))
+	}
 }
 
 func requireAny(report *FileReport, issue string, body string, terms ...string) {
