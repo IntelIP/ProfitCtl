@@ -270,6 +270,9 @@ func judgeAssessmentFile(file string) FileReport {
 	if artifact.AnalyzedFiles < 1 || len(artifact.Providers) == 0 {
 		report.Issues = append(report.Issues, "assessment requires analyzed files and at least one code-backed provider")
 	}
+	if len(artifact.Providers) > llm.MaxProviderCandidates {
+		report.Issues = append(report.Issues, fmt.Sprintf("assessment provider count exceeds limit of %d", llm.MaxProviderCandidates))
+	}
 	assessmentRoot, assessmentRootErr := resolveAssessmentRoot(file, artifact.Path)
 	if assessmentRootErr != nil {
 		report.Issues = append(report.Issues, fmt.Sprintf("assessment path cannot be resolved: %v", assessmentRootErr))
@@ -287,6 +290,9 @@ func judgeAssessmentFile(file string) FileReport {
 		if !supported {
 			report.Issues = append(report.Issues, fmt.Sprintf("providers[%d].provider is not in the trusted provider registry", index))
 			continue
+		}
+		if _, duplicate := declaredProviders[providerKey]; duplicate {
+			report.Issues = append(report.Issues, fmt.Sprintf("providers[%d].provider duplicates %q", index, providerKey))
 		}
 		if strings.ToLower(strings.TrimSpace(provider.OfficialDomain)) != trustedDomain {
 			report.Issues = append(report.Issues, fmt.Sprintf("providers[%d].official_domain does not match the trusted provider registry", index))
@@ -395,9 +401,13 @@ func judgeAssessmentFile(file string) FileReport {
 		exaRuntimeUnits := 0.0
 		modelInputUnits := 0.0
 		modelOutputUnits := 0.0
+		codeBackedUnits := make(map[string]float64, len(artifact.Providers))
 		for _, line := range draft.CostLines {
 			lineProviders[line.Provider] = struct{}{}
 			total += line.MonthlyCostUSD
+			if line.Role == llm.CostRoleCodebackedProvider {
+				codeBackedUnits[line.Provider] += line.UnitsPerMonth
+			}
 			if line.Provider == "exa" && line.Role == llm.CostRoleAssessmentResearch {
 				exaRuntimeUnits += line.UnitsPerMonth
 			}
@@ -414,6 +424,9 @@ func judgeAssessmentFile(file string) FileReport {
 		for _, provider := range artifact.Providers {
 			if _, exists := lineProviders[provider.Provider]; !exists {
 				report.Issues = append(report.Issues, fmt.Sprintf("provider %q has no cost line", provider.Provider))
+			}
+			if codeBackedUnits[provider.Provider] <= 0 {
+				report.Issues = append(report.Issues, fmt.Sprintf("provider %q code-backed units_per_month must be positive", provider.Provider))
 			}
 		}
 		if math.Abs(total-artifact.EstimatedMonthlyCostUSD) > 0.000001*math.Max(1, math.Abs(total)) {

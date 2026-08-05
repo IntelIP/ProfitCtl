@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/IntelIP/ProfitCtl/internal/scanner/llm"
 )
 
 func TestJudgeAssessmentFilePassesValidArtifact(t *testing.T) {
@@ -176,6 +178,36 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 				artifact["analyzed_files"] = 2
 			},
 			wantIssue: "analyzed_files must equal the recollected supported file count",
+		},
+		{
+			name: "provider count exceeds discovery limit",
+			mutate: func(artifact map[string]any) {
+				providers := artifact["providers"].([]any)
+				for len(providers) <= llm.MaxProviderCandidates {
+					providers = append(providers, providers[0])
+				}
+				artifact["providers"] = providers
+			},
+			wantIssue: "assessment provider count exceeds limit",
+		},
+		{
+			name: "provider candidate is duplicated",
+			mutate: func(artifact map[string]any) {
+				providers := artifact["providers"].([]any)
+				artifact["providers"] = append(providers, providers[0])
+			},
+			wantIssue: `provider duplicates "aws"`,
+		},
+		{
+			name: "code-backed provider reports zero usage",
+			mutate: func(artifact map[string]any) {
+				draft := artifact["draft"].(map[string]any)
+				lines := draft["cost_lines"].([]any)
+				lines[0].(map[string]any)["units_per_month"] = 0
+				lines[0].(map[string]any)["monthly_cost_usd"] = 0
+				artifact["estimated_monthly_cost_usd"] = 5.042
+			},
+			wantIssue: `provider "aws" code-backed units_per_month must be positive`,
 		},
 		{
 			name: "draft is wrapped in an array",
