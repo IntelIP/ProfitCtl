@@ -45,7 +45,15 @@ profitctl validate -f examples/hybrid_steady_profit.yml
 OPENROUTER_API_KEY=... profitctl detect --path . --out detect-report.json
 ```
 
-## 4. Output modes
+## 4. Build a starter cost model from a codebase
+
+```bash
+OPENROUTER_API_KEY=... EXA_API_KEY=... profitctl assess --path . --out cost-assessment.json
+```
+
+`assess` scans active configuration, finds providers using exact code excerpts, resolves trusted domains and pricing paths, retrieves pricing through Exa, and emits a labeled starter cost model. Repository facts and inferred scale assumptions stay separate. Target-code costs stay separate from assessment runtime costs; model input and output are priced independently. Every line must match one exact price and unit excerpt. The output also includes Exa execution cost and an estimated monthly total.
+
+## 5. Output modes
 
 ```bash
 profitctl simulate -f examples/valid_profit.yml --json
@@ -54,7 +62,7 @@ profitctl simulate -f examples/valid_profit.yml --quiet
 profitctl simulate -f examples/hybrid_profit.yml --json
 ```
 
-## 5. Compare scenarios
+## 6. Compare scenarios
 
 ```bash
 profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
@@ -87,7 +95,7 @@ For committed shareable compare artifacts, see:
 - `benchmark_scenarios/reports/hybrid_steady_vs_pilot.md`
 - `benchmark_scenarios/reports/hybrid_safe_vs_breach.md`
 
-## 6. Normalize a calibration export
+## 7. Normalize a calibration export
 
 ```bash
 profitctl calibrate --input examples/calibration_exports/hybrid_profit_calibration.csv
@@ -96,7 +104,7 @@ profitctl calibrate --input examples/calibration_exports/hybrid_profit_calibrati
 
 The normalized output can be referenced from a scenario via `calibration_file: ...`. Supported input formats are YAML, JSON, and CSV using `field,value` rows such as `paid_users.monthly,1800` or `plan_mix.starter,0.65`.
 
-## 7. Starter config
+## 8. Starter config
 
 ```bash
 profitctl init
@@ -105,16 +113,16 @@ profitctl validate -f profit.yml
 
 The starter template now defaults to `pricing.mode: mix` and includes payment-fee assumptions so new scenarios begin from a realistic open-core baseline.
 
-## 8. Pricing modes
+## 9. Pricing modes
 
 - `tiered`: cumulative user bands with an optional unlimited final plan
 - `mix`: explicit plan shares for free-to-paid and plan adoption mix
 - `hybrid`: workspace minimums, base-fee-plus-seat contracts, and optional pilots
 
-## 9. Hybrid seat-based contracts
+## 10. Hybrid seat-based contracts
 
 Hybrid scenarios can set `simulation.billable_users` when billable seats differ from total modeled users. This keeps contract revenue honest for open-core or shared-workspace deployments where active users and paid seats diverge.
 
-## 10. Calibration
+## 11. Calibration
 
 You can add a top-level `calibration:` block or a `calibration_file:` reference to compare modeled revenue and payment fees against actual exported values. The simulator surfaces deltas in JSON, CLI, and Markdown output.

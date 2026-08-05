@@ -7,6 +7,8 @@ import (
 	"github.com/revrost/go-openrouter"
 )
 
+const DefaultOpenRouterModel = "openai/gpt-5.6-terra"
+
 // OpenRouterProvider implements the LLMProvider interface using OpenRouter API
 type OpenRouterProvider struct {
 	client *openrouter.Client
@@ -19,7 +21,7 @@ func NewOpenRouterProvider(apiKey, model string) (*OpenRouterProvider, error) {
 		return nil, fmt.Errorf("API key is required")
 	}
 	if model == "" {
-		model = "mistralai/mistral-7b-instruct" // Best cheap open source model
+		model = DefaultOpenRouterModel
 	}
 
 	client := openrouter.NewClient(apiKey)

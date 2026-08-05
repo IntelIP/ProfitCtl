@@ -15,7 +15,7 @@ import (
 const (
 	defaultDetectPath     = "."
 	defaultDetectProvider = "openrouter"
-	defaultDetectModel    = "mistralai/mistral-7b-instruct"
+	defaultDetectModel    = llm.DefaultOpenRouterModel
 )
 
 var (
