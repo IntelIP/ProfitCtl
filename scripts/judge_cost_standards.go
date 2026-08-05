@@ -316,6 +316,9 @@ func judgeAssessmentFile(file string) FileReport {
 		if err != nil {
 			report.Issues = append(report.Issues, fmt.Sprintf("assessed files cannot be recollected: %v", err))
 		} else {
+			if artifact.AnalyzedFiles != len(files) {
+				report.Issues = append(report.Issues, "analyzed_files must equal the recollected supported file count")
+			}
 			for _, detected := range detectCodeBackedProviders(files) {
 				if !declaresAnyProvider(declaredProviders, detected.Aliases) {
 					report.Issues = append(report.Issues, fmt.Sprintf(
@@ -381,8 +384,10 @@ func judgeAssessmentFile(file string) FileReport {
 		report.Issues = append(report.Issues, "assessment requires OpenRouter model and Exa research runtime receipts")
 	}
 
-	draft, err := llm.ParseCostDraft(string(artifact.Draft), artifact.Providers, artifact.PricingReceipts)
-	if err != nil {
+	var draftObject map[string]json.RawMessage
+	if err := json.Unmarshal(artifact.Draft, &draftObject); err != nil || draftObject == nil {
+		report.Issues = append(report.Issues, "assessment draft must be a JSON object")
+	} else if draft, err := llm.ParseCostDraft(string(artifact.Draft), artifact.Providers, artifact.PricingReceipts); err != nil {
 		report.Issues = append(report.Issues, fmt.Sprintf("assessment draft is invalid: %v", err))
 	} else {
 		lineProviders := make(map[string]struct{}, len(draft.CostLines))
@@ -613,7 +618,7 @@ func detectCodeBackedProviders(files map[string]string) []detectedProvider {
 	for _, signature := range codeBackedProviderSignatures {
 		foundFile := ""
 		for _, path := range paths {
-			content := strings.ToLower(files[path])
+			content := strings.ToLower(providerDetectionContent(path, files[path]))
 			for _, marker := range signature.Markers {
 				if strings.Contains(content, marker) {
 					foundFile = path
@@ -633,6 +638,44 @@ func detectCodeBackedProviders(files map[string]string) []detectedProvider {
 		}
 	}
 	return detected
+}
+
+func providerDetectionContent(path, content string) string {
+	switch strings.ToLower(filepath.Base(path)) {
+	case "go.sum":
+		return ""
+	case "go.mod":
+		return directGoModuleRequirements(content)
+	default:
+		return content
+	}
+}
+
+func directGoModuleRequirements(content string) string {
+	var direct []string
+	inRequireBlock := false
+	for _, rawLine := range strings.Split(content, "\n") {
+		line := strings.TrimSpace(rawLine)
+		if inRequireBlock {
+			if line == ")" {
+				inRequireBlock = false
+				continue
+			}
+			if line == "" || strings.HasPrefix(line, "//") || strings.Contains(line, "// indirect") {
+				continue
+			}
+			direct = append(direct, line)
+			continue
+		}
+		if strings.HasPrefix(line, "require (") {
+			inRequireBlock = true
+			continue
+		}
+		if strings.HasPrefix(line, "require ") && !strings.Contains(line, "// indirect") {
+			direct = append(direct, strings.TrimSpace(strings.TrimPrefix(line, "require ")))
+		}
+	}
+	return strings.Join(direct, "\n")
 }
 
 func declaresAnyProvider(declared map[string]struct{}, aliases []string) bool {

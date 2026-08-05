@@ -171,6 +171,20 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 			wantIssue: `assessed files contain code-backed provider "stripe"`,
 		},
 		{
+			name: "analyzed file count is stale",
+			mutate: func(artifact map[string]any) {
+				artifact["analyzed_files"] = 2
+			},
+			wantIssue: "analyzed_files must equal the recollected supported file count",
+		},
+		{
+			name: "draft is wrapped in an array",
+			mutate: func(artifact map[string]any) {
+				artifact["draft"] = []any{artifact["draft"]}
+			},
+			wantIssue: "assessment draft must be a JSON object",
+		},
+		{
 			name: "missing assessment model output line",
 			mutate: func(artifact map[string]any) {
 				draft := artifact["draft"].(map[string]any)
@@ -201,6 +215,29 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 				t.Fatalf("expected issue containing %q, got %v", test.wantIssue, report.Issues)
 			}
 		})
+	}
+}
+
+func TestDetectCodeBackedProvidersIgnoresTransitiveGoEntries(t *testing.T) {
+	files := map[string]string{
+		"go.sum": "github.com/aws/aws-sdk-go v1.48.0 h1:checksum",
+		"go.mod": `module example.com/app
+
+require github.com/stripe/stripe-go/v76 v76.15.0 // indirect
+`,
+	}
+
+	if detected := detectCodeBackedProviders(files); len(detected) != 0 {
+		t.Fatalf("expected transitive Go entries to be ignored, got %v", detected)
+	}
+
+	files["go.mod"] = `module example.com/app
+
+require github.com/stripe/stripe-go/v76 v76.15.0
+`
+	detected := detectCodeBackedProviders(files)
+	if len(detected) != 1 || detected[0].Provider != "stripe" {
+		t.Fatalf("expected direct Stripe requirement, got %v", detected)
 	}
 }
 
