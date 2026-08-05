@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -15,40 +16,31 @@ const (
 	MaxPricingHighlightCharacters = 800
 )
 
-var usdPricePattern = regexp.MustCompile(`(?i)(?:US\$|\$|USD\s*)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)`)
+var (
+	usdPricePattern     = regexp.MustCompile(`(?i)(?:US\$|\$|USD\s*)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)`)
+	percentPricePattern = regexp.MustCompile(`(?i)\b[0-9]+(?:\.[0-9]+)?\s*%`)
+	centPricePattern    = regexp.MustCompile(`(?i)\b[0-9]+(?:\.[0-9]+)?\s*(?:¢|cents?\b)`)
+)
 
-var trustedOfficialDomains = map[string]string{
-	"anthropic":     "anthropic.com",
-	"aws":           "aws.amazon.com",
-	"azure":         "azure.microsoft.com",
-	"buildkite":     "buildkite.com",
-	"clerk":         "clerk.com",
-	"cloudflare":    "cloudflare.com",
-	"datadog":       "datadoghq.com",
-	"exa":           "exa.ai",
-	"gcp":           "cloud.google.com",
-	"github":        "github.com",
-	"google-cloud":  "cloud.google.com",
-	"mongodb-atlas": "mongodb.com",
-	"neon":          "neon.com",
-	"openai":        "openai.com",
-	"openrouter":    "openrouter.ai",
-	"pinecone":      "pinecone.io",
-	"resend":        "resend.com",
-	"sentry":        "sentry.io",
-	"stripe":        "stripe.com",
-	"supabase":      "supabase.com",
-	"twilio":        "twilio.com",
-	"upstash":       "upstash.com",
-	"vercel":        "vercel.com",
+const (
+	CostRoleCodebackedProvider = "codebacked_provider"
+	CostRoleAssessmentModel    = "assessment_model"
+	CostRoleAssessmentResearch = "assessment_research"
+)
+
+// ProviderEvidence is an exact code excerpt tied to one collected file.
+type ProviderEvidence struct {
+	File    string `json:"file"`
+	Excerpt string `json:"excerpt"`
 }
 
 // ProviderCandidate is a code-backed external service that needs a price receipt.
 type ProviderCandidate struct {
-	Name           string   `json:"name"`
-	Provider       string   `json:"provider"`
-	OfficialDomain string   `json:"official_domain"`
-	EvidenceFiles  []string `json:"evidence_files"`
+	Name           string             `json:"name"`
+	Provider       string             `json:"provider"`
+	OfficialDomain string             `json:"official_domain"`
+	Evidence       []ProviderEvidence `json:"evidence"`
+	EvidenceFiles  []string           `json:"evidence_files,omitempty"`
 }
 
 // ProviderDiscoveryResponse is the first structured result of a cost assessment.
@@ -124,6 +116,7 @@ func normalizeAssumptionValue(raw json.RawMessage) (string, error) {
 type CostLine struct {
 	Name            string  `json:"name"`
 	Provider        string  `json:"provider"`
+	Role            string  `json:"role"`
 	Unit            string  `json:"unit"`
 	PricePerUnitUSD float64 `json:"price_per_unit_usd"`
 	UnitsPerMonth   float64 `json:"units_per_month"`
@@ -154,14 +147,15 @@ func BuildProviderDiscoveryPrompt(ctx CodeContext) string {
 	sb.WriteString("Do not list programming libraries, documentation, examples, fixtures, benchmark scenarios, or hypothetical architecture.\n\n")
 	sb.WriteString("Use only these trusted provider keys and exact official domains:\n")
 	for _, provider := range supportedProviderKeys() {
-		fmt.Fprintf(&sb, "- %s: %s\n", provider, trustedOfficialDomains[provider])
+		domain, _ := TrustedOfficialDomain(provider)
+		fmt.Fprintf(&sb, "- %s: %s\n", provider, domain)
 	}
 	sb.WriteString("\n")
 	writeCodeContext(&sb, ctx)
 	sb.WriteString("## Required JSON\n\n")
 	sb.WriteString("Return only a JSON object with this shape:\n")
-	sb.WriteString("{\"providers\":[{\"name\":\"OpenRouter\",\"provider\":\"openrouter\",\"official_domain\":\"openrouter.ai\",\"evidence_files\":[\"go.mod\"]}]}\n\n")
-	fmt.Fprintf(&sb, "Every provider and official_domain pair must exactly match the trusted list. Every evidence_files value must be an exact path shown above. Return at most %d providers and an empty providers list when no supported external billed service is code-backed.\n", MaxProviderCandidates)
+	sb.WriteString("{\"providers\":[{\"name\":\"OpenRouter\",\"provider\":\"openrouter\",\"official_domain\":\"openrouter.ai\",\"evidence\":[{\"file\":\"go.mod\",\"excerpt\":\"github.com/revrost/go-openrouter\"}]}]}\n\n")
+	fmt.Fprintf(&sb, "Every provider and official_domain pair must exactly match the trusted list. Every evidence excerpt must be copied exactly from its named file and must contain a marker for that provider. Return at most %d providers and an empty providers list when no supported external billed service is code-backed.\n", MaxProviderCandidates)
 	return sb.String()
 }
 
@@ -175,6 +169,7 @@ func BuildCostDraftPrompt(ctx CodeContext, providers []ProviderCandidate, receip
 	fmt.Fprintf(&sb, "The assessment model is %s. When pricing OpenRouter, model this selected assessment model, never a free or alternate model. Include a cost line for every assessment runtime receipt, including the model and Exa research requests, even when the target codebase does not use those providers.\n", assessmentModel)
 	fmt.Fprintf(&sb, "This assessment performs exactly %d Exa pricing-search requests. Use that verified count when modeling the assessment research cost.\n", len(receipts))
 	fmt.Fprintf(&sb, "Verified code context: %d files and %d code-context characters are sent in each model request.\n\n", stats.FileCount, stats.CodeContextCharacters)
+	writeCodeContext(&sb, ctx)
 	sb.WriteString("Code-backed providers:\n")
 	for _, provider := range providers {
 		fmt.Fprintf(&sb, "- %s (%s), evidence: %s\n", provider.Name, provider.Provider, strings.Join(provider.EvidenceFiles, ", "))
@@ -190,10 +185,12 @@ func BuildCostDraftPrompt(ctx CodeContext, providers []ProviderCandidate, receip
 	sb.WriteString("\n## Required JSON\n\n")
 	sb.WriteString("Return only JSON with assumptions, cost_lines, and recommendation. recommendation is an object with summary and next_steps. ")
 	sb.WriteString("Each assumption has name, value as a JSON string, source (repo_detected or inferred), and rationale. ")
-	sb.WriteString("Each cost line has name, provider, unit, price_per_unit_usd, units_per_month, monthly_cost_usd, source_url, source_excerpt, and confidence. ")
+	sb.WriteString("Each cost line has name, provider, role, unit, price_per_unit_usd, units_per_month, monthly_cost_usd, source_url, source_excerpt, and confidence. ")
+	sb.WriteString("role must be codebacked_provider for target-code usage, assessment_model for this command's model usage, or assessment_research for this command's Exa usage. ")
 	sb.WriteString("Use a price only when one exact receipt highlight states exactly one USD price. source_url must exactly match the same receipt URL and source_excerpt must exactly match that highlight. ")
 	sb.WriteString("Every meaningful unit word, including qualifiers such as input or output, must appear in the same source_excerpt. confidence must be medium. ")
-	sb.WriteString("Include at least one grounded cost line for every code-backed provider and every assessment runtime provider. UnitsPerMonth must use the same unit as PricePerUnitUSD. Do not claim actual billing.\n")
+	sb.WriteString("Keep codebacked_provider lines separate from assessment runtime lines even when they share a provider. Include separate assessment_model input-token and output-token lines. ")
+	sb.WriteString("Include at least one grounded cost line for every other required role. UnitsPerMonth must use the same unit as PricePerUnitUSD. Do not claim actual billing.\n")
 	return sb.String()
 }
 
@@ -240,16 +237,31 @@ func ParseProviderDiscoveryResponse(raw string, files map[string]string) (Provid
 		if provider.OfficialDomain != trustedDomain {
 			return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].official_domain must be %q for provider %q", index, trustedDomain, provider.Provider)
 		}
-		if len(provider.EvidenceFiles) == 0 {
-			return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence_files is required", index)
+		if len(provider.Evidence) == 0 {
+			return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence is required", index)
 		}
-		for evidenceIndex, path := range provider.EvidenceFiles {
-			path = strings.TrimSpace(path)
-			if _, exists := files[path]; !exists {
-				return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence_files[%d] is not collected code context", index, evidenceIndex)
+		evidenceFiles := make(map[string]struct{}, len(provider.Evidence))
+		for evidenceIndex := range provider.Evidence {
+			evidence := &provider.Evidence[evidenceIndex]
+			evidence.File = strings.TrimSpace(evidence.File)
+			evidence.Excerpt = strings.TrimSpace(evidence.Excerpt)
+			content, exists := files[evidence.File]
+			if !exists {
+				return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence[%d].file is not collected code context", index, evidenceIndex)
 			}
-			provider.EvidenceFiles[evidenceIndex] = path
+			if evidence.Excerpt == "" || !strings.Contains(content, evidence.Excerpt) {
+				return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence[%d].excerpt is not exact collected code", index, evidenceIndex)
+			}
+			if !ProviderEvidenceMatches(provider.Provider, evidence.Excerpt) {
+				return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].evidence[%d].excerpt does not identify provider %q", index, evidenceIndex, provider.Provider)
+			}
+			evidenceFiles[evidence.File] = struct{}{}
 		}
+		provider.EvidenceFiles = provider.EvidenceFiles[:0]
+		for path := range evidenceFiles {
+			provider.EvidenceFiles = append(provider.EvidenceFiles, path)
+		}
+		sort.Strings(provider.EvidenceFiles)
 		if _, exists := seen[provider.Provider]; exists {
 			return ProviderDiscoveryResponse{}, fmt.Errorf("providers[%d].provider duplicates %q", index, provider.Provider)
 		}
@@ -272,18 +284,27 @@ func ParseCostDraft(raw string, providers []ProviderCandidate, receipts []Pricin
 		return CostDraft{}, fmt.Errorf("cost draft requires assumptions, cost_lines, and recommendation")
 	}
 	knownProviders := make(map[string]struct{}, len(providers))
-	requiredProviders := make(map[string]struct{}, len(providers))
+	discoveredProviders := make(map[string]struct{}, len(providers))
+	requiredLines := make(map[string]string, len(providers)+3)
 	for _, provider := range providers {
-		knownProviders[provider.Provider] = struct{}{}
-		requiredProviders[provider.Provider] = struct{}{}
+		providerKey := normalizeProviderKey(provider.Provider)
+		knownProviders[providerKey] = struct{}{}
+		discoveredProviders[providerKey] = struct{}{}
+		addCostRequirement(requiredLines, providerKey, CostRoleCodebackedProvider, "")
 	}
 	knownReceipts := make(map[string]PricingReceipt, len(receipts))
 	for _, receipt := range receipts {
+		receipt.Provider = normalizeProviderKey(receipt.Provider)
+		receipt.Role = strings.ToLower(strings.TrimSpace(receipt.Role))
 		receipt.Highlights = NormalizePricingHighlights(receipt.Highlights)
 		knownReceipts[receipt.URL] = receipt
 		knownProviders[receipt.Provider] = struct{}{}
-		if strings.Contains(receipt.Role, "assessment_model") || strings.Contains(receipt.Role, "assessment_research") {
-			requiredProviders[receipt.Provider] = struct{}{}
+		if strings.Contains(receipt.Role, CostRoleAssessmentModel) {
+			addCostRequirement(requiredLines, receipt.Provider, CostRoleAssessmentModel, "input")
+			addCostRequirement(requiredLines, receipt.Provider, CostRoleAssessmentModel, "output")
+		}
+		if strings.Contains(receipt.Role, CostRoleAssessmentResearch) {
+			addCostRequirement(requiredLines, receipt.Provider, CostRoleAssessmentResearch, "")
 		}
 	}
 	for index := range draft.Assumptions {
@@ -299,20 +320,21 @@ func ParseCostDraft(raw string, providers []ProviderCandidate, receipts []Pricin
 			return CostDraft{}, fmt.Errorf("assumptions[%d].source must be repo_detected or inferred", index)
 		}
 	}
-	costLineProviders := make(map[string]struct{}, len(draft.CostLines))
+	coveredLines := make(map[string]struct{}, len(draft.CostLines))
 	for index := range draft.CostLines {
 		line := &draft.CostLines[index]
 		line.Name = strings.TrimSpace(line.Name)
 		line.Provider = strings.ToLower(strings.TrimSpace(line.Provider))
+		line.Role = strings.ToLower(strings.TrimSpace(line.Role))
 		line.Unit = strings.TrimSpace(line.Unit)
 		line.SourceURL = strings.TrimSpace(line.SourceURL)
 		line.SourceExcerpt = strings.TrimSpace(line.SourceExcerpt)
 		line.Confidence = strings.ToLower(strings.TrimSpace(line.Confidence))
-		if line.Name == "" || line.Unit == "" || line.SourceURL == "" || line.SourceExcerpt == "" {
-			return CostDraft{}, fmt.Errorf("cost_lines[%d] requires name, unit, source_url, and source_excerpt", index)
+		if line.Name == "" || line.Role == "" || line.Unit == "" || line.SourceURL == "" || line.SourceExcerpt == "" {
+			return CostDraft{}, fmt.Errorf("cost_lines[%d] requires name, role, unit, source_url, and source_excerpt", index)
 		}
 		if _, exists := knownProviders[line.Provider]; !exists {
-			return CostDraft{}, fmt.Errorf("cost_lines[%d].provider is not code-backed", index)
+			return CostDraft{}, fmt.Errorf("cost_lines[%d].provider is not discovered or runtime-backed", index)
 		}
 		receipt, exists := knownReceipts[line.SourceURL]
 		if !exists {
@@ -320,6 +342,29 @@ func ParseCostDraft(raw string, providers []ProviderCandidate, receipts []Pricin
 		}
 		if receipt.Provider != line.Provider {
 			return CostDraft{}, fmt.Errorf("cost_lines[%d].source_url does not belong to provider %q", index, line.Provider)
+		}
+		if !strings.Contains(receipt.Role, line.Role) {
+			return CostDraft{}, fmt.Errorf("cost_lines[%d].role is not supported by its pricing receipt", index)
+		}
+		usage := ""
+		switch line.Role {
+		case CostRoleCodebackedProvider:
+			if _, exists := discoveredProviders[line.Provider]; !exists {
+				return CostDraft{}, fmt.Errorf("cost_lines[%d].role requires a discovered provider", index)
+			}
+		case CostRoleAssessmentModel:
+			var err error
+			usage, err = assessmentModelUsage(line.Unit)
+			if err != nil {
+				return CostDraft{}, fmt.Errorf("cost_lines[%d]: %w", index, err)
+			}
+		case CostRoleAssessmentResearch:
+		default:
+			return CostDraft{}, fmt.Errorf("cost_lines[%d].role is invalid", index)
+		}
+		requirementKey := costRequirementKey(line.Provider, line.Role, usage)
+		if _, required := requiredLines[requirementKey]; !required {
+			return CostDraft{}, fmt.Errorf("cost_lines[%d] does not match a required provider role", index)
 		}
 		if !containsExactHighlight(receipt.Highlights, line.SourceExcerpt) {
 			return CostDraft{}, fmt.Errorf("cost_lines[%d].source_excerpt is not an exact pricing-receipt highlight", index)
@@ -337,27 +382,45 @@ func ParseCostDraft(raw string, providers []ProviderCandidate, receipts []Pricin
 		if line.Confidence != "medium" {
 			return CostDraft{}, fmt.Errorf("cost_lines[%d].confidence must be medium", index)
 		}
-		costLineProviders[line.Provider] = struct{}{}
+		coveredLines[requirementKey] = struct{}{}
 	}
-	for provider := range requiredProviders {
-		if _, exists := costLineProviders[provider]; !exists {
-			return CostDraft{}, fmt.Errorf("cost draft requires a cost line for provider %q", provider)
+	for key, label := range requiredLines {
+		if _, exists := coveredLines[key]; !exists {
+			return CostDraft{}, fmt.Errorf("cost draft requires a cost line for %s", label)
 		}
 	}
 	return draft, nil
 }
 
-// TrustedOfficialDomain returns the code-owned official-domain binding for a
-// supported provider. Model output can select a provider, but cannot invent or
-// change the domain used for pricing research.
-func TrustedOfficialDomain(provider string) (string, bool) {
-	domain, ok := trustedOfficialDomains[strings.ToLower(strings.TrimSpace(provider))]
-	return domain, ok
+func addCostRequirement(requirements map[string]string, provider, role, usage string) {
+	key := costRequirementKey(provider, role, usage)
+	label := fmt.Sprintf("provider %q role %q", provider, role)
+	if usage != "" {
+		label += fmt.Sprintf(" usage %q", usage)
+	}
+	requirements[key] = label
+}
+
+func costRequirementKey(provider, role, usage string) string {
+	return normalizeProviderKey(provider) + "\x00" + strings.ToLower(strings.TrimSpace(role)) + "\x00" + strings.ToLower(strings.TrimSpace(usage))
+}
+
+func assessmentModelUsage(unit string) (string, error) {
+	tokens := canonicalUnitTokens(unit)
+	_, input := tokens["input"]
+	_, output := tokens["output"]
+	if input == output {
+		return "", fmt.Errorf("assessment_model unit must identify exactly one of input or output")
+	}
+	if input {
+		return "input", nil
+	}
+	return "output", nil
 }
 
 func supportedProviderKeys() []string {
-	keys := make([]string, 0, len(trustedOfficialDomains))
-	for provider := range trustedOfficialDomains {
+	keys := make([]string, 0, len(trustedProviderSpecs))
+	for provider := range trustedProviderSpecs {
 		keys = append(keys, provider)
 	}
 	sort.Strings(keys)
@@ -408,6 +471,9 @@ func validatePriceUnitExcerpt(excerpt, unit string, price float64) error {
 	matches := usdPricePattern.FindAllStringSubmatch(excerpt, -1)
 	if len(matches) != 1 {
 		return fmt.Errorf("source_excerpt must state exactly one USD price")
+	}
+	if percentPricePattern.MatchString(excerpt) || centPricePattern.MatchString(excerpt) {
+		return fmt.Errorf("source_excerpt contains an additional percentage or cent price component")
 	}
 	value, err := strconv.ParseFloat(strings.ReplaceAll(matches[0][1], ",", ""), 64)
 	if err != nil || math.Abs(value-price) > 0.000001*math.Max(1, math.Abs(price)) {
@@ -477,6 +543,10 @@ func parseStructuredJSON(raw string, target any) error {
 	}
 	seen := make(map[string]struct{}, len(candidates))
 	var lastErr error
+	targetValue := reflect.ValueOf(target)
+	if targetValue.Kind() != reflect.Pointer || targetValue.IsNil() {
+		return fmt.Errorf("%w: target must be a non-nil pointer", ErrInvalidJSON)
+	}
 	for _, candidate := range candidates {
 		if candidate == "" {
 			continue
@@ -485,7 +555,9 @@ func parseStructuredJSON(raw string, target any) error {
 			continue
 		}
 		seen[candidate] = struct{}{}
-		if err := json.Unmarshal([]byte(candidate), target); err == nil {
+		candidateTarget := reflect.New(targetValue.Elem().Type())
+		if err := json.Unmarshal([]byte(candidate), candidateTarget.Interface()); err == nil {
+			targetValue.Elem().Set(candidateTarget.Elem())
 			return nil
 		} else {
 			lastErr = err

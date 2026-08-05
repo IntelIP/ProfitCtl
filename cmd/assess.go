@@ -215,7 +215,10 @@ func retrievePricingReceipt(ctx context.Context, searcher exa.Searcher, provider
 		return llm.PricingReceipt{}, fmt.Errorf("provider %q must use trusted official domain %q", provider.Provider, trustedDomain)
 	}
 	provider.OfficialDomain = trustedDomain
-	query, requiredPath := pricingSearchTarget(provider, assessmentModel)
+	query, pathRequirement, err := pricingSearchTarget(provider, assessmentModel)
+	if err != nil {
+		return llm.PricingReceipt{}, err
+	}
 	response, err := searcher.Search(ctx, exa.SearchRequest{
 		Query:          query,
 		Type:           "auto",
@@ -226,7 +229,7 @@ func retrievePricingReceipt(ctx context.Context, searcher exa.Searcher, provider
 	if err != nil {
 		return llm.PricingReceipt{}, fmt.Errorf("retrieve %s pricing through Exa: %w", provider.Name, err)
 	}
-	result, ok := firstOfficialResult(response.Results, provider.OfficialDomain, requiredPath)
+	result, ok := firstOfficialResult(response.Results, provider.OfficialDomain, pathRequirement)
 	if !ok {
 		return llm.PricingReceipt{}, fmt.Errorf("Exa returned no official %s pricing result", provider.Name)
 	}
@@ -242,18 +245,26 @@ func retrievePricingReceipt(ctx context.Context, searcher exa.Searcher, provider
 	}, nil
 }
 
-func pricingSearchTarget(provider llm.ProviderCandidate, assessmentModel string) (query, requiredPath string) {
-	if provider.Provider != defaultDetectProvider || strings.TrimSpace(assessmentModel) == "" {
-		if provider.Provider == "exa" {
-			return provider.Name + " pricing", "/pricing"
-		}
-		return provider.Name + " pricing", ""
-	}
-	modelPath := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(assessmentModel)), "/")
-	return provider.Name + " " + assessmentModel + " pricing", "/" + modelPath
+type pricingPathRequirement struct {
+	ExactPath string
+	Fragments []string
 }
 
-func firstOfficialResult(results []exa.SearchResult, domain, requiredPath string) (exa.SearchResult, bool) {
+func pricingSearchTarget(provider llm.ProviderCandidate, assessmentModel string) (string, pricingPathRequirement, error) {
+	if provider.Provider == defaultDetectProvider && strings.TrimSpace(assessmentModel) != "" {
+		modelPath := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(assessmentModel)), "/")
+		return provider.Name + " " + assessmentModel + " pricing", pricingPathRequirement{
+			ExactPath: "/" + modelPath,
+		}, nil
+	}
+	fragments, supported := llm.TrustedPricingPathFragments(provider.Provider)
+	if !supported || len(fragments) == 0 {
+		return "", pricingPathRequirement{}, fmt.Errorf("provider %q has no trusted pricing-page paths", provider.Provider)
+	}
+	return provider.Name + " pricing", pricingPathRequirement{Fragments: fragments}, nil
+}
+
+func firstOfficialResult(results []exa.SearchResult, domain string, requirement pricingPathRequirement) (exa.SearchResult, bool) {
 	for _, result := range results {
 		parsed, err := url.Parse(result.URL)
 		if err != nil {
@@ -261,7 +272,7 @@ func firstOfficialResult(results []exa.SearchResult, domain, requiredPath string
 		}
 		host := strings.ToLower(parsed.Hostname())
 		if host == domain || strings.HasSuffix(host, "."+domain) {
-			if requiredPath != "" && !exactPathMatch(parsed.Path, requiredPath) {
+			if !pricingPathMatches(parsed.Path, requirement) {
 				continue
 			}
 			return result, true
@@ -270,8 +281,17 @@ func firstOfficialResult(results []exa.SearchResult, domain, requiredPath string
 	return exa.SearchResult{}, false
 }
 
-func exactPathMatch(actual, required string) bool {
-	actual = strings.Trim(strings.ToLower(strings.TrimSpace(actual)), "/")
-	required = strings.Trim(strings.ToLower(strings.TrimSpace(required)), "/")
-	return actual == required
+func pricingPathMatches(actual string, requirement pricingPathRequirement) bool {
+	actual = "/" + strings.Trim(strings.ToLower(strings.TrimSpace(actual)), "/")
+	if requirement.ExactPath != "" {
+		required := "/" + strings.Trim(strings.ToLower(strings.TrimSpace(requirement.ExactPath)), "/")
+		return actual == required
+	}
+	for _, fragment := range requirement.Fragments {
+		fragment = "/" + strings.Trim(strings.ToLower(strings.TrimSpace(fragment)), "/")
+		if actual == fragment || strings.HasSuffix(actual, fragment) || strings.Contains(actual, fragment+"/") {
+			return true
+		}
+	}
+	return false
 }

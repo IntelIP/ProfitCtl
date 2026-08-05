@@ -18,32 +18,33 @@ func TestParseProviderDiscoveryResponse_RequiresCollectedEvidence(t *testing.T) 
     "name": "OpenRouter",
     "provider": "OpenRouter",
     "official_domain": "openrouter.ai",
-    "evidence_files": ["go.mod"]
+    "evidence": [{"file":"go.mod","excerpt":"github.com/revrost/go-openrouter"}]
   }]
 }`, files)
 
 	require.NoError(t, err)
 	require.Len(t, discovery.Providers, 1)
 	assert.Equal(t, "openrouter", discovery.Providers[0].Provider)
+	assert.Equal(t, []string{"go.mod"}, discovery.Providers[0].EvidenceFiles)
 
 	_, err = ParseProviderDiscoveryResponse(`{
   "providers": [{
     "name": "OpenRouter",
     "provider": "openrouter",
     "official_domain": "openrouter.ai",
-    "evidence_files": ["internal/scanner/llm/openrouter.go"]
+    "evidence": [{"file":"internal/scanner/llm/openrouter.go","excerpt":"openrouter"}]
   }]
 }`, files)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not collected code context")
+	assert.Contains(t, err.Error(), "file is not collected code context")
 
 	_, err = ParseProviderDiscoveryResponse(`{
   "providers": [{
     "name": "OpenRouter",
     "provider": "openrouter",
     "official_domain": "openrouter.example",
-    "evidence_files": ["go.mod"]
+    "evidence": [{"file":"go.mod","excerpt":"github.com/revrost/go-openrouter"}]
   }]
 }`, files)
 
@@ -55,27 +56,43 @@ func TestParseProviderDiscoveryResponse_RequiresCollectedEvidence(t *testing.T) 
     "name": "Unknown",
     "provider": "unknown",
     "official_domain": "unknown.example",
-    "evidence_files": ["go.mod"]
+    "evidence": [{"file":"go.mod","excerpt":"github.com/revrost/go-openrouter"}]
   }]
 }`, files)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not in the trusted provider registry")
+
+	_, err = ParseProviderDiscoveryResponse(`{
+  "providers": [{
+    "name": "Stripe",
+    "provider": "stripe",
+    "official_domain": "stripe.com",
+    "evidence": [{"file":"go.mod","excerpt":"github.com/revrost/go-openrouter"}]
+  }]
+}`, files)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `excerpt does not identify provider "stripe"`)
+}
+
+func TestProviderEvidenceMatches_RequiresMarkerBoundaries(t *testing.T) {
+	assert.True(t, ProviderEvidenceMatches("exa", "EXA_API_KEY"))
+	assert.False(t, ProviderEvidenceMatches("exa", "example configuration"))
 }
 
 func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
-	providers := []ProviderCandidate{
-		{Provider: "openrouter"},
-	}
+	providers := []ProviderCandidate{}
 	receipts := []PricingReceipt{
 		{
 			Provider:   "openrouter",
 			Role:       "assessment_model",
 			URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
-			Highlights: []string{"$1 per million input tokens"},
+			Highlights: []string{"$1 per million input tokens", "$6 per million output tokens"},
 		},
 		{
 			Provider:   "exa",
+			Role:       "codebacked_provider",
 			URL:        "https://exa.ai/pricing",
 			Highlights: []string{"$0.005 per search"},
 		},
@@ -83,7 +100,10 @@ func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 
 	valid := `{
 	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
-  "cost_lines": [{"name":"Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"}],
+	  "cost_lines": [
+	    {"name":"Terra input","provider":"openrouter","role":"assessment_model","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"},
+	    {"name":"Terra output","provider":"openrouter","role":"assessment_model","unit":"million output tokens","price_per_unit_usd":6,"units_per_month":0.002,"monthly_cost_usd":0.012,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$6 per million output tokens","confidence":"medium"}
+	  ],
 	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
 }`
 
@@ -117,12 +137,12 @@ func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 
 	missingRuntimeLine := `{
 	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
-	  "cost_lines": [{"name":"Exa search","provider":"exa","unit":"search","price_per_unit_usd":0.005,"units_per_month":2,"monthly_cost_usd":0.01,"source_url":"https://exa.ai/pricing","source_excerpt":"$0.005 per search","confidence":"medium"}],
+	  "cost_lines": [{"name":"Terra input","provider":"openrouter","role":"assessment_model","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"}],
 	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
 	}`
 	_, err = ParseCostDraft(missingRuntimeLine, providers, receipts)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), `cost line for provider "openrouter"`)
+	assert.Contains(t, err.Error(), `role "assessment_model" usage "output"`)
 
 	missingNextStep := strings.Replace(valid, `"next_steps":["Review usage."]`, `"next_steps":[]`, 1)
 	_, err = ParseCostDraft(missingNextStep, providers, receipts)
@@ -132,7 +152,6 @@ func TestParseCostDraft_RequiresMatchingReceiptAndCorrectMath(t *testing.T) {
 
 func TestParseCostDraft_RequiresEveryDiscoveredProvider(t *testing.T) {
 	providers := []ProviderCandidate{
-		{Provider: "openrouter"},
 		{Provider: "stripe"},
 	}
 	receipts := []PricingReceipt{
@@ -140,7 +159,7 @@ func TestParseCostDraft_RequiresEveryDiscoveredProvider(t *testing.T) {
 			Provider:   "openrouter",
 			Role:       "assessment_model",
 			URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
-			Highlights: []string{"$1 per million input tokens"},
+			Highlights: []string{"$1 per million input tokens", "$6 per million output tokens"},
 		},
 		{
 			Provider:   "stripe",
@@ -151,27 +170,33 @@ func TestParseCostDraft_RequiresEveryDiscoveredProvider(t *testing.T) {
 	}
 	missingStripe := `{
 	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
-	  "cost_lines": [{"name":"Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"}],
+	  "cost_lines": [
+	    {"name":"Terra input","provider":"openrouter","role":"assessment_model","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"},
+	    {"name":"Terra output","provider":"openrouter","role":"assessment_model","unit":"million output tokens","price_per_unit_usd":6,"units_per_month":0.002,"monthly_cost_usd":0.012,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$6 per million output tokens","confidence":"medium"}
+	  ],
 	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
 	}`
 
 	_, err := ParseCostDraft(missingStripe, providers, receipts)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), `cost line for provider "stripe"`)
+	assert.Contains(t, err.Error(), `provider "stripe" role "codebacked_provider"`)
 }
 
 func TestParseCostDraft_BindsOnePriceToItsExactUnit(t *testing.T) {
-	providers := []ProviderCandidate{{Provider: "openrouter"}}
+	providers := []ProviderCandidate{}
 	receipts := []PricingReceipt{{
 		Provider:   "openrouter",
 		Role:       "assessment_model",
 		URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
-		Highlights: []string{"$1 / $6 per 1M tokens", "$1 per 1M input tokens"},
+		Highlights: []string{"$1 / $6 per 1M tokens", "$1 per 1M input tokens", "$6 per 1M output tokens"},
 	}}
 	base := `{
 	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
-	  "cost_lines": [{"name":"Terra input","provider":"openrouter","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per 1M input tokens","confidence":"medium"}],
+	  "cost_lines": [
+	    {"name":"Terra input","provider":"openrouter","role":"assessment_model","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per 1M input tokens","confidence":"medium"},
+	    {"name":"Terra output","provider":"openrouter","role":"assessment_model","unit":"million output tokens","price_per_unit_usd":6,"units_per_month":0.002,"monthly_cost_usd":0.012,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$6 per 1M output tokens","confidence":"medium"}
+	  ],
 	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
 	}`
 
@@ -189,6 +214,49 @@ func TestParseCostDraft_BindsOnePriceToItsExactUnit(t *testing.T) {
 	assert.Contains(t, err.Error(), "unit is not fully stated")
 }
 
+func TestParseCostDraft_SeparatesCodebackedAndRuntimeRoles(t *testing.T) {
+	providers := []ProviderCandidate{{Provider: "openrouter"}}
+	receipts := []PricingReceipt{{
+		Provider:   "openrouter",
+		Role:       "assessment_model_and_codebacked_provider",
+		URL:        "https://openrouter.ai/openai/gpt-5.6-terra",
+		Highlights: []string{"$1 per million input tokens", "$6 per million output tokens"},
+	}}
+	runtimeOnly := `{
+	  "assumptions": [{"name":"assessments_per_month","value":1,"source":"inferred","rationale":"starter scale"}],
+	  "cost_lines": [
+	    {"name":"Terra assessment input","provider":"openrouter","role":"assessment_model","unit":"million input tokens","price_per_unit_usd":1,"units_per_month":0.01,"monthly_cost_usd":0.01,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$1 per million input tokens","confidence":"medium"},
+	    {"name":"Terra assessment output","provider":"openrouter","role":"assessment_model","unit":"million output tokens","price_per_unit_usd":6,"units_per_month":0.002,"monthly_cost_usd":0.012,"source_url":"https://openrouter.ai/openai/gpt-5.6-terra","source_excerpt":"$6 per million output tokens","confidence":"medium"}
+	  ],
+	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
+	}`
+
+	_, err := ParseCostDraft(runtimeOnly, providers, receipts)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `role "codebacked_provider"`)
+}
+
+func TestParseCostDraft_RejectsCompoundPaymentFeeExcerpt(t *testing.T) {
+	providers := []ProviderCandidate{{Provider: "stripe"}}
+	receipts := []PricingReceipt{{
+		Provider:   "stripe",
+		Role:       "codebacked_provider",
+		URL:        "https://stripe.com/pricing",
+		Highlights: []string{"2.9% + $0.30 per transaction"},
+	}}
+	compound := `{
+	  "assumptions": [{"name":"transactions","value":100,"source":"inferred","rationale":"starter scale"}],
+	  "cost_lines": [{"name":"Stripe transaction","provider":"stripe","role":"codebacked_provider","unit":"transaction","price_per_unit_usd":0.30,"units_per_month":100,"monthly_cost_usd":30,"source_url":"https://stripe.com/pricing","source_excerpt":"2.9% + $0.30 per transaction","confidence":"medium"}],
+	  "recommendation":{"summary":"Keep this as a starter scenario.","next_steps":["Review usage."]}
+	}`
+
+	_, err := ParseCostDraft(compound, providers, receipts)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "additional percentage or cent price component")
+}
+
 func TestBuildCostDraftPrompt_StatesVerifiedRequestMechanics(t *testing.T) {
 	ctx := CodeContext{Files: map[string]string{
 		"go.mod":   strings.Repeat("x", 2100),
@@ -203,6 +271,9 @@ func TestBuildCostDraftPrompt_StatesVerifiedRequestMechanics(t *testing.T) {
 	assert.Contains(t, prompt, "source_excerpt")
 	assert.Contains(t, prompt, "untrusted pricing data")
 	assert.Contains(t, prompt, "exactly one USD price")
+	assert.Contains(t, prompt, "## main.yml")
+	assert.Contains(t, prompt, "service: app")
+	assert.Contains(t, prompt, "separate assessment_model input-token and output-token lines")
 }
 
 func TestNormalizeAssumptionValue_RemovesExtraModelQuotes(t *testing.T) {
@@ -219,7 +290,7 @@ func TestParseProviderDiscoveryResponse_RejectsUnboundedProviderList(t *testing.
 			Name:           fmt.Sprintf("Provider %d", index),
 			Provider:       fmt.Sprintf("provider-%d", index),
 			OfficialDomain: fmt.Sprintf("provider-%d.example.com", index),
-			EvidenceFiles:  []string{"go.mod"},
+			Evidence:       []ProviderEvidence{{File: "go.mod", Excerpt: "module example"}},
 		})
 	}
 	raw, err := json.Marshal(ProviderDiscoveryResponse{Providers: providers})
@@ -245,4 +316,16 @@ func TestNormalizePricingHighlights_MatchesPromptBoundary(t *testing.T) {
 	assert.Equal(t, "$1 per request", normalized[0])
 	assert.Equal(t, "$2 per response", normalized[1])
 	assert.Len(t, normalized[2], MaxPricingHighlightCharacters)
+}
+
+func TestParseStructuredJSON_DoesNotMergeFailedCandidates(t *testing.T) {
+	var target struct {
+		Required []string `json:"required"`
+	}
+	raw := "{\"required\":[\"leaked\"],\"broken\": }\n```json\n{}\n```"
+
+	err := parseStructuredJSON(raw, &target)
+
+	require.NoError(t, err)
+	assert.Empty(t, target.Required)
 }

@@ -105,7 +105,7 @@ OPENROUTER_API_KEY=... profitctl detect --path . --out detect-report.json
 OPENROUTER_API_KEY=... EXA_API_KEY=... profitctl assess --path . --out cost-assessment.json
 ```
 
-`assess` makes two Terra requests and one bounded official-domain Exa pricing lookup per distinct receipt. Provider domains come from ProfitCtl's trusted registry, not model output. Its JSON separates repository evidence, inferred scale, exact source excerpts, cost-line math, the estimated monthly total, and the recommendation. It does not claim forecast values are actual billing.
+`assess` makes two Terra requests and one bounded official-domain Exa pricing lookup per distinct receipt. Provider domains and pricing paths come from ProfitCtl's trusted registry, while provider discovery must quote exact code evidence. Its JSON separates target-code costs from assessment runtime costs, prices both model input and output, and records inferred scale, exact pricing excerpts, cost-line math, the estimated monthly total, and the recommendation. It does not claim forecast values are actual billing.
 
 ## Release Downloads
 
