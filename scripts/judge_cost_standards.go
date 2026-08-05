@@ -309,7 +309,7 @@ func judgeAssessmentFile(file string) FileReport {
 				content, err := readAssessmentEvidence(assessmentRoot, evidence.File)
 				if err != nil {
 					report.Issues = append(report.Issues, fmt.Sprintf("providers[%d].evidence[%d].file cannot be read from assessed path: %v", index, evidenceIndex, err))
-				} else if !strings.Contains(content, evidence.Excerpt) {
+				} else if !strings.Contains(providerDetectionContent(evidence.File, content), evidence.Excerpt) {
 					report.Issues = append(report.Issues, fmt.Sprintf("providers[%d].evidence[%d].excerpt is not exact assessed code", index, evidenceIndex))
 				}
 			}
@@ -726,7 +726,7 @@ func judgeRecommendationFile(file string) FileReport {
 	requireRecommendationSection(&report, sections, "recommendation")
 	requireRecommendationSection(&report, sections, "assumptions")
 	requireRecommendationSection(&report, sections, "economics")
-	requireRecommendationSection(&report, sections, "alternative")
+	requireRecommendationSection(&report, sections, "alternative", "tradeoff")
 	requireAny(&report, "recommendation artifact needs an explicit recommendation", body, "recommendation")
 	requireAny(&report, "recommendation artifact needs explicit assumptions", body, "assumption", "assumptions")
 	requireAny(&report, "recommendation artifact needs monthly fixed cost", body, "fixed cost", "fixed_cost")
@@ -735,14 +735,14 @@ func judgeRecommendationFile(file string) FileReport {
 	requireAny(&report, "recommendation artifact needs p95 stress evidence", body, "p95")
 	requireAny(&report, "recommendation artifact needs cost per user evidence", body, "cost/user", "cost per user", "cost_per_user")
 	requireAny(&report, "recommendation artifact needs covenant status", body, "covenant")
-	requireAny(&report, "recommendation artifact needs cheaper alternative analysis", body, "alternative")
+	requireAny(&report, "recommendation artifact needs cheaper alternative analysis", body, "alternative", "tradeoff")
 	requireAny(&report, "recommendation artifact needs source provenance", body, "source", "provenance")
 	requireAny(&report, "recommendation artifact needs confidence level", body, "confidence")
 
 	if (strings.Contains(body, "$") || strings.Contains(body, "%")) && (!hasAny(body, "source", "provenance") || !hasAny(body, "confidence")) {
 		report.Issues = append(report.Issues, "precise cost or margin claims need provenance and confidence")
 	}
-	if hasAny(body, "guaranteed", "always", "invoice-grade") && !hasAny(body, "telemetry", "invoice") {
+	if hasAny(body, "guaranteed", "always", "invoice-grade") && !hasMeasuredRecommendationEvidence(body) {
 		report.Issues = append(report.Issues, "high-certainty recommendation language needs telemetry or invoice evidence")
 	}
 	if !hasAny(body, "template", "repo_detected", "user_supplied", "provider_catalog", "telemetry", "invoice") {
@@ -774,16 +774,19 @@ func recommendationSections(body string) map[string]string {
 	return sections
 }
 
-func requireRecommendationSection(report *FileReport, sections map[string]string, label string) {
-	value, exists := sections[label]
-	normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), "."))
-	if !exists || recommendationSectionPlaceholder(label, normalized) || len(strings.Fields(value)) < 2 {
-		report.Issues = append(report.Issues, fmt.Sprintf("recommendation artifact needs a labeled %s section with a non-placeholder value", label))
+func requireRecommendationSection(report *FileReport, sections map[string]string, label string, aliases ...string) {
+	for _, candidate := range append([]string{label}, aliases...) {
+		value, exists := sections[candidate]
+		normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), "."))
+		if exists && !recommendationSectionPlaceholder(candidate, normalized) && len(strings.Fields(value)) >= 2 {
+			return
+		}
 	}
+	report.Issues = append(report.Issues, fmt.Sprintf("recommendation artifact needs a labeled %s section with a non-placeholder value", label))
 }
 
 func recommendationSectionPlaceholder(label, value string) bool {
-	for _, placeholder := range []string{"n/a", "no", "none", "not available", "not provided", "unknown"} {
+	for _, placeholder := range []string{"n/a", "none", "not available", "not provided", "unknown"} {
 		if value == placeholder || strings.HasPrefix(value, placeholder+" ") {
 			return true
 		}
@@ -800,6 +803,55 @@ func recommendationSectionPlaceholder(label, value string) bool {
 		}
 	}
 	return label == "economics" && strings.HasPrefix(value, "no fixed cost")
+}
+
+func hasMeasuredRecommendationEvidence(body string) bool {
+	for _, line := range strings.Split(strings.ToLower(body), "\n") {
+		for _, sourceType := range []string{"telemetry", "invoice"} {
+			if !hasAny(
+				line,
+				"source.type: "+sourceType,
+				"source.type="+sourceType,
+				"source type: "+sourceType,
+				"source: "+sourceType,
+				"provenance is "+sourceType,
+				sourceType+" evidence",
+				sourceType+"-backed",
+				sourceType+" backed",
+				sourceType+" shows",
+				sourceType+" confirms",
+				"from "+sourceType,
+				"`"+sourceType+"`",
+			) {
+				continue
+			}
+			if !recommendationEvidenceIsNegated(line, sourceType) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func recommendationEvidenceIsNegated(line, sourceType string) bool {
+	index := strings.Index(line, sourceType)
+	if index < 0 {
+		return false
+	}
+	prefixStart := index - 48
+	if prefixStart < 0 {
+		prefixStart = 0
+	}
+	prefix := line[prefixStart:index]
+	if hasAny(prefix, "no ", "without ", "not ", "missing ", "lack ", "lacks ", "neither ") {
+		return true
+	}
+	suffixEnd := index + len(sourceType) + 32
+	if suffixEnd > len(line) {
+		suffixEnd = len(line)
+	}
+	suffix := line[index+len(sourceType) : suffixEnd]
+	return hasAny(suffix, " not available", " not provided", " unavailable", " absent", " missing")
 }
 
 func requireAny(report *FileReport, issue string, body string, terms ...string) {

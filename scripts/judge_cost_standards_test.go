@@ -67,6 +67,15 @@ func TestJudgeAssessmentFileRejectsInvalidEvidenceAndMath(t *testing.T) {
 			wantIssue: "excerpt is not exact assessed code",
 		},
 		{
+			name: "provider evidence is an indirect Go requirement",
+			mutate: func(artifact map[string]any) {
+				providers := artifact["providers"].([]any)
+				evidence := providers[0].(map[string]any)["evidence"].([]any)
+				evidence[0].(map[string]any)["excerpt"] = "github.com/aws/aws-sdk-go-v2/config v1.18.25 // indirect"
+			},
+			wantIssue: "excerpt is not exact assessed code",
+		},
+		{
 			name: "provider evidence file is missing",
 			mutate: func(artifact map[string]any) {
 				providers := artifact["providers"].([]any)
@@ -368,6 +377,87 @@ Alternative: no alternative provided
 		if !issuesContain(report.Issues, "labeled "+section+" section") {
 			t.Fatalf("expected %s placeholder failure, got %v", section, report.Issues)
 		}
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsNoGoRecommendation(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := strings.Replace(
+		string(data),
+		"Recommendation: Use Cloudflare Workers for the public AI SaaS path because the ProfitCtl compare run shows lower monthly cost while all covenants pass.",
+		"Recommendation: No launch until p95 margin passes the covenant with measured usage.",
+		1,
+	)
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected evidence-bearing no-go recommendation to pass, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsTradeoffAsAlternative(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := strings.Split(string(data), "\nAlternative:")[0]
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected labeled tradeoff to satisfy alternative analysis, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileRejectsNegatedMeasuredEvidence(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := string(data) + "\nThis outcome is always guaranteed with no invoice or telemetry evidence.\n"
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if report.Passed || !issuesContain(report.Issues, "high-certainty recommendation language") {
+		t.Fatalf("expected negated measured evidence to fail, got passed=%v issues=%v", report.Passed, report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsAffirmedMeasuredEvidence(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := string(data) + "\nEvidence: Production telemetry shows this covenant always passed in the measured window.\n"
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected affirmed telemetry evidence to support high certainty, issues: %v", report.Issues)
 	}
 }
 
