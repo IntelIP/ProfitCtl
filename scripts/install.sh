@@ -6,6 +6,7 @@ INSTALL_DIR="${PROFITCTL_INSTALL_DIR:-}"
 VERSION="${PROFITCTL_VERSION:-}"
 BIN_NAME="${PROFITCTL_BIN_NAME:-profitctl}"
 RELEASE_REPO="${PROFITCTL_RELEASE_REPO:-IntelIP/ProfitCtl}"
+CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
 
 usage() {
   cat <<'EOF'
@@ -17,6 +18,7 @@ Environment variables:
   PROFITCTL_DOWNLOAD_BASE_URL Optional release mirror root override
   PROFITCTL_INSTALL_DIR       Install prefix, default $HOME/.local/bin
   PROFITCTL_BIN_NAME          Binary name to install, default profitctl
+  CODEX_HOME                  Codex home, default $HOME/.codex
 EOF
 }
 
@@ -185,12 +187,26 @@ tar -xzf "$ARCHIVE_PATH" -C "$EXTRACT_DIR"
 
 BIN_PATH="$(find "$EXTRACT_DIR" -type f -name "$BIN_NAME" -perm -111 | head -n 1)"
 [[ -n "$BIN_PATH" ]] || die "installed archive did not contain ${BIN_NAME}"
+SKILL_SOURCE="$(find "$EXTRACT_DIR" -type d -path "*/skills/profitctl-cost-aware" | head -n 1)"
 
 TARGET_PATH="${INSTALL_DIR}/${BIN_NAME}"
 cp "$BIN_PATH" "$TARGET_PATH"
 chmod 755 "$TARGET_PATH"
 
 log "Installed ${BIN_NAME} to ${TARGET_PATH}"
+
+if [[ -n "$SKILL_SOURCE" ]]; then
+  SKILL_TARGET="${CODEX_HOME_DIR}/skills/profitctl-cost-aware"
+  mkdir -p "$SKILL_TARGET"
+  cp -R "${SKILL_SOURCE}/." "$SKILL_TARGET/"
+  chmod 755 "${SKILL_TARGET}/scripts/run_profitctl_scenarios.py"
+  if [[ -f "${SKILL_TARGET}/bin/${BIN_NAME}" ]]; then
+    chmod 755 "${SKILL_TARGET}/bin/${BIN_NAME}"
+  fi
+  log "Installed profitctl-cost-aware skill to ${SKILL_TARGET}"
+else
+  log "Release ${VERSION} predates the bundled Codex skill; installed CLI only."
+fi
 
 case ":${PATH}:" in
   *":${INSTALL_DIR}:"*) ;;

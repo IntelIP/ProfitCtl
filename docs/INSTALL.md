@@ -1,12 +1,13 @@
 # Install Guide
 
-ProfitCtl ships a release-based install script for macOS and Linux. The script downloads the latest published binary from GitHub Releases by default, verifies the checksum from the matching `SHA256SUMS` asset, and installs the binary into a writable prefix. If you operate a private mirror, override the source with `PROFITCTL_DOWNLOAD_BASE_URL`.
+ProfitCtl ships a release-based install script for macOS and Linux. The script downloads the latest published package from GitHub Releases by default, verifies the checksum from the matching `SHA256SUMS` asset, installs the binary into a writable prefix, and installs the portable `profitctl-cost-aware` Codex skill. If you operate a private mirror, override the source with `PROFITCTL_DOWNLOAD_BASE_URL`.
 
 ## Requirements
 
 - `curl`
 - `tar`
 - `sha256sum` or `shasum`
+- Python 3.10+ for the bundled Codex skill helper
 
 ## Recommended Install
 
@@ -14,7 +15,7 @@ ProfitCtl ships a release-based install script for macOS and Linux. The script d
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 ```
 
-The script installs to `~/.local/bin` by default. If that directory is not on your `PATH`, add it before running `profitctl`.
+The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$HOME/.codex}/skills/profitctl-cost-aware`. If the binary directory is not on your `PATH`, the installed skill uses its bundled platform binary.
 
 ## Pin a Version
 

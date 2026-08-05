@@ -9,7 +9,13 @@ fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="${ROOT}/dist/${TAG}"
+SKILL_SOURCE="${ROOT}/skills/profitctl-cost-aware"
 mkdir -p "${OUT_DIR}"
+
+[[ -f "${SKILL_SOURCE}/SKILL.md" ]] || {
+  echo "missing bundled skill: ${SKILL_SOURCE}" >&2
+  exit 1
+}
 
 MATRIX=(
   "linux amd64"
@@ -37,6 +43,14 @@ for entry in "${MATRIX[@]}"; do
     go build -trimpath -ldflags="-s -w -X main.version=${TAG}" -o "${PKG_DIR}/${BIN_NAME}" "${ROOT}"
 
   cp "${ROOT}/README.md" "${PKG_DIR}/README.md"
+  mkdir -p "${PKG_DIR}/skills"
+  cp -R "${SKILL_SOURCE}" "${PKG_DIR}/skills/profitctl-cost-aware"
+  mkdir -p "${PKG_DIR}/skills/profitctl-cost-aware/bin"
+  cp "${PKG_DIR}/${BIN_NAME}" "${PKG_DIR}/skills/profitctl-cost-aware/bin/${BIN_NAME}"
+  chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
+  if [[ "${GOOS}" != "windows" ]]; then
+    chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/bin/${BIN_NAME}"
+  fi
 
   if [[ "${ARCHIVE_EXT}" == "zip" ]]; then
     (cd "${OUT_DIR}" && zip -rq "profitctl_${TAG}_${GOOS}_${GOARCH}.zip" "profitctl_${TAG}_${GOOS}_${GOARCH}")
