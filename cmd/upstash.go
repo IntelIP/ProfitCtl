@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	ledgerv1 "github.com/IntelIP/ProfitCtl/pkg/ledger/v1"
@@ -42,6 +44,15 @@ func runUpstashReconcile(cmd *cobra.Command, args []string) error {
 	if strings.TrimSpace(upstashLedger) == "" {
 		return wrapExit(2, fmt.Errorf("--ledger is required"))
 	}
+	if strings.TrimSpace(upstashOutput) != "" {
+		aliases, err := pathsAlias(upstashLedger, upstashOutput)
+		if err != nil {
+			return wrapExit(2, fmt.Errorf("compare --ledger and --output paths: %w", err))
+		}
+		if aliases {
+			return wrapExit(2, fmt.Errorf("--output must not reference --ledger"))
+		}
+	}
 
 	reconciliation, normalized, err := upstashv1.ReconcileFile(upstashInput)
 	if err != nil {
@@ -77,4 +88,39 @@ func runUpstashReconcile(cmd *cobra.Command, args []string) error {
 		return wrapExit(3, fmt.Errorf("write reconciliation artifact: %w", err))
 	}
 	return nil
+}
+
+// pathsAlias rejects equivalent local paths before either file is written. It
+// compares cleaned absolute paths, resolved parent directories, and existing
+// filesystem identities so a reconciliation artifact cannot replace its ledger.
+func pathsAlias(left, right string) (bool, error) {
+	leftPath, err := canonicalLocalPath(left)
+	if err != nil {
+		return false, err
+	}
+	rightPath, err := canonicalLocalPath(right)
+	if err != nil {
+		return false, err
+	}
+	if leftPath == rightPath {
+		return true, nil
+	}
+
+	leftInfo, leftErr := os.Stat(leftPath)
+	rightInfo, rightErr := os.Stat(rightPath)
+	if leftErr == nil && rightErr == nil && os.SameFile(leftInfo, rightInfo) {
+		return true, nil
+	}
+	return false, nil
+}
+
+func canonicalLocalPath(path string) (string, error) {
+	absPath, err := filepath.Abs(filepath.Clean(path))
+	if err != nil {
+		return "", err
+	}
+	if realDirectory, err := filepath.EvalSymlinks(filepath.Dir(absPath)); err == nil {
+		return filepath.Join(realDirectory, filepath.Base(absPath)), nil
+	}
+	return absPath, nil
 }

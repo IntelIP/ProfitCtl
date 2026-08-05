@@ -101,7 +101,7 @@
         "total_cost": { "$ref": "#/$defs/money" },
         "window": { "$ref": "#/$defs/window" },
         "artifact_identity": { "type": "string", "minLength": 1 },
-        "captured_at": { "type": "string", "minLength": 1 },
+        "captured_at": { "$ref": "#/$defs/capture_time" },
         "unavailable_reason": { "type": "string", "minLength": 1 }
       },
       "allOf": [
@@ -111,10 +111,19 @@
             "required": ["evidence_status"]
           },
           "then": {
-            "required": ["total_cost", "window", "artifact_identity", "captured_at"]
+            "required": ["total_cost", "window", "artifact_identity", "captured_at"],
+            "not": { "required": ["unavailable_reason"] }
           },
           "else": {
-            "required": ["unavailable_reason"]
+            "required": ["unavailable_reason"],
+            "not": {
+              "anyOf": [
+                { "required": ["total_cost"] },
+                { "required": ["window"] },
+                { "required": ["artifact_identity"] },
+                { "required": ["captured_at"] }
+              ]
+            }
           }
         }
       ]
@@ -125,8 +134,8 @@
       "required": ["observed_minus_predicted_commands", "observed_minus_predicted_cost"],
       "properties": {
         "observed_minus_predicted_commands": { "type": "number" },
-        "observed_minus_predicted_cost": { "$ref": "#/$defs/money" },
-        "billed_minus_observed_cost": { "$ref": "#/$defs/money" }
+        "observed_minus_predicted_cost": { "$ref": "#/$defs/signed_money" },
+        "billed_minus_observed_cost": { "$ref": "#/$defs/signed_money" }
       }
     },
     "dominant_operational_driver": {
@@ -178,7 +187,7 @@
       "required": ["artifact_identity", "captured_at"],
       "properties": {
         "artifact_identity": { "type": "string", "minLength": 1 },
-        "captured_at": { "type": "string", "minLength": 1 }
+        "captured_at": { "$ref": "#/$defs/capture_time" }
       }
     },
     "window": {
@@ -195,9 +204,32 @@
       "additionalProperties": false,
       "required": ["amount", "currency"],
       "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "signed_money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
         "amount": { "type": "number" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
       }
+    },
+    "capture_time": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+        }
+      ]
     },
     "quantity": {
       "type": "object",

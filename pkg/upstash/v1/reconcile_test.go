@@ -142,6 +142,37 @@ func TestReconciliationSchemaIsValidJSON(t *testing.T) {
 	require.Equal(t, "https://github.com/IntelIP/ProfitCtl/schemas/upstash-reconciliation/v1/reconciliation.schema.json", schema["$id"])
 }
 
+func TestReconciliationSchemaGuardsArtifactBoundaries(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	require.NoError(t, err)
+	data, err := os.ReadFile(filepath.Join(root, "schemas", "upstash-reconciliation", "v1", "reconciliation.schema.json"))
+	require.NoError(t, err)
+
+	var schema map[string]any
+	require.NoError(t, json.Unmarshal(data, &schema))
+	definitions := schema["$defs"].(map[string]any)
+	money := definitions["money"].(map[string]any)
+	moneyAmount := money["properties"].(map[string]any)["amount"].(map[string]any)
+	require.Equal(t, float64(0), moneyAmount["minimum"])
+	signedMoney := definitions["signed_money"].(map[string]any)
+	signedAmount := signedMoney["properties"].(map[string]any)["amount"].(map[string]any)
+	require.NotContains(t, signedAmount, "minimum")
+
+	source := definitions["source"].(map[string]any)
+	sourceCapturedAt := source["properties"].(map[string]any)["captured_at"].(map[string]any)
+	require.Equal(t, "#/$defs/capture_time", sourceCapturedAt["$ref"])
+
+	billing := schema["properties"].(map[string]any)["billing"].(map[string]any)
+	condition := billing["allOf"].([]any)[0].(map[string]any)
+	forbiddenAvailableFields := condition["else"].(map[string]any)["not"].(map[string]any)["anyOf"].([]any)
+	require.Len(t, forbiddenAvailableFields, 4)
+
+	variance := schema["properties"].(map[string]any)["variance"].(map[string]any)
+	varianceProperties := variance["properties"].(map[string]any)
+	require.Equal(t, "#/$defs/signed_money", varianceProperties["observed_minus_predicted_cost"].(map[string]any)["$ref"])
+	require.Equal(t, "#/$defs/signed_money", varianceProperties["billed_minus_observed_cost"].(map[string]any)["$ref"])
+}
+
 func upstashFixturePath(t *testing.T, name string) string {
 	t.Helper()
 	root, err := filepath.Abs(filepath.Join("..", "..", ".."))

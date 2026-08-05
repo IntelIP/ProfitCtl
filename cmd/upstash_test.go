@@ -111,6 +111,27 @@ func TestRunUpstashReconcileRequiresInputAndLedger(t *testing.T) {
 	require.ErrorContains(t, err, "--ledger is required")
 }
 
+func TestRunUpstashReconcileRejectsOutputAliasingLedger(t *testing.T) {
+	oldInput, oldLedger, oldOutput := upstashInput, upstashLedger, upstashOutput
+	defer func() {
+		upstashInput, upstashLedger, upstashOutput = oldInput, oldLedger, oldOutput
+	}()
+
+	temporary := t.TempDir()
+	upstashInput = filepath.Join("..", "test", "fixtures", "upstash", "v1", "idle_polling.json")
+	upstashLedger = filepath.Join(temporary, "ledger.json")
+	workingDirectory, err := os.Getwd()
+	require.NoError(t, err)
+	relativeLedger, err := filepath.Rel(workingDirectory, upstashLedger)
+	require.NoError(t, err)
+	upstashOutput = relativeLedger
+
+	err = runUpstashReconcile(&cobra.Command{}, nil)
+	require.ErrorContains(t, err, "--output must not reference --ledger")
+	_, err = os.Stat(upstashLedger)
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
 func TestUpstashCommandFlags(t *testing.T) {
 	require.NotNil(t, upstashReconcileCmd.Flags().Lookup("input"))
 	require.NotNil(t, upstashReconcileCmd.Flags().Lookup("ledger"))
