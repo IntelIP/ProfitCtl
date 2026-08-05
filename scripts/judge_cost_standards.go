@@ -697,7 +697,7 @@ func directGoModuleRequirements(content string) string {
 			continue
 		}
 		if strings.HasPrefix(line, "require ") && !strings.Contains(line, "// indirect") {
-			direct = append(direct, strings.TrimSpace(strings.TrimPrefix(line, "require ")))
+			direct = append(direct, line)
 		}
 	}
 	return strings.Join(direct, "\n")
@@ -834,24 +834,32 @@ func hasMeasuredRecommendationEvidence(body string) bool {
 }
 
 func recommendationEvidenceIsNegated(line, sourceType string) bool {
-	index := strings.Index(line, sourceType)
-	if index < 0 {
-		return false
+	otherSourceType := "invoice"
+	if sourceType == "invoice" {
+		otherSourceType = "telemetry"
 	}
-	prefixStart := index - 48
-	if prefixStart < 0 {
-		prefixStart = 0
-	}
-	prefix := line[prefixStart:index]
-	if hasAny(prefix, "no ", "without ", "not ", "missing ", "lack ", "lacks ", "neither ") {
+	if hasAny(
+		line,
+		"no "+sourceType,
+		"without "+sourceType,
+		"missing "+sourceType,
+		"lack of "+sourceType,
+		"lacks "+sourceType,
+		"neither "+sourceType,
+		"no "+otherSourceType+" or "+sourceType,
+		"without "+otherSourceType+" or "+sourceType,
+		"neither "+otherSourceType+" nor "+sourceType,
+	) {
 		return true
 	}
-	suffixEnd := index + len(sourceType) + 32
-	if suffixEnd > len(line) {
-		suffixEnd = len(line)
-	}
-	suffix := line[index+len(sourceType) : suffixEnd]
-	return hasAny(suffix, " not available", " not provided", " unavailable", " absent", " missing")
+	return hasAny(
+		line,
+		sourceType+" not available",
+		sourceType+" not provided",
+		sourceType+" unavailable",
+		sourceType+" absent",
+		sourceType+" missing",
+	)
 }
 
 func requireAny(report *FileReport, issue string, body string, terms ...string) {

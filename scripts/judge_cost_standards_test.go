@@ -298,6 +298,18 @@ require github.com/stripe/stripe-go/v76 v76.15.0
 	}
 }
 
+func TestProviderDetectionContentPreservesSingleLineGoRequirement(t *testing.T) {
+	content := `module example.com/app
+
+require github.com/aws/aws-sdk-go v1.48.0
+`
+	direct := providerDetectionContent("go.mod", content)
+
+	if !strings.Contains(direct, "require github.com/aws/aws-sdk-go v1.48.0") {
+		t.Fatalf("expected exact single-line requirement, got %q", direct)
+	}
+}
+
 func TestJudgeAssessmentFileRejectsTrailingJSON(t *testing.T) {
 	source := filepath.Join("..", "test", "fixtures", "assessment_valid.json")
 	data, err := os.ReadFile(source)
@@ -458,6 +470,39 @@ func TestJudgeRecommendationFileAcceptsAffirmedMeasuredEvidence(t *testing.T) {
 
 	if !report.Passed {
 		t.Fatalf("expected affirmed telemetry evidence to support high certainty, issues: %v", report.Issues)
+	}
+}
+
+func TestJudgeRecommendationFileAcceptsTelemetryAfterMissingInvoiceDisclosure(t *testing.T) {
+	source := filepath.Join("..", "test", "fixtures", "agent_recommendation_valid.md")
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatalf("read recommendation fixture: %v", err)
+	}
+	body := string(data) + "\nEvidence: No invoice evidence is available, but production telemetry shows this covenant always passed in the measured window.\n"
+	path := filepath.Join(t.TempDir(), "recommendation.md")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	report := judgeRecommendationFile(path)
+
+	if !report.Passed {
+		t.Fatalf("expected affirmed telemetry to remain valid after invoice disclosure, issues: %v", report.Issues)
+	}
+}
+
+func TestCostAwareSkillOutputNamesRecommendationEvidenceFields(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "skills", "profitctl-cost-aware", "SKILL.md"))
+	if err != nil {
+		t.Fatalf("read skill: %v", err)
+	}
+	body := string(data)
+
+	for _, field := range []string{"Source provenance:", "Confidence:"} {
+		if !strings.Contains(body, field) {
+			t.Fatalf("expected skill output pattern to include %q", field)
+		}
 	}
 }
 

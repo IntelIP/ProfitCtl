@@ -70,5 +70,7 @@ Recommendation: [choice] because [ProfitCtl evidence].
 Assumptions: [users/growth/ARPU/top usage assumptions].
 Economics: [revenue/cost/margin/p95/cost per user/covenants].
 Tradeoff: [what gets cheaper or riskier].
+Source provenance: [source.type values and supporting URLs or artifacts].
+Confidence: [confidence level and why].
 Next step: [scenario to refine or check to run].
 ```
