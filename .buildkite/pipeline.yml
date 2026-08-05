@@ -1,0 +1,32 @@
+env:
+  CI: "1"
+  NO_COLOR: "1"
+
+agents:
+  queue: "docker-local-pilot"
+
+steps:
+  - label: ":moneybag: ProfitCtl portable validation"
+    key: "portable-validation"
+    command: |
+      trusted_runner=".buildkite/scripts/self-hosted-validation.sh"
+      printf '%s  %s\n' \
+        "e41288774b59ac3f475111319593141f06d769d6425b7a256eff8029fd6539b0" \
+        "$$trusted_runner" | sha256sum --check --strict
+      bash "$$trusted_runner"
+    timeout_in_minutes: 30
+    cancel_on_build_failing: true
+    concurrency: 1
+    concurrency_group: "intelip/current-projects/self-hosted"
+    retry:
+      manual:
+        allowed: false
+        reason: "Create a new exact-SHA lease after local diagnosis."
+    artifact_paths:
+      - "profitctl-self-hosted-evidence.json"
+    plugins:
+      - docker#ae0bd411c9aa2dcba4194717e2d3a6c70f51ce2d:
+          image: "golang:1.24-bookworm@sha256:1a6d4452c65dea36aac2e2d606b01b4a029ec90cc1ae53890540ce6173ea77ac"
+          chown: false
+          environment:
+            - "BUILDKITE_COMMIT"
