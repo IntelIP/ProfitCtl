@@ -19,6 +19,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - `validate`: validate config structure and rules
 - `detect`: scan repository config files and return JSON service/dependency analysis
 - `assess`: detect code-backed providers, retrieve official pricing through Exa, and create a GPT-5.6 Terra starter cost model that includes its own OpenRouter and Exa execution cost
+- portable `profitctl-cost-aware` Codex skill: requires source-backed assessment when material price or scale context is missing
 - `doctor`: check local binary, runtime, config, and catalog readiness without changing local state
 - pricing modes: `tiered`, `mix`, and `hybrid`
 - workspace-aware pricing and minimum-floor scenario modeling
@@ -39,7 +40,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 ```
 
-The installer downloads a GitHub Release archive, verifies it against that release's `SHA256SUMS`, and installs `profitctl` to `~/.local/bin` unless a custom prefix is selected.
+The installer downloads a GitHub Release archive, verifies it against that release's `SHA256SUMS`, installs `profitctl` to `~/.local/bin`, and installs the portable `profitctl-cost-aware` Codex skill to `${CODEX_HOME:-$HOME/.codex}/skills`.
 
 ### Homebrew
 

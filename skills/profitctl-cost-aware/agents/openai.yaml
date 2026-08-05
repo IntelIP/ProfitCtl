@@ -1,7 +1,7 @@
 interface:
   display_name: "ProfitCtl Cost-Aware"
-  short_description: "Cost-aware architecture and product economics"
-  default_prompt: "Use $profitctl-cost-aware to compare architecture choices with ProfitCtl economics."
+  short_description: "Source-backed cost decisions for Codex"
+  default_prompt: "Use $profitctl-cost-aware to evaluate this material decision and fill missing cost context with ProfitCtl."
 
 policy:
   allow_implicit_invocation: true
