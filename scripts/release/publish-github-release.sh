@@ -24,7 +24,7 @@ PUBLIC_KEY="${ROOT}/keys/profitctl-release-cosign.pub"
 }
 
 if ! gh release view "${TAG}" --repo IntelIP/ProfitCtl >/dev/null 2>&1; then
-  gh release create "${TAG}" --repo IntelIP/ProfitCtl --title "${TAG}" --notes "Automated Woodpecker release for ${TAG}."
+  gh release create "${TAG}" --repo IntelIP/ProfitCtl --title "${TAG}" --notes "Automated ProfitCtl release for ${TAG}."
 fi
 
 gh release upload "${TAG}" "${OUT_DIR}"/profitctl_* "${OUT_DIR}"/SHA256SUMS "${OUT_DIR}"/SHA256SUMS.sig "${PUBLIC_KEY}" --repo IntelIP/ProfitCtl --clobber

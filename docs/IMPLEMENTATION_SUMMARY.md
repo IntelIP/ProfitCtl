@@ -7,4 +7,4 @@ Current product-facing behavior is documented in:
 - `README.md`
 - `docs/HOW_IT_WORKS.md`
 - `docs/ARCHITECTURE.md`
-- `docs/deployment/WOODPECKER_HOSTINGER_SETUP.md`
+- `docs/deployment/README.md`

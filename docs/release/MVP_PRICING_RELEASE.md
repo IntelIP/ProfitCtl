@@ -51,11 +51,11 @@ Use `GOCACHE` and `GOTMPDIR` overrides in restricted environments.
 
 ## Verification Model
 
-The current release pipeline uses Cosign key-pair signing because the authoritative release pipeline runs in Woodpecker, not GitHub Actions. That means releases do not currently use GitHub OIDC keyless signing or Rekor-backed transparency bundles. Consumers verify with the committed and published `profitctl-release-cosign.pub` key instead.
+Published release assets use Cosign key-pair signing. Releases do not currently use GitHub OIDC keyless signing or Rekor-backed transparency bundles. Consumers verify with the committed and published `profitctl-release-cosign.pub` key instead.
 
 This is a deliberate tradeoff:
 
-- it fits the current release infrastructure
+- it supports deterministic verification without depending on CI-provider identity
 - it provides deterministic offline verification for archives, SBOMs, and checksum manifests
 - it keeps the upgrade path open if release publishing moves to an OIDC-capable environment later
 
