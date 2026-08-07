@@ -38,7 +38,7 @@ go test ./...
 
 ## CI/CD
 
-- PR and main checks run in Woodpecker.
-- Release publish/deploy runs on semver tags.
+- PR and main checks run in GitHub Actions.
+- Release publishing remains an explicit maintainer action for semver tags.
 - External releases are cut from `main` only after the release checklist is complete.
 - CODEOWNERS should be treated as the default review path for release, policy, and contributor-facing changes.

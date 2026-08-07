@@ -14,10 +14,7 @@
 
 ## CI/CD Architecture
 
-- Woodpecker pipeline file: `.woodpecker.yml`
-- PR/main verification jobs on `pool=shared-kvm`
-- Tag release jobs on `pool=shared-kvm`
-- GitHub Actions provides required public repo checks: `verify-go` and `verify-install-smoke`
+- GitHub Actions provides required public repo checks: `verify-go`, `verify-install-smoke`, and `security-scan`
 - Canonical public release channel: GitHub Releases
 - Public releases include detached Cosign signatures, SPDX JSON SBOMs, and the release verification public key
 - Release artifacts mirrored to Hostinger VPS at `/opt/profitctl/releases`

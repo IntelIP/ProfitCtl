@@ -29,7 +29,6 @@
 ## Deployment and CI/CD
 
 - [Deployment Docs](deployment/README.md)
-- [Woodpecker + Hostinger Setup](deployment/WOODPECKER_HOSTINGER_SETUP.md)
 
 ## Historical Notes
 

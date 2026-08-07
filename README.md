@@ -30,7 +30,7 @@ It helps teams model fixed + variable costs, simulate growth and stress scenario
 - booked vs operating margin reporting for one-time-heavy contract scenarios
 - full-economics reporting across delivery, productization, and adoption cost layers
 - Output formats: human CLI, JSON, Markdown
-- CI/CD via Woodpecker (Hostinger VPS + builder pool)
+- GitHub Actions verification for PRs and `main`
 
 ## Install
 
@@ -159,7 +159,6 @@ The repo now includes IntelIP-specific economics scenario packs for conservative
 - [Adoption Dashboard](docs/growth/adoption-dashboard.md)
 - [Design-Partner Operating System](docs/growth/design-partner-operating-system.md)
 - [MVP Pricing Release Guide](docs/release/MVP_PRICING_RELEASE.md)
-- [Woodpecker + Hostinger Runbook](docs/deployment/WOODPECKER_HOSTINGER_SETUP.md)
 
 ## Contributing
 
