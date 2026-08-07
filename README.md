@@ -169,34 +169,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 See [SECURITY.md](SECURITY.md).
 
-## AppSec PR Review
-
-`ProfitCtl` can publish PR security findings into the separate `appsec-mvp` service.
-
-- PR and main scans run in GitHub Actions via `semgrep`, `trivy`, `gitleaks`, and `osv-scanner`
-- findings are uploaded to `appsec-mvp`
-- GitHub PRs receive:
-  - commit status `appsec/mvp`
-  - check run `AppSec MVP Review`
-  - selective inline comments for high-confidence findings
-
-Required GitHub repository secrets:
-
-- `APPSEC_API_URL`
-- `APPSEC_API_TOKEN`
-
-Optional GitHub repository variable:
-
-- `APPSEC_STRICT_API`
-
-Required `appsec-mvp` runtime config:
-
-- `GITHUB_APP_ID`
-- `GITHUB_APP_PRIVATE_KEY_PEM` or `GITHUB_APP_PRIVATE_KEY_PATH`
-- `GITHUB_WEBHOOK_SECRET`
-
-The initial `/.appsec.yml` policy is set to `report_only` for rollout validation, and the helper scripts default `APPSEC_STRICT_API` to `false` so AppSec service outages do not hard-fail PRs during onboarding. Switch the policy to `enforce` and set `APPSEC_STRICT_API=true` once the integration is stable.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).
