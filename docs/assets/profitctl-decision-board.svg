@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title description">
+  <title id="title">ProfitCtl hybrid scenario decision sheet</title>
+  <desc id="description">A light financial control sheet comparing the committed hybrid steady-state and pilot fixtures. Steady-state leads operating margin and cost per user. Pilot leads revenue.</desc>
+  <rect width="1440" height="760" rx="12" fill="#FAFAF9"/>
+  <path d="M0 8H1440" stroke="#1244E6" stroke-width="8"/>
+
+  <g font-family="Instrument Sans, Arial, sans-serif">
+    <g transform="translate(64 54)">
+      <rect width="48" height="48" rx="8" fill="#FFFFFF" stroke="#D4D4D8" stroke-width="2"/>
+      <path d="M16 12h-4v24h4M32 12h4v24h-4" fill="none" stroke="#0A0A0A" stroke-width="2.5"/>
+      <path d="M20 18h10M20 24h7M20 30h5" fill="none" stroke="#52525B" stroke-linecap="round" stroke-width="2.5"/>
+      <circle cx="30" cy="18" r="3" fill="#1244E6"/>
+      <text x="66" y="20" fill="#0A0A0A" font-size="22" font-weight="600">ProfitCtl</text>
+      <text x="66" y="42" fill="#52525B" font-size="14" font-weight="500">Decision sheet · 01</text>
+    </g>
+
+    <g transform="translate(1010 62)">
+      <text x="0" y="14" fill="#52525B" font-size="12" font-weight="600">SOURCE</text>
+      <text x="72" y="14" fill="#0A0A0A" font-size="13" font-weight="500">Committed hybrid fixtures</text>
+      <text x="0" y="38" fill="#52525B" font-size="12" font-weight="600">STATUS</text>
+      <circle cx="82" cy="34" r="5" fill="#047857"/>
+      <text x="96" y="38" fill="#047857" font-size="13" font-weight="600">Both pass covenants</text>
+    </g>
+
+    <g transform="translate(64 160)">
+      <text x="0" y="0" fill="#1244E6" font-size="13" font-weight="600">HYBRID CONTRACT COMPARISON</text>
+      <text x="0" y="48" fill="#0A0A0A" font-size="40" font-weight="600">Two revenue profiles. One margin trade-off.</text>
+      <text x="0" y="82" fill="#52525B" font-size="17">Steady-state leads operating efficiency. The pilot produces more booked revenue with a higher unit cost.</text>
+    </g>
+
+    <g transform="translate(64 286)">
+      <rect width="1312" height="232" rx="8" fill="#FFFFFF" stroke="#D4D4D8" stroke-width="2"/>
+      <rect width="1312" height="48" rx="8" fill="#F4F4F5"/>
+      <path d="M0 48H1312M0 140H1312" stroke="#D4D4D8" stroke-width="2"/>
+      <path d="M308 0V232M526 0V232M730 0V232M946 0V232M1134 0V232" stroke="#E4E4E7" stroke-width="1"/>
+
+      <text x="24" y="31" fill="#52525B" font-size="12" font-weight="600">SCENARIO</text>
+      <text x="332" y="31" fill="#52525B" font-size="12" font-weight="600">REVENUE</text>
+      <text x="550" y="31" fill="#52525B" font-size="12" font-weight="600">RECURRING</text>
+      <text x="754" y="31" fill="#52525B" font-size="12" font-weight="600">OPERATING MARGIN</text>
+      <text x="970" y="31" fill="#52525B" font-size="12" font-weight="600">COST / USER</text>
+      <text x="1158" y="31" fill="#52525B" font-size="12" font-weight="600">COVENANTS</text>
+
+      <rect x="24" y="68" width="72" height="24" rx="4" fill="#EFF6FF"/>
+      <text x="36" y="85" fill="#1D4ED8" font-size="11" font-weight="600">BASELINE</text>
+      <text x="24" y="118" fill="#0A0A0A" font-size="18" font-weight="600">Hybrid steady-state</text>
+      <text x="332" y="103" fill="#0A0A0A" font-size="24" font-weight="600">$2,000</text>
+      <text x="550" y="103" fill="#0A0A0A" font-size="24" font-weight="600">$2,000</text>
+      <text x="754" y="103" fill="#1244E6" font-size="24" font-weight="600">95.00%</text>
+      <text x="970" y="103" fill="#0A0A0A" font-size="24" font-weight="600">$2.00</text>
+      <rect x="1158" y="80" width="66" height="26" rx="4" fill="#ECFDF5" stroke="#A7F3D0"/>
+      <text x="1175" y="98" fill="#047857" font-size="12" font-weight="600">PASS</text>
+
+      <rect x="24" y="160" width="48" height="24" rx="4" fill="#F4F4F5"/>
+      <text x="36" y="177" fill="#52525B" font-size="11" font-weight="600">PILOT</text>
+      <text x="24" y="210" fill="#0A0A0A" font-size="18" font-weight="600">Hybrid pilot</text>
+      <text x="332" y="195" fill="#0A0A0A" font-size="24" font-weight="600">$6,500</text>
+      <text x="550" y="195" fill="#0A0A0A" font-size="24" font-weight="600">$2,000</text>
+      <text x="754" y="195" fill="#0A0A0A" font-size="24" font-weight="600">69.00%</text>
+      <text x="970" y="195" fill="#0A0A0A" font-size="24" font-weight="600">$12.40</text>
+      <rect x="1158" y="172" width="66" height="26" rx="4" fill="#ECFDF5" stroke="#A7F3D0"/>
+      <text x="1175" y="190" fill="#047857" font-size="12" font-weight="600">PASS</text>
+    </g>
+
+    <g transform="translate(64 564)">
+      <path d="M0 0H1312" stroke="#D4D4D8" stroke-width="2"/>
+      <path d="M437 24V126M874 24V126" stroke="#D4D4D8" stroke-width="2"/>
+
+      <text x="0" y="38" fill="#52525B" font-size="12" font-weight="600">MARGIN LEADER</text>
+      <text x="0" y="82" fill="#1244E6" font-size="36" font-weight="600">95.00%</text>
+      <text x="150" y="79" fill="#52525B" font-size="15">steady-state</text>
+
+      <text x="469" y="38" fill="#52525B" font-size="12" font-weight="600">PILOT REVENUE DELTA</text>
+      <text x="469" y="82" fill="#0A0A0A" font-size="36" font-weight="600">+$4,500</text>
+      <text x="649" y="79" fill="#52525B" font-size="15">vs baseline</text>
+
+      <text x="906" y="38" fill="#52525B" font-size="12" font-weight="600">PILOT UNIT-COST DELTA</text>
+      <text x="906" y="82" fill="#0A0A0A" font-size="36" font-weight="600">+$10.40</text>
+      <text x="1080" y="79" fill="#52525B" font-size="15">per user</text>
+    </g>
+
+    <g transform="translate(64 710)">
+      <text x="0" y="0" fill="#52525B" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">profitctl compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml</text>
+      <text x="1312" y="0" text-anchor="end" fill="#52525B" font-size="12">Fixture output · not a forecast</text>
+    </g>
+  </g>
+</svg>
