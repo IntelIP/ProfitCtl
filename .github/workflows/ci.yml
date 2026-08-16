@@ -84,7 +84,7 @@ jobs:
           bash scripts/release/prepare-bun-package.sh "${TAG}"
           BUN_INSTALL_GLOBAL_DIR="${RUNNER_TEMP}/bun-global" \
           BUN_INSTALL_BIN="${RUNNER_TEMP}/bun-bin" \
-            bun add --global "dist/${TAG}/profitctl-0.0.0-ci.tgz"
+            bun add --global "${GITHUB_WORKSPACE}/dist/${TAG}/profitctl-0.0.0-ci.tgz"
           "${RUNNER_TEMP}/bun-bin/profitctl" --help >/dev/null
 
       - name: Build local mirror layout
