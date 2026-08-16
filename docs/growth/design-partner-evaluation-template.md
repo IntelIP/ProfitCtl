@@ -19,7 +19,7 @@ Use this template for every serious evaluator or design-partner loop.
 
 - Install path used:
   - `curl install`
-  - `Homebrew`
+  - `Bun package`
   - `source build`
 - Install completed without help:
 - Friction encountered:

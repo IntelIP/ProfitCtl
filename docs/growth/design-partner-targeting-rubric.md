@@ -44,7 +44,7 @@ Total possible score: `16`
 
 ### 4. Install Readiness
 
-- `2`: comfortable with CLI or Homebrew install
+- `2`: comfortable with CLI or Bun package install
 - `1`: willing to try with help
 - `0`: wants a hosted-only workflow now
 
@@ -84,7 +84,7 @@ Do not target if they:
 
 - only want generic finance planning
 - want a hosted collaboration product immediately
-- cannot install the CLI or run Homebrew
+- cannot install the CLI or run Bun
 - cannot articulate a pricing or contract decision
 - are asking for bespoke consulting work instead of product evaluation
 
@@ -100,4 +100,3 @@ For every target, capture:
 - outreach status
 - last touch date
 - follow-up next step
-

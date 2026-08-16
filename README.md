@@ -36,7 +36,7 @@ cd ProfitCtl
 go run . compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
 ```
 
-You will see revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric. For the release binary and Homebrew, see the [Install Guide](./docs/INSTALL.md).
+You will see revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric. For the release binary and private Bun package, see the [Install Guide](./docs/INSTALL.md).
 
 ## Use it where decisions happen
 
@@ -53,8 +53,11 @@ You will see revenue, recurring revenue, fees, booked and operating margins, cos
 - [How ProfitCtl works](./docs/HOW_IT_WORKS.md)
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Cost intelligence system design](./docs/cost-intelligence-system-design.md)
+- [Open-source company plan](./docs/OPEN_SOURCE_COMPANY_PLAN.md)
+- [ProfitCtl plugin pilot](./docs/PROFITCTL_PLUGIN_PILOT_SPEC.md)
+- [Website source](./website/README.md)
 - [Release downloads](https://github.com/IntelIP/ProfitCtl/releases)
 
 ## Trust and participation
 
-ProfitCtl is MIT licensed. See [LICENSE](./LICENSE), [Security](./SECURITY.md), and [Contributing](./CONTRIBUTING.md).
+ProfitCtl is MIT licensed. See [LICENSE](./LICENSE), [NOTICE](./NOTICE), [Trademark Guidelines](./TRADEMARKS.md), [Security](./SECURITY.md), and [Contributing](./CONTRIBUTING.md).

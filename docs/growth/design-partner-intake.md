@@ -15,7 +15,7 @@ For inbound evaluators from the public repo, use the GitHub `Design-partner requ
 ## 15-Minute Evaluation Path
 
 1. Send the benchmark comparison that matches their problem.
-2. Point them to the public install path or Homebrew formula.
+2. Point them to the public install path or Bun package.
 3. Ask them to run `profitctl compare` once or share the closest pricing shape.
 4. If the result is useful, ask for real inputs so the model can be calibrated.
 5. Decide whether they need docs help, a feature, or a design-partner call.

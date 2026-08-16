@@ -11,7 +11,7 @@ Options:
   --owner NAME               Owner name for the review.
   --release-version VERSION  Release version to record.
   --release-downloads COUNT  Release downloads to record.
-  --homebrew-installs COUNT  Homebrew installs to record.
+  --bun-installs COUNT       Bun package installs to record.
   --output PATH              Markdown output file path.
   --force                    Overwrite the output file if it already exists.
   --help                     Show this help text.
@@ -29,7 +29,7 @@ week_of="$(date -u +%Y-%m-%d)"
 owner=""
 release_version=""
 release_downloads=""
-homebrew_installs=""
+bun_installs=""
 output_path=""
 force="false"
 
@@ -51,8 +51,8 @@ while [[ $# -gt 0 ]]; do
       release_downloads="${2:-}"
       shift 2
       ;;
-    --homebrew-installs)
-      homebrew_installs="${2:-}"
+    --bun-installs)
+      bun_installs="${2:-}"
       shift 2
       ;;
     --output)
@@ -121,7 +121,7 @@ Use this template every Friday after the design-partner and adoption dashboard r
 - Calibration requests received:
 - Design-partner commitments:
 - Release downloads: ${release_downloads}
-- Homebrew installs: ${homebrew_installs}
+- Bun package installs: ${bun_installs}
 
 ## What Changed
 
@@ -180,5 +180,5 @@ Wrote weekly review scaffold to:
 ${output_path}
 
 Dashboard row:
-| ${week_of} | ${release_version} |  |  |  |  |  |  |  | ${release_downloads} | ${homebrew_installs} |  |  |
+| ${week_of} | ${release_version} |  |  |  |  |  |  |  | ${release_downloads} | ${bun_installs} |  |  |
 EOF

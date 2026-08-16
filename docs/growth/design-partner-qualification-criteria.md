@@ -8,7 +8,7 @@ A target qualifies when all of the following are true:
 
 - they have a real pricing, packaging, or contract question
 - the question affects recurring economics
-- they can run a local install or Homebrew install
+- they can run a local install or Bun package install
 - they can explain what decision they are trying to make
 - they are willing to share enough input for calibration
 
@@ -37,7 +37,7 @@ These are not necessarily disqualifiers, but they lower priority:
 Do not advance the target if they:
 
 - do not have a concrete decision in motion
-- cannot install the CLI or use Homebrew
+- cannot install the CLI or use Bun
 - cannot give any real scenario inputs
 - are asking for custom consulting instead of product evaluation
 - need a collaboration platform before any comparison can happen
@@ -48,7 +48,7 @@ Ask these in order:
 
 1. What pricing or contract decision are you making?
 2. Is the economics mostly recurring, one-time, or mixed?
-3. Can you install `profitctl` locally or with Homebrew?
+3. Can you install `profitctl` locally or with Bun?
 4. Can you share the smallest useful set of inputs?
 5. Would you use this before committing to the decision?
 
@@ -61,4 +61,3 @@ Use one of these labels after qualification:
 - `needs calibration`
 - `needs follow-up`
 - `not a fit`
-

@@ -29,7 +29,7 @@ Keep the follow-up to:
 
 - what pricing or contract question they are making
 - whether the issue is recurring, one-time, or mixed
-- whether they can install the CLI or use Homebrew
+- whether they can install the CLI or use Bun
 - whether they can share real inputs
 
 ## Stage 3: Install Push
@@ -42,7 +42,7 @@ Preferred path:
 
 Fallback:
 
-- Homebrew install
+- Bun package install
 
 If installation needs too much help, record that friction explicitly.
 
@@ -94,4 +94,3 @@ Use this order unless the target is unusually warm:
 - bespoke consulting before installation
 - asking for too many inputs at once
 - turning a target into a manual support queue
-

@@ -27,7 +27,7 @@ Keep the generated review file in a private operating system. Do not commit live
 - Calibration requests received:
 - Design-partner commitments:
 - Release downloads:
-- Homebrew installs:
+- Bun package installs:
 
 ## What Changed
 
