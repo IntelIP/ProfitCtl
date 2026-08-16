@@ -46,8 +46,9 @@ Use `GOCACHE` and `GOTMPDIR` overrides in restricted environments.
    - `operating_margin` covenants for contract safety checks
 10. Verify the exact public install path from the README against the new tag:
    - `curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | env -u PROFITCTL_DOWNLOAD_BASE_URL PROFITCTL_VERSION=<tag> bash`
-11. Update and publish the Homebrew tap if `Formula/profitctl.rb` changed:
-   - `bash scripts/release/publish-homebrew-tap.sh`
+11. Build and smoke-test the private Bun/npm tarball:
+   - `bash scripts/release/prepare-bun-package.sh <tag>`
+   - registry publication remains disabled until ProfitCtl's visibility and release gate change
 
 ## Verification Model
 

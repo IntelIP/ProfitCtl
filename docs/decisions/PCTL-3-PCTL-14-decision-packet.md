@@ -15,7 +15,7 @@ The accepted contract:
 1. ProfitCtl becomes a local-first cost-intelligence control loop for founder-led developers and operators of AI-native software.
 2. Existing simulation remains the forecast engine. First vertical slice adds synthetic Upstash idle-polling observations, variance attribution, and one bounded recommendation.
 3. Provider catalog values remain sourced planning defaults, never guaranteed current prices.
-4. Supported package identity is repository and Go module `github.com/IntelIP/ProfitCtl`, binary `profitctl`, GitHub Release install script as primary distribution, Homebrew as secondary distribution, and `go run` / `go install` as explicit development fallbacks.
+4. Supported package identity is repository and Go module `github.com/IntelIP/ProfitCtl`, binary `profitctl`, GitHub Release install script as primary distribution, a Bun/npm package as secondary distribution, and `go run` / `go install` as explicit development fallbacks.
 
 This acceptance clears product and provenance definition. It authorizes PCTL-2 implementation without selecting, publishing, merging, or deploying a release.
 
@@ -26,7 +26,7 @@ This acceptance clears product and provenance definition. It authorizes PCTL-2 i
 - Dirty canonical branch `docs/profitctl-oss-company-plan` proposes a different public center: “unit economics as code for AI-native software teams,” agent-decision demos, and a 120-day adoption plan. PCTL-10 and PCTL-16 preserve its work, but no active task, PR, or accepted product decision owns that direction.
 - Canonical checkout is modified across product, open-core, growth, legal, standards-judge, skill, and website surfaces. It remains read-only.
 - Repository identity is already `github.com/IntelIP/ProfitCtl`; installed binary name is already `profitctl`.
-- Latest GitHub Release is `v0.2.0` from 2026-05-29. Repository Homebrew formula says `0.1.3`; install docs pin `v0.1.2`.
+- The former secondary tap drifted from release assets and was retired; the replacement Bun/npm package remains private until its publication gate is approved.
 - Release builds inject `main.version`, but current CLI does not expose it. A clean local build rejects both `profitctl --version` and `profitctl doctor`.
 - Seed provider catalog was captured 2026-05-29. Entries have type, confidence, capture date, and notes, but no refresh owner, cadence, expiry behavior, or Upstash entry.
 - PCTL-17 validation manifest exists only on local branch `codex/pctl-17-product-validation`; it requires deterministic, zero-provider-call schema, semantic, workflow, operational, and security validation.
@@ -156,7 +156,7 @@ PCTL-20 should add a source-backed Upstash catalog entry only after policy accep
 - Canonical identity: `github.com/IntelIP/ProfitCtl`.
 - Supported executable: `profitctl`.
 - Primary install: checksum-verified GitHub Release install script into a user-selected or temporary prefix.
-- Secondary install: Homebrew formula pinned to the same release.
+- Secondary install: Bun/npm package assembled from the same release binaries.
 - Development fallback: explicit `go run .` or `go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>`; never silent. The command package path is required because installing the mixed-case module root would create a `ProfitCtl` binary instead of the supported `profitctl` identity.
 - Go-install availability: select a commit or future tag containing `cmd/profitctl`; the current published `v0.2.0` tag predates that package.
 - Version behavior: `profitctl version` and `profitctl --version` report injected package tag; development builds report an explicit development identity.
@@ -187,7 +187,7 @@ Hudson accepted Option A in full on 2026-07-31:
 - Official pricing is medium-confidence catalog data; invoices own billed amounts; telemetry and runtime ledgers own usage.
 - Stale data is warned and downgraded, and cannot support current-price claims.
 - Canonical package/repository is `github.com/IntelIP/ProfitCtl`; binary is `profitctl`.
-- Checksum-verified GitHub Release installer is primary; Homebrew is secondary; Go paths are explicit developer fallbacks.
+- Checksum-verified GitHub Release installer is primary; Bun/npm is secondary; Go paths are explicit developer fallbacks.
 - `--version` and `doctor` are required.
 
 Plane PCTL-3 and PCTL-14 record the accepted outcome and evidence contracts. PCTL-2 implementation proceeds on isolated branch `codex/pctl-2-stable-cli-identity`; the dirty canonical company-plan checkout remains separate and read-only.

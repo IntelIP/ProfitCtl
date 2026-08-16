@@ -1,5 +1,6 @@
 # Binaries
 profitctl
+!/packages/profitctl/
 *.exe
 *.dll
 *.so
@@ -13,6 +14,7 @@ profitctl
 
 # Dependency directories
 vendor/
+node_modules/
 
 # Go workspace file
 go.work
@@ -34,6 +36,7 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+.astro/
 
 # Test output
 *.log
@@ -42,3 +45,5 @@ Thumbs.db
 # Build artifacts
 /dist/
 /build/
+/website/dist/
+/packages/profitctl/native/
