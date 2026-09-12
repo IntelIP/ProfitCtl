@@ -5,6 +5,8 @@ This doc defines which artifact owns which part of the design-partner operating 
 ## Canonical Sources
 
 - Product positioning and packaging: [ProfitCtl Open-Core Packaging](../OPEN_CORE_PACKAGING.md)
+- Company direction and 120-day plan: [ProfitCtl Open-Source Company Plan](../OPEN_SOURCE_COMPANY_PLAN.md)
+- Agent demo workflow: [Agent Cost OS Demo Playbook](agent-cost-os-demo-playbook.md)
 - Design-partner operating motion: [Design-Partner Operating System](design-partner-operating-system.md)
 - Target selection: [Design-Partner Targeting Rubric](design-partner-targeting-rubric.md)
 - Outreach sequence: [Design-Partner Outreach Sequencing](design-partner-outreach-sequencing.md)
@@ -26,6 +28,7 @@ This doc defines which artifact owns which part of the design-partner operating 
 ## What Each Artifact Owns
 
 - `README.md`: navigation only
+- `OPEN_SOURCE_COMPANY_PLAN.md`: company wedge, product system, open-core boundary, and 120-day plan
 - growth docs: operating model, templates, and review guidance
 - Linear: execution state, follow-ups, owners, and due dates
 - benchmark reports: proof of product behavior

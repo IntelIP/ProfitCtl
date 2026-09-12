@@ -1,11 +1,11 @@
 name: Design-partner request
-description: Request a design-partner evaluation loop for a real pricing or contract decision.
+description: Request a design-partner evaluation loop for a real architecture, AI API, pricing, or contract decision.
 title: "[design-partner] "
 body:
   - type: markdown
     attributes:
       value: |
-        Use this form if you want to evaluate `ProfitCtl` against a real pricing, packaging, or contract question.
+        Use this form if you want to evaluate `ProfitCtl` against a real architecture, AI API, pricing, packaging, or contract question.
 
         Before opening this request, install the CLI and run one matching benchmark pair if possible:
         - `profitctl compare benchmark_scenarios/open_core_tiered.yml benchmark_scenarios/open_core_mix.yml`
@@ -23,23 +23,24 @@ body:
     id: role
     attributes:
       label: Your role
-      description: Founder, product, finance, RevOps, sales, CS, or similar.
+      description: Founder, developer, AI engineer, product, finance, RevOps, sales, CS, or similar.
       placeholder: Founder
     validations:
       required: true
   - type: textarea
     id: decision
     attributes:
-      label: Pricing or contract decision
+      label: Decision
       description: What real decision are you trying to make right now?
-      placeholder: We are deciding whether to keep a pilot-heavy hybrid enterprise contract or move to a steadier recurring structure.
+      placeholder: We are deciding whether to add deep research to every agent run, move a Next.js AI app to Workers, or change a pilot-heavy enterprise contract.
     validations:
       required: true
   - type: dropdown
     id: revenue_shape
     attributes:
-      label: Revenue shape
+      label: Revenue or usage shape
       options:
+        - AI/API usage-driven
         - Mostly recurring
         - Mostly one-time
         - Mixed
@@ -48,9 +49,12 @@ body:
   - type: dropdown
     id: benchmark_pair
     attributes:
-      label: Closest benchmark pair
+      label: Closest starting point
       description: Pick the starting point that matches your question best.
       options:
+        - Vercel vs Cloudflare Workers
+        - Cloud Run vs Workers
+        - Deep research API risk
         - open_core_tiered vs open_core_mix
         - hybrid_steady_contract vs hybrid_pilot_contract
         - hybrid_operating_safe vs hybrid_operating_breach
@@ -63,7 +67,7 @@ body:
       label: Install status
       options:
         - Installed via install script
-        - Installed via Homebrew
+        - Installed via Bun package
         - Not installed yet
         - Need help installing
     validations:
@@ -73,7 +77,7 @@ body:
     attributes:
       label: Inputs you can share
       description: Keep this high level if needed. What real inputs could you provide for calibration?
-      placeholder: Current pricing shape, free vs paid monthly vs paid annual mix, one recurring-cost assumption, and the target contract shape.
+      placeholder: Current pricing shape, users, runs per user, tokens/search calls per run, paid API assumptions, or one recurring-cost assumption.
     validations:
       required: true
   - type: textarea
@@ -81,7 +85,7 @@ body:
     attributes:
       label: Success criterion
       description: What would make this evaluation useful enough to continue?
-      placeholder: We want to know whether the recurring margin still holds up before we commit to the contract.
+      placeholder: We want to know whether the margin and cost per user still hold up before we commit.
     validations:
       required: true
   - type: textarea

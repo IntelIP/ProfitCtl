@@ -6,9 +6,20 @@ Use these assets when the goal is to get an evaluator from interest to one concr
 
 ## Operating Rule
 
-Pick one benchmark pair only.
+Pick one benchmark pair or one agent demo only.
 
 Do not send multiple comparisons in the first conversation. The point is to prove one decision, not showcase every feature.
+
+## Pack 0: Agent Cost OS
+
+- Question:
+  should this AI-native product choose one architecture, runtime, model, search, or paid API path over another?
+- Lead metric:
+  cost per user with p95 margin
+- Demo playbook:
+  [Agent Cost OS Demo Playbook](agent-cost-os-demo-playbook.md)
+- Best fit:
+  AI SaaS teams, agent builders, devtools founders, and teams adding paid AI/search APIs
 
 ## Pack 1: Open-Core Packaging
 
@@ -63,7 +74,7 @@ profitctl compare benchmark_scenarios/hybrid_operating_safe.yml benchmark_scenar
 
 ## How To Use This Pack
 
-1. choose the benchmark pair that matches the evaluator's question
+1. choose the benchmark pair or agent demo that matches the evaluator's question
 2. send one report or one command only
 3. state the lead metric before any secondary metrics
 4. ask whether they want to run the closest version of their own scenario next

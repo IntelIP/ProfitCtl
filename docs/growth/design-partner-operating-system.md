@@ -54,7 +54,7 @@ One company/contact with a clear pricing, packaging, or contract question.
 They fit the target criteria and can articulate the decision they are trying to make.
 
 3. `Installed`
-They installed `profitctl` locally or via Homebrew.
+They installed `profitctl` locally or via the Bun package.
 
 4. `Activated`
 They ran one benchmark comparison or a config close to their own scenario.
@@ -97,11 +97,10 @@ Use the public install path first:
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 ```
 
-Or Homebrew:
+Or the Bun package after registry publication:
 
 ```bash
-brew tap IntelIP/profitctl
-brew install profitctl
+bunx profitctl --help
 ```
 
 The install itself is part of the product test. If it requires hand-holding, record that as product friction.
@@ -188,7 +187,7 @@ Primary metrics:
 Secondary metrics:
 
 - GitHub release download trend
-- Homebrew install trend
+- Bun package install trend
 - docs/help friction themes
 - top missing config or output patterns
 

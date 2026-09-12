@@ -23,18 +23,23 @@ The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$H
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=<tag> bash
 ```
 
-## Homebrew
+## Bun
 
 ```bash
-brew tap IntelIP/profitctl
-brew install profitctl
+git clone https://github.com/IntelIP/ProfitCtl.git
+cd ProfitCtl/packages/profitctl
+bun run build:native
+bun run profitctl -- --help
 ```
 
-For explicit tap-qualified installs:
+The package includes a native launcher and can be packed as a Bun/npm tarball during a release:
 
 ```bash
-brew install IntelIP/profitctl/profitctl
+bash scripts/release/build-artifacts.sh <tag>
+bash scripts/release/prepare-bun-package.sh <tag>
 ```
+
+Registry publication is intentionally disabled while the canonical repository remains private. No public npm package is created by these commands.
 
 ## Custom Prefix
 
@@ -67,7 +72,7 @@ go install github.com/IntelIP/ProfitCtl/cmd/profitctl@<version>
 Choose a commit or future tag that contains `cmd/profitctl`; the current published
 `v0.2.0` tag predates this package. Source and Go installs are explicit developer
 fallbacks. The checksum-verified GitHub Release installer is the primary supported
-path; Homebrew is secondary.
+path; the private Bun package is the secondary development path.
 
 ## Verify the Current Published Install
 
@@ -77,7 +82,7 @@ profitctl --help
 
 ## Verify a Release Candidate
 
-Use these checks for an artifact built from a commit containing the stable CLI identity contract. Publishing that artifact and updating Homebrew remain separate release actions.
+Use these checks for an artifact built from a commit containing the stable CLI identity contract. Publishing that artifact and publishing the Bun package remain separate release actions.
 
 ```bash
 profitctl --version

@@ -1,0 +1,1603 @@
+---
+import ProductLayout from "../layouts/ProductLayout.astro";
+
+const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
+const providers = [
+  {
+    name: "Cloudflare Workers",
+    shortName: "Workers",
+    logo: "/logos/profitctl/cloudflare-workers.svg",
+    logoAlt: "Cloudflare Workers",
+    fixed: "$24",
+    variable: "$6.30",
+    monthly: "$87",
+    margin: "78%",
+    p95: "62%",
+    activeCost: "$9.40",
+    delta: "best",
+    state: "pass",
+    stateLabel: "Pass",
+    series: "workers",
+  },
+  {
+    name: "Google Cloud Run",
+    shortName: "Cloud Run",
+    logo: "/logos/profitctl/google-cloud.svg",
+    logoAlt: "Google Cloud",
+    fixed: "$38",
+    variable: "$8.10",
+    monthly: "$128",
+    margin: "66%",
+    p95: "52%",
+    activeCost: "$12.30",
+    delta: "+47%",
+    state: "pass",
+    stateLabel: "Pass",
+    series: "cloud",
+  },
+  {
+    name: "Vercel",
+    shortName: "Vercel",
+    logo: "/logos/profitctl/vercel.svg",
+    logoAlt: "Vercel",
+    fixed: "$52",
+    variable: "$11.40",
+    monthly: "$162",
+    margin: "58%",
+    p95: "41%",
+    activeCost: "$16.80",
+    delta: "+86%",
+    state: "watch",
+    stateLabel: "Watch",
+    series: "vercel",
+  },
+];
+
+const heroMetrics = [
+  { label: "Monthly cost", value: "$87", detail: "best option" },
+  { label: "Gross margin", value: "78%", detail: "meets >= 60%" },
+  { label: "p95 margin", value: "62%", detail: "meets >= 40%" },
+  { label: "Cost / active user", value: "$9.40", detail: "meets <= $18" },
+];
+
+const deliveryModes = ["CLI today", "Codex skill", "CI output"];
+
+const evidenceCards = [
+  {
+    badge: "Deploy choice",
+    title: "Workers vs Vercel for this Next.js app",
+    logos: [
+      { src: "/logos/profitctl/cloudflare-workers.svg", alt: "Cloudflare Workers" },
+      { src: "/logos/profitctl/vercel.svg", alt: "Vercel" },
+    ],
+    bars: [
+      { label: "Workers", value: 31, amount: "$87", tone: "workers" },
+      { label: "Cloud Run", value: 46, amount: "$128", tone: "cloud" },
+      { label: "Vercel", value: 58, amount: "$162", tone: "vercel" },
+    ],
+    metrics: [
+      { label: "Margin", value: "78%" },
+      { label: "p95", value: "62%" },
+      { label: "Cost / user", value: "$9.40" },
+    ],
+    action: "See comparison",
+  },
+  {
+    badge: "Deep research risk",
+    title: "What is the cost risk of adding deep research?",
+    logos: [
+      { src: "/logos/profitctl/openai.svg", alt: "OpenAI" },
+      { src: "/logos/profitctl/google-cloud.svg", alt: "Google Cloud" },
+    ],
+    bars: [
+      { label: "Base", value: 18, amount: "$9.40", tone: "neutral" },
+      { label: "+ light research", value: 36, amount: "$17.80", tone: "cloud" },
+      { label: "+ deep research", value: 52, amount: "$26.60", tone: "risk" },
+    ],
+    metrics: [
+      { label: "Margin", value: "42%" },
+      { label: "p95", value: "28%" },
+      { label: "Cost / user", value: "$26.60" },
+    ],
+    action: "Run this scenario",
+  },
+  {
+    badge: "Pricing model",
+    title: "Which pricing model keeps 60%+ margin?",
+    pricingRows: [
+      { label: "Pro plan ($20/mo)", value: 78, tone: "workers" },
+      { label: "Team plan ($40/mo)", value: 64, tone: "cloud" },
+      { label: "Usage ($0.10 / msg)", value: 38, tone: "risk" },
+    ],
+    metrics: [
+      { label: "Best option", value: "Pro plan" },
+      { label: "ARR potential", value: "$2.4M" },
+      { label: "Confidence", value: "Medium" },
+    ],
+    action: "Model your pricing",
+  },
+];
+
+const standards = [
+  { label: "Provenance", detail: "Every cost line has source, capture date, and note." },
+  { label: "Confidence", detail: "Low, medium, high based on actual evidence, not guesswork." },
+  { label: "Covenants", detail: "Margins, p95, and user cost tracked against explicit targets." },
+  { label: "Decision artifact", detail: "Shareable output with assumptions, tables, and charts." },
+  { label: "No hand-wave claims", detail: "Judge blocks precise claims without trustworthy evidence." },
+];
+
+const productSurfaces = [
+  {
+    status: "Open source now",
+    title: "CLI",
+    detail: "Run compare, simulate, and validate locally.",
+    items: [
+      "compare, simulate, validate",
+      "Scenario templates",
+      "Local modeling",
+      "JSON output",
+      "Standards judge",
+    ],
+  },
+  {
+    status: "Open source now",
+    title: "Codex skill",
+    detail: "Pull repo context into cost-aware agent decisions.",
+    items: [
+      "Repo-aware cost decisions",
+      "Architecture comparisons",
+      "Assumption-aware output",
+      "Temporary scenario edits",
+      "No new CLI command in v1",
+    ],
+  },
+  {
+    status: "Open source now",
+    title: "CI / PR check",
+    detail: "Turn scenarios into gates before spend lands.",
+    items: [
+      "JSON output in CI",
+      "Recurring margin checks",
+      "Covenant failures in PRs",
+      "Saved scenario files",
+      "Decision evidence in reviews",
+    ],
+  },
+  {
+    status: "Hosted later",
+    title: "Team workflow",
+    detail: "Keep history, approvals, and calibration in one place.",
+    items: [
+      "Team workspaces",
+      "Saved runs and history",
+      "Policies and approvals",
+      "Calibration connectors",
+      "RBAC and SSO",
+    ],
+  },
+];
+
+const footerLinks = [
+  { label: "GitHub", href: repoUrl, external: true },
+  { label: "Get started", href: "#get-started" },
+];
+---
+
+<ProductLayout
+  title="ProfitCtl | Profit-Aware Agents"
+  description="ProfitCtl helps AI-native teams compare infrastructure, model, tool, pricing, and product-cost decisions before spend becomes real."
+>
+  <main class="profitctl-page">
+    <header class="site-header">
+      <div class="site-header-inner">
+          <a href="/" class="brand" aria-label="ProfitCtl home">
+          <span class="brand-mark" aria-hidden="true">P</span>
+          <span>ProfitCtl</span>
+        </a>
+        <nav class="site-nav" aria-label="ProfitCtl navigation">
+          <a href="#compare">Compare</a>
+          <a href="#demos">Examples</a>
+          <a href="#standards">Standards</a>
+          <a href="#open-core">Open core</a>
+        </nav>
+        <a class="nav-button" href={repoUrl} rel="noopener noreferrer" target="_blank">
+          <img src="/logos/profitctl/github.svg" alt="" loading="eager" decoding="async" />
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <section class="hero-shell">
+      <div class="hero-copy">
+        <h1>Compare spend before it ships.</h1>
+        <p>
+          ProfitCtl helps AI-native teams compare infrastructure, model, API, and pricing
+          choices with unit economics that hold under real usage.
+        </p>
+
+        <div class="hero-actions">
+          <a class="primary-action" href={repoUrl} rel="noopener noreferrer" target="_blank">
+            Try ProfitCtl locally
+          </a>
+          <a class="secondary-action" href="#demos">View examples</a>
+        </div>
+
+        <div class="entry-strip" aria-label="ProfitCtl delivery modes">
+          <strong>Use it as</strong>
+          <div>
+            {deliveryModes.map((mode) => <span>{mode}</span>)}
+          </div>
+        </div>
+
+        <div class="proof-points" aria-label="ProfitCtl proof points">
+          <article>
+            <span aria-hidden="true" />
+            <strong>Open source</strong>
+            <small>MIT licensed</small>
+          </article>
+          <article>
+            <span aria-hidden="true" />
+            <strong>Unit economics</strong>
+            <small>Not vibes</small>
+          </article>
+          <article>
+            <span aria-hidden="true" />
+            <strong>Decision evidence</strong>
+            <small>For teams and agents</small>
+          </article>
+        </div>
+      </div>
+
+      <article class="decision-board" id="compare" aria-label="ProfitCtl compare preview">
+        <div class="command-strip">
+          <span>$ profitctl compare examples/mix_profit.yml examples/hybrid_profit.yml --json</span>
+          <strong>recommended: Workers</strong>
+        </div>
+
+        <div class="metrics-strip">
+          {
+            heroMetrics.map((metric) => (
+              <article>
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+                <small>{metric.detail}</small>
+              </article>
+            ))
+          }
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-header">
+            <div>
+              <p>Projected monthly cost</p>
+              <h2>Based on 10k active users</h2>
+            </div>
+            <div class="chart-legend" aria-hidden="true">
+              <span class="workers">Cloudflare Workers</span>
+              <span class="cloud">Google Cloud Run</span>
+              <span class="vercel">Vercel</span>
+              <span class="threshold">Threshold</span>
+            </div>
+          </div>
+
+          <svg
+            class="compare-chart"
+            viewBox="0 0 420 244"
+            role="img"
+            aria-label="Projected monthly cost comparison from May to October with covenant threshold"
+          >
+            <path class="axis-grid" d="M56 36H392 M56 72H392 M56 108H392 M56 144H392 M56 180H392" />
+            <path class="axis-rule" d="M56 180V36 M56 180H392" />
+            <path class="threshold-line" d="M56 90H392" />
+            <text class="threshold-label" x="398" y="86">$150 threshold</text>
+
+            <path class="workers-area" d="M56 180 L56 160 L120 156 L184 152 L248 148 L312 142 L376 136 L376 180 Z" />
+
+            <polyline class="workers-line" points="56,160 120,156 184,152 248,148 312,142 376,136" />
+            <polyline class="cloud-line" points="56,148 120,140 184,132 248,124 312,116 376,108" />
+            <polyline class="vercel-line" points="56,136 120,122 184,114 248,98 312,84 376,68" />
+
+            <circle class="workers-point" cx="312" cy="142" r="6" />
+            <circle class="cloud-point" cx="312" cy="116" r="5" />
+            <circle class="vercel-point" cx="312" cy="84" r="5" />
+            <path class="active-guide" d="M312 180V56" />
+            <text class="active-label" x="312" y="48">$87</text>
+
+            <text class="axis-label" x="14" y="40">$200</text>
+            <text class="axis-label" x="18" y="76">$160</text>
+            <text class="axis-label" x="18" y="112">$120</text>
+            <text class="axis-label" x="24" y="148">$80</text>
+            <text class="axis-label" x="30" y="184">$0</text>
+
+            <text class="month-label" x="56" y="212">May</text>
+            <text class="month-label" x="120" y="212">Jun</text>
+            <text class="month-label" x="184" y="212">Jul</text>
+            <text class="month-label" x="248" y="212">Aug</text>
+            <text class="month-label" x="312" y="212">Sep</text>
+            <text class="month-label" x="376" y="212">Oct</text>
+          </svg>
+        </div>
+
+        <div class="provider-summary" aria-label="Compare provider summary">
+          {
+            providers.map((provider) => (
+              <article class={`summary-card ${provider.series}`}>
+                <div class="summary-id">
+                  <img src={provider.logo} alt={provider.logoAlt} loading="eager" decoding="async" />
+                  <div>
+                    <h3>{provider.shortName}</h3>
+                    <p>{provider.stateLabel}</p>
+                  </div>
+                </div>
+                <strong>{provider.monthly}</strong>
+                <small>{provider.margin} gross margin</small>
+              </article>
+            ))
+          }
+        </div>
+
+        <div class="recommendation-bar">
+          <div class="recommendation-copy">
+            <strong>Workers clears every covenant.</strong>
+            <p>Save $75 / month vs Vercel at 10k active users.</p>
+          </div>
+          <a href="#demos">View examples</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="evidence-band" id="demos" aria-label="ProfitCtl decision examples">
+      {
+        evidenceCards.map((card) => (
+          <article class="evidence-card">
+            <span class="card-badge">{card.badge}</span>
+            <h2>{card.title}</h2>
+
+            {
+              card.logos && (
+                <div class="card-logos">
+                  {card.logos.map((logo) => <img src={logo.src} alt={logo.alt} loading="lazy" decoding="async" />)}
+                </div>
+              )
+            }
+
+            {
+              card.bars && (
+                <div class="mini-chart">
+                  {card.bars.map((bar) => (
+                    <div class={`mini-row ${bar.tone}`}>
+                      <span>{bar.label}</span>
+                      <div class="mini-track">
+                        <i style={`--mini-width:${bar.value}%`} />
+                      </div>
+                      <strong>{bar.amount}</strong>
+                    </div>
+                  ))}
+                  <div class="mini-axis" aria-hidden="true">
+                    <span>$0</span>
+                    <span>$100</span>
+                    <span>$200</span>
+                    <span>$300</span>
+                  </div>
+                </div>
+              )
+            }
+
+            {
+              card.pricingRows && (
+                <div class="mini-chart pricing-chart">
+                  {card.pricingRows.map((row) => (
+                    <div class={`mini-row ${row.tone}`}>
+                      <span>{row.label}</span>
+                      <div class="mini-track">
+                        <i style={`--mini-width:${row.value}%`} />
+                      </div>
+                      <strong>{row.value}%</strong>
+                    </div>
+                  ))}
+                  <div class="mini-axis" aria-hidden="true">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              )
+            }
+
+            <dl class="card-metrics">
+              {card.metrics.map((metric) => (
+                <div>
+                  <dt>{metric.label}</dt>
+                  <dd>{metric.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <a href="#compare">{card.action}</a>
+          </article>
+        ))
+      }
+    </section>
+
+    <section class="standards-section" id="standards">
+      <div class="section-copy">
+        <h2>Standards make the math trustworthy.</h2>
+        <p>Every answer includes provenance, confidence, assumptions, and covenant checks.</p>
+      </div>
+
+      <div class="standards-grid">
+        {
+          standards.map((standard) => (
+            <article>
+              <span class="standard-icon" aria-hidden="true" />
+              <h3>{standard.label}</h3>
+              <p>{standard.detail}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="open-core-section" id="open-core">
+      <div class="section-copy">
+        <h2>ProfitCtl ships today as a CLI, a Codex skill, and a CI check.</h2>
+        <p>
+          Same scenario engine, different delivery surface. Open source covers local compare,
+          repo-aware agent decisions, and PR gates now. Hosted workflow later adds saved history,
+          approvals, and calibration.
+        </p>
+      </div>
+
+      <div class="core-map">
+        {
+          productSurfaces.map((surface) => (
+            <article class={`surface-card ${surface.status === "Hosted later" ? "later" : "current"}`}>
+              <span class="side-label">{surface.status}</span>
+              <h3>{surface.title}</h3>
+              <p>{surface.detail}</p>
+              <ul>
+                {surface.items.map((item) => <li>{item}</li>)}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="final-cta" id="get-started">
+      <div>
+        <span class="section-chip">First step</span>
+        <h2>Run one compare from the CLI.</h2>
+        <p>
+          Start with one local scenario and one real choice. Keep the output as your decision
+          artifact. Add the Codex skill or CI gate after the workflow proves useful.
+        </p>
+      </div>
+      <div class="cta-actions">
+        <a href={repoUrl} rel="noopener noreferrer" target="_blank">
+          Open GitHub
+        </a>
+        <a class="cta-secondary" href="#compare">See compare output</a>
+      </div>
+    </section>
+
+    <footer class="product-footer">
+      <div class="product-footer-inner">
+        <a href="/" class="brand" aria-label="ProfitCtl home">
+          <span class="brand-mark" aria-hidden="true">P</span>
+          <span>ProfitCtl</span>
+        </a>
+        <nav aria-label="ProfitCtl footer">
+          {
+            footerLinks.map((link) => (
+              <a href={link.href} rel={link.external ? "noopener noreferrer" : undefined} target={link.external ? "_blank" : undefined}>
+                {link.label}
+              </a>
+            ))
+          }
+        </nav>
+        <p>Copyright (c) 2026 ProfitCtl contributors.</p>
+      </div>
+    </footer>
+  </main>
+</ProductLayout>
+
+<style>
+  :global(html) {
+    background: hsl(42 38% 95%);
+    color-scheme: light;
+  }
+
+  .profitctl-page {
+    --pc-bg: 42 38% 95%;
+    --pc-bg-2: 34 34% 98%;
+    --pc-panel: 0 0% 100%;
+    --pc-panel-2: 40 38% 97%;
+    --pc-panel-3: 45 26% 92%;
+    --pc-line: 38 18% 83%;
+    --pc-line-strong: 34 18% 74%;
+    --pc-text: 30 14% 11%;
+    --pc-muted: 28 10% 38%;
+    --pc-subtle: 30 10% 56%;
+    --pc-profit: 84 83% 47%;
+    --pc-profit-deep: 83 72% 34%;
+    --pc-copper: 32 77% 56%;
+    --pc-risk: 22 90% 58%;
+    --pc-blue: 217 63% 55%;
+    --pc-shadow: 30 18% 30%;
+    min-height: 100vh;
+    overflow-x: clip;
+    background:
+      radial-gradient(circle at top left, hsl(var(--pc-profit) / 0.14), transparent 24rem),
+      radial-gradient(circle at 90% 16%, hsl(var(--pc-copper) / 0.12), transparent 28rem),
+      linear-gradient(180deg, hsl(var(--pc-bg-2)) 0%, hsl(var(--pc-bg)) 52%, hsl(40 30% 93%) 100%);
+    color: hsl(var(--pc-text));
+  }
+
+  .hero-shell,
+  .evidence-band,
+  .standards-section,
+  .open-core-section,
+  .final-cta {
+    width: min(1280px, calc(100% - 64px));
+    margin-inline: auto;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    height: 74px;
+    border-bottom: 1px solid hsl(var(--pc-line) / 0.95);
+    background: hsl(var(--pc-bg-2) / 0.86);
+    backdrop-filter: blur(18px);
+    width: 100%;
+    padding-inline: 24px;
+  }
+
+  .site-header-inner,
+  .product-footer-inner {
+    width: min(1280px, 100%);
+    margin-inline: auto;
+  }
+
+  .site-header-inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    height: 100%;
+  }
+
+  .brand,
+  .site-nav,
+  .nav-button,
+  .hero-actions,
+  .product-footer,
+  .product-footer nav,
+  .card-logos {
+    display: flex;
+    align-items: center;
+  }
+
+  .brand {
+    gap: 12px;
+    color: hsl(var(--pc-text));
+    font-size: 18px;
+    font-weight: 760;
+    text-decoration: none;
+  }
+
+  .brand-mark {
+    display: inline-grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 8px;
+    background: hsl(var(--pc-profit) / 0.22);
+    color: hsl(var(--pc-profit-deep));
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .site-nav {
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .site-nav a,
+  .product-footer a {
+    color: hsl(var(--pc-muted));
+    font-size: 13px;
+    font-weight: 580;
+    text-decoration: none;
+  }
+
+  .site-nav a:hover,
+  .product-footer nav a:hover {
+    color: hsl(var(--pc-text));
+  }
+
+  .nav-button,
+  .primary-action,
+  .secondary-action,
+  .evidence-card a,
+  .final-cta a,
+  .recommendation-bar a {
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .nav-button {
+    gap: 10px;
+    justify-self: end;
+    border: 1px solid hsl(var(--pc-line-strong));
+    background: hsl(var(--pc-panel));
+    color: hsl(var(--pc-text));
+    padding: 9px 14px;
+    box-shadow: 0 12px 28px hsl(var(--pc-shadow) / 0.06);
+  }
+
+  .nav-button img {
+    width: 17px;
+    height: 17px;
+  }
+
+  .hero-shell {
+    display: grid;
+    grid-template-columns: minmax(340px, 0.94fr) minmax(560px, 1.06fr);
+    gap: 40px;
+    align-items: start;
+    padding: 24px 0 28px;
+    min-height: auto;
+  }
+
+  .hero-copy h1 {
+    max-width: 520px;
+    font-size: clamp(54px, 6.2vw, 80px);
+    font-weight: 520;
+    line-height: 0.94;
+    letter-spacing: 0;
+    font-family: "Instrument Sans", sans-serif;
+  }
+
+  .hero-copy h1::selection,
+  .section-copy h2::selection {
+    background: hsl(var(--pc-profit) / 0.24);
+  }
+
+  .hero-copy p {
+    max-width: 470px;
+    margin-top: 20px;
+    color: hsl(var(--pc-muted));
+    font-size: 18px;
+    line-height: 1.55;
+  }
+
+  .hero-actions {
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .entry-strip {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg, hsl(var(--pc-profit) / 0.08), transparent 52%),
+      hsl(var(--pc-panel) / 0.94);
+    padding: 14px 16px;
+    box-shadow: 0 18px 38px hsl(var(--pc-shadow) / 0.06);
+  }
+
+  .entry-strip strong {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--pc-subtle));
+  }
+
+  .entry-strip div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .entry-strip span {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 999px;
+    background: hsl(var(--pc-panel-2));
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 650;
+    color: hsl(var(--pc-text));
+  }
+
+  .primary-action,
+  .secondary-action,
+  .final-cta a {
+    min-height: 48px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .primary-action {
+    background: hsl(var(--pc-text));
+    color: hsl(var(--pc-panel));
+    box-shadow: 0 18px 38px hsl(var(--pc-shadow) / 0.12);
+  }
+
+  .secondary-action {
+    border: 1px solid hsl(var(--pc-line-strong));
+    background: hsl(var(--pc-panel));
+    color: hsl(var(--pc-text));
+  }
+
+  .proof-points {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .proof-points article {
+    display: grid;
+    gap: 5px;
+  }
+
+  .proof-points span {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--pc-profit-deep) / 0.36);
+    background:
+      radial-gradient(circle at 50% 50%, hsl(var(--pc-profit)) 0 35%, transparent 37%),
+      hsl(var(--pc-panel));
+  }
+
+  .proof-points strong {
+    font-size: 13px;
+    font-weight: 680;
+  }
+
+  .proof-points small {
+    color: hsl(var(--pc-muted));
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .decision-board,
+  .evidence-card,
+  .standards-grid article,
+  .surface-card,
+  .final-cta {
+    border: 1px solid hsl(var(--pc-line));
+    background: hsl(var(--pc-panel) / 0.94);
+    box-shadow: 0 22px 52px hsl(var(--pc-shadow) / 0.08);
+  }
+
+  .decision-board {
+    overflow: hidden;
+    border-radius: 22px;
+    max-width: 720px;
+    justify-self: end;
+  }
+
+  .command-strip {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid hsl(var(--pc-line));
+    padding: 10px 18px;
+    color: hsl(var(--pc-muted));
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+  }
+
+  .command-strip strong {
+    color: hsl(var(--pc-text));
+    font-weight: 760;
+  }
+
+  .metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 18px 0;
+  }
+
+  .metrics-strip article {
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 14px;
+    background: hsl(var(--pc-panel-2));
+    padding: 11px 13px;
+  }
+
+  .metrics-strip span,
+  .recommendation-copy strong,
+  .card-badge,
+  dt,
+  .side-label {
+    color: hsl(var(--pc-subtle));
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .metrics-strip strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 29px;
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .metrics-strip small {
+    display: block;
+    margin-top: 6px;
+    color: hsl(var(--pc-profit-deep));
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .chart-shell {
+    padding: 16px 18px 0;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: end;
+    margin-bottom: 12px;
+  }
+
+  .chart-header p {
+    color: hsl(var(--pc-muted));
+    font-size: 13px;
+  }
+
+  .chart-header h2 {
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: 720;
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: end;
+    gap: 10px 14px;
+  }
+
+  .chart-legend span {
+    position: relative;
+    padding-left: 14px;
+    color: hsl(var(--pc-muted));
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .chart-legend span::before {
+    position: absolute;
+    top: 7px;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+  }
+
+  .chart-legend .workers {
+    color: hsl(var(--pc-profit-deep));
+  }
+
+  .chart-legend .cloud {
+    color: hsl(var(--pc-blue));
+  }
+
+  .chart-legend .vercel {
+    color: hsl(var(--pc-copper));
+  }
+
+  .chart-legend .threshold {
+    color: hsl(var(--pc-subtle));
+  }
+
+  .chart-legend .threshold::before {
+    width: 10px;
+    height: 2px;
+    top: 10px;
+    border-radius: 0;
+  }
+
+  .compare-chart {
+    width: 100%;
+    height: auto;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, hsl(var(--pc-panel)) 0%, hsl(var(--pc-panel-2)) 100%);
+    overflow: visible;
+  }
+
+  .axis-grid,
+  .axis-rule {
+    fill: none;
+    stroke: hsl(var(--pc-line));
+    stroke-width: 1;
+  }
+
+  .axis-grid {
+    stroke-dasharray: 4 6;
+  }
+
+  .threshold-line,
+  .active-guide {
+    fill: none;
+    stroke: hsl(var(--pc-line-strong));
+    stroke-width: 1.5;
+    stroke-dasharray: 6 6;
+  }
+
+  .workers-area {
+    fill: hsl(var(--pc-profit) / 0.12);
+  }
+
+  .workers-line,
+  .cloud-line,
+  .vercel-line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+  }
+
+  .workers-line {
+    stroke: hsl(var(--pc-profit-deep));
+  }
+
+  .cloud-line {
+    stroke: hsl(var(--pc-blue));
+  }
+
+  .vercel-line {
+    stroke: hsl(var(--pc-copper));
+  }
+
+  .workers-point,
+  .cloud-point,
+  .vercel-point {
+    stroke: hsl(var(--pc-panel));
+    stroke-width: 3;
+  }
+
+  .workers-point {
+    fill: hsl(var(--pc-profit-deep));
+  }
+
+  .cloud-point {
+    fill: hsl(var(--pc-blue));
+  }
+
+  .vercel-point {
+    fill: hsl(var(--pc-copper));
+  }
+
+  .threshold-label,
+  .axis-label,
+  .month-label,
+  .active-label {
+    fill: hsl(var(--pc-muted));
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+  }
+
+  .threshold-label {
+    text-anchor: end;
+  }
+
+  .active-label {
+    fill: hsl(var(--pc-profit-deep));
+    font-weight: 700;
+    text-anchor: middle;
+  }
+
+  .summary-id {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .summary-id img,
+  .card-logos img {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid hsl(var(--pc-line));
+    background: hsl(var(--pc-panel));
+    padding: 7px;
+    object-fit: contain;
+  }
+
+  .provider-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 18px 0;
+  }
+
+  .summary-card {
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 16px;
+    background: hsl(var(--pc-panel-2));
+    padding: 12px 13px;
+  }
+
+  .summary-id h3 {
+    font-size: 14px;
+    font-weight: 690;
+  }
+
+  .summary-id p {
+    margin-top: 2px;
+    color: hsl(var(--pc-subtle));
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .summary-card strong {
+    display: block;
+    margin-top: 12px;
+    font-size: 22px;
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .summary-card small {
+    display: block;
+    margin-top: 6px;
+    color: hsl(var(--pc-muted));
+    font-size: 11px;
+  }
+
+  .summary-card.workers strong {
+    color: hsl(var(--pc-profit-deep));
+  }
+
+  .summary-card.cloud strong {
+    color: hsl(var(--pc-blue));
+  }
+
+  .summary-card.vercel strong {
+    color: hsl(var(--pc-copper));
+  }
+
+  .recommendation-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: center;
+    margin: 14px 18px 18px;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 16px;
+    background:
+      linear-gradient(90deg, hsl(var(--pc-profit) / 0.12), transparent 36%),
+      hsl(var(--pc-panel-2));
+    padding: 10px 14px;
+  }
+
+  .recommendation-copy p,
+  .section-copy p,
+  .standards-grid p,
+  .surface-card li,
+  .final-cta p {
+    color: hsl(var(--pc-muted));
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .recommendation-copy p {
+    margin-top: 6px;
+  }
+
+  .recommendation-bar a,
+  .evidence-card a {
+    color: hsl(var(--pc-text));
+  }
+
+  .evidence-band,
+  .standards-grid,
+  .core-map {
+    display: grid;
+    gap: 16px;
+  }
+
+  .evidence-band {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 12px;
+    scroll-margin-top: 96px;
+  }
+
+  .evidence-card {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .card-badge {
+    display: inline-flex;
+    width: fit-content;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--pc-line));
+    background: hsl(var(--pc-panel-2));
+    padding: 6px 9px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .evidence-card h2 {
+    font-size: 17px;
+    font-weight: 620;
+    line-height: 1.24;
+  }
+
+  .card-logos {
+    gap: 10px;
+  }
+
+  .mini-chart {
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 16px;
+    background: hsl(var(--pc-panel-2));
+    padding: 12px;
+  }
+
+  .mini-row {
+    display: grid;
+    grid-template-columns: minmax(92px, 1fr) minmax(0, 1.5fr) auto;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .mini-row:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .mini-row span {
+    color: hsl(var(--pc-muted));
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .mini-track {
+    position: relative;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: hsl(var(--pc-line) / 0.8);
+  }
+
+  .mini-track i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--mini-width);
+    border-radius: 999px;
+    background: hsl(var(--pc-profit-deep));
+    content: "";
+  }
+
+  .mini-row.cloud .mini-track i {
+    background: hsl(var(--pc-blue));
+  }
+
+  .mini-row.vercel .mini-track i,
+  .mini-row.risk .mini-track i {
+    background: hsl(var(--pc-copper));
+  }
+
+  .mini-row.neutral .mini-track i {
+    background: hsl(var(--pc-line-strong));
+  }
+
+  .mini-row strong {
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .mini-axis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 14px;
+    color: hsl(var(--pc-subtle));
+    font-size: 10px;
+  }
+
+  .pricing-chart .mini-axis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .card-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 16px;
+    overflow: hidden;
+    background: hsl(var(--pc-panel));
+  }
+
+  .card-metrics div {
+    padding: 12px 10px;
+    border-right: 1px solid hsl(var(--pc-line));
+  }
+
+  .card-metrics div:last-child {
+    border-right: 0;
+  }
+
+  dt {
+    letter-spacing: 0;
+  }
+
+  dd {
+    margin-top: 6px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .evidence-card a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .section-copy {
+    max-width: 740px;
+  }
+
+  .section-copy h2 {
+    font-size: clamp(32px, 3.6vw, 46px);
+    font-weight: 540;
+    line-height: 0.98;
+  }
+
+  .section-copy p {
+    margin-top: 14px;
+    font-size: 16px;
+  }
+
+  .standards-section,
+  .open-core-section {
+    margin-top: 18px;
+    padding: 28px 0 0;
+    scroll-margin-top: 96px;
+  }
+
+  .standards-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-top: 22px;
+  }
+
+  .standards-grid article {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .standard-icon {
+    display: inline-block;
+    width: 34px;
+    height: 34px;
+    border: 1px solid hsl(var(--pc-line-strong));
+    border-radius: 12px;
+    background:
+      linear-gradient(135deg, hsl(var(--pc-panel)), hsl(var(--pc-panel-2))),
+      hsl(var(--pc-panel));
+    position: relative;
+  }
+
+  .standard-icon::after {
+    position: absolute;
+    inset: 10px;
+    border-radius: 999px;
+    background: hsl(var(--pc-text));
+    content: "";
+    opacity: 0.12;
+  }
+
+  .standards-grid h3 {
+    margin-top: 16px;
+    font-size: 15px;
+    font-weight: 690;
+  }
+
+  .standards-grid p {
+    margin-top: 10px;
+  }
+
+  .core-map {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    margin-top: 24px;
+  }
+
+  .surface-card {
+    display: grid;
+    align-content: start;
+    border-radius: 20px;
+    padding: 18px;
+    border: 1px solid hsl(var(--pc-line));
+    background: hsl(var(--pc-panel) / 0.94);
+    box-shadow: 0 22px 52px hsl(var(--pc-shadow) / 0.08);
+  }
+
+  .surface-card.current {
+    background:
+      linear-gradient(180deg, hsl(var(--pc-profit) / 0.08), transparent 30%),
+      hsl(var(--pc-panel) / 0.96);
+  }
+
+  .surface-card.later {
+    background:
+      linear-gradient(180deg, hsl(var(--pc-blue) / 0.08), transparent 30%),
+      hsl(var(--pc-panel) / 0.96);
+  }
+
+  .surface-card h3 {
+    margin-top: 14px;
+    font-size: 21px;
+    font-weight: 690;
+    line-height: 1.04;
+  }
+
+  .surface-card p {
+    margin-top: 8px;
+    color: hsl(var(--pc-muted));
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .surface-card ul {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .surface-card li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 10px;
+  }
+
+  .surface-card li::before {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: hsl(var(--pc-profit-deep));
+    content: "";
+  }
+
+  .surface-card.later li::before {
+    background: hsl(var(--pc-blue));
+  }
+
+  .final-cta {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    margin-top: 24px;
+    border-radius: 22px;
+    background:
+      linear-gradient(90deg, hsl(var(--pc-profit) / 0.08), transparent 40%),
+      hsl(var(--pc-panel));
+    padding: 18px 20px;
+  }
+
+  .final-cta h2 {
+    font-size: clamp(28px, 3.2vw, 40px);
+    font-weight: 560;
+    line-height: 1;
+  }
+
+  .section-chip {
+    display: inline-flex;
+    min-height: 26px;
+    align-items: center;
+    border: 1px solid hsl(var(--pc-line));
+    border-radius: 999px;
+    background: hsl(var(--pc-panel-2));
+    padding: 0 10px;
+    color: hsl(var(--pc-subtle));
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .final-cta p {
+    margin-top: 10px;
+  }
+
+  .cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: end;
+    gap: 12px;
+  }
+
+  .final-cta a {
+    background: hsl(var(--pc-text));
+    color: hsl(var(--pc-panel));
+    white-space: nowrap;
+  }
+
+  .final-cta .cta-secondary {
+    border: 1px solid hsl(var(--pc-line-strong));
+    background: hsl(var(--pc-panel));
+    color: hsl(var(--pc-text));
+  }
+
+  .product-footer {
+    width: 100%;
+    margin-top: 20px;
+    border-top: 1px solid hsl(var(--pc-line));
+    padding: 20px 24px 40px;
+  }
+
+  .product-footer-inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .product-footer nav {
+    justify-content: center;
+    gap: 18px;
+  }
+
+  .product-footer p {
+    color: hsl(var(--pc-subtle));
+    font-size: 11px;
+    text-align: right;
+  }
+
+  @media (max-width: 1180px) {
+    .hero-shell,
+    .evidence-band,
+    .standards-grid,
+    .core-map,
+    .final-cta,
+    .product-footer-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .product-footer nav,
+    .product-footer p {
+      justify-content: start;
+      text-align: left;
+    }
+
+    .metrics-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 980px) {
+    .hero-shell,
+    .evidence-band,
+    .standards-section,
+    .open-core-section,
+    .final-cta {
+      width: min(100%, calc(100% - 32px));
+    }
+
+    .site-header {
+      height: auto;
+      padding-inline: 16px;
+    }
+
+    .site-header-inner {
+      grid-template-columns: auto auto;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .site-nav {
+      order: 3;
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .hero-shell {
+      gap: 28px;
+      padding-top: 28px;
+    }
+
+    .proof-points,
+    .standards-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .provider-summary {
+      grid-template-columns: 1fr;
+    }
+
+    .recommendation-bar {
+      grid-template-columns: 1fr;
+    }
+
+    .cta-actions {
+      justify-content: start;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .hero-copy h1,
+    .section-copy h2,
+    .final-cta h2 {
+      font-size: clamp(38px, 12vw, 52px);
+    }
+
+    .hero-copy p,
+    .section-copy p {
+      font-size: 15px;
+    }
+
+    .metrics-strip,
+    .proof-points,
+    .card-metrics,
+    .standards-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-header,
+    .chart-legend {
+      display: grid;
+      justify-content: start;
+    }
+
+    .product-footer {
+      padding-inline: 16px;
+    }
+
+    .mini-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .mini-axis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .entry-strip div,
+    .cta-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

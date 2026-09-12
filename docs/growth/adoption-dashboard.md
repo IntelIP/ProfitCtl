@@ -18,7 +18,7 @@ Track whether ProfitCtl is becoming easier to:
 
 Use one row per week.
 
-| Week Of | Release | New Targets | Contacted | Replied | Installed | Activated | Calibrated | Design Partners | Release Downloads | Homebrew Installs | Key Friction Theme | Next Fix |
+| Week Of | Release | New Targets | Contacted | Replied | Installed | Activated | Calibrated | Design Partners | Release Downloads | Bun Package Installs | Key Friction Theme | Next Fix |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
@@ -27,12 +27,12 @@ Use one row per week.
 - `New Targets`: new companies added to the first 10-target list
 - `Contacted`: targets that received first touch or follow-up
 - `Replied`: targets that responded with a real evaluation signal
-- `Installed`: targets that completed a local or Homebrew install
+- `Installed`: targets that completed a local or Bun package install
 - `Activated`: targets that ran one compare or benchmark pair
 - `Calibrated`: targets that shared real inputs or scenario details
 - `Design Partners`: targets committed to a follow-up loop
 - `Release Downloads`: release page downloads for the current version
-- `Homebrew Installs`: installs observed through the tap or manual confirmations
+- `Bun Package Installs`: installs observed through the package registry or manual confirmations
 - `Key Friction Theme`: the main blocker that repeated during the week
 - `Next Fix`: the one change we should make before the next outreach cycle
 
@@ -57,7 +57,7 @@ That script scaffolds the weekly review markdown and prints a dashboard row with
 ## What To Source From
 
 - GitHub Releases for release version and download trend
-- Homebrew tap activity for install signal
+- Bun package activity for install signal
 - Linear for target states and execution follow-ups
 - evaluator notes for install, activation, and calibration outcomes
 - benchmark reports for evidence that the product proof holds

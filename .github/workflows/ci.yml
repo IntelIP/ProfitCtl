@@ -58,6 +58,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
       - name: Verify installer syntax
         run: bash -n scripts/install.sh
 
@@ -72,6 +77,16 @@ jobs:
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/bin/profitctl"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/bin/profitctl-standards"
+
+      - name: Verify Bun package
+        run: |
+          TAG=v0.0.0-ci
+          bash scripts/release/prepare-bun-package.sh "${TAG}"
+          BUN_INSTALL_GLOBAL_DIR="${RUNNER_TEMP}/bun-global" \
+          BUN_INSTALL_BIN="${RUNNER_TEMP}/bun-bin" \
+            bun add --global "${GITHUB_WORKSPACE}/dist/${TAG}/profitctl-0.0.0-ci.tgz"
+          "${RUNNER_TEMP}/bun-bin/profitctl" --help >/dev/null
+          "${RUNNER_TEMP}/bun-bin/profitctl" mcp --workspace-root "${GITHUB_WORKSPACE}" </dev/null
 
       - name: Build local mirror layout
         run: |
@@ -130,6 +145,29 @@ jobs:
           printf '%s\n' "${doctor_output}" | grep -F "[fail] catalog:" >/dev/null
           printf '%s\n' "${doctor_output}" | grep -F "no fallback or local state change was performed" >/dev/null
           EOF
+
+  verify-website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build
 
   security-scan:
     runs-on: ubuntu-latest

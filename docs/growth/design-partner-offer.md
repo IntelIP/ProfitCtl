@@ -4,7 +4,7 @@ This is the offer we make to early evaluators.
 
 ## Offer
 
-We will help you compare one pricing or contract shape against one realistic alternative before you commit to it.
+We will help you compare one architecture, AI API, pricing, or contract decision against one realistic alternative before you commit to it.
 
 The goal is not a generic demo. The goal is to help you decide whether to ship, revise, or reject the change.
 
@@ -13,6 +13,8 @@ The goal is not a generic demo. The goal is to help you decide whether to ship, 
 Bring only the minimum needed to make the comparison real:
 
 - the pricing or contract shape you are considering
+- the architecture, model, search, agent-runtime, or paid API choice you are considering
+- the expected users, runs per user, tokens, searches, seats, or contract volume
 - whether revenue is mostly recurring, mostly one-time, or mixed
 - whether free users, paid monthly users, and paid annual users behave differently
 - one success criterion you care about
@@ -21,7 +23,7 @@ Bring only the minimum needed to make the comparison real:
 
 Each design-partner loop should produce:
 
-- one benchmark comparison matched to your question
+- one benchmark or agent-cost comparison matched to your question
 - one calibrated scenario using your inputs
 - one clear answer about recurring margin, operating cost, and covenant risk
 - one follow-up decision: keep, change, or stop
@@ -33,6 +35,8 @@ Use this offer only when the evaluator has a real decision in flight.
 Good fits:
 
 - a founder deciding between tiered, mix, or hybrid pricing
+- an AI SaaS team deciding between hosting, database, search, model, or agent-runtime options
+- an agent builder adding deep research, model routing, or paid tool calls
 - a finance lead checking whether recurring economics survive a contract change
 - a revenue leader trying to justify or remove pilot-heavy terms
 
@@ -44,9 +48,9 @@ Poor fits:
 
 ## First Conversation Script
 
-1. Ask what pricing or contract decision they are trying to make.
-2. Point them at the matching benchmark pair.
-3. Ask them to install `profitctl` or use the Homebrew formula.
+1. Ask what architecture, AI API, pricing, or contract decision they are trying to make.
+2. Point them at the matching benchmark pair or agent demo.
+3. Ask them to install `profitctl` or use the Bun package.
 4. Run one `compare`.
 5. Decide whether the next step is calibration or a follow-up call.
 
@@ -54,7 +58,7 @@ Poor fits:
 
 The design partner is real when they can say:
 
-> This comparison changed how we think about the pricing or contract we were about to ship.
+> This comparison changed how we think about the product, architecture, AI API, pricing, or contract decision we were about to ship.
 
 ## Next Step After A Good Session
 

@@ -1,0 +1,31 @@
+{
+  "name": "profitctl",
+  "version": "0.0.0-development",
+  "private": true,
+  "description": "Bun launcher for the ProfitCtl unit-economics CLI",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "profitctl": "bin/profitctl.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "native",
+    "README.md"
+  ],
+  "scripts": {
+    "build:native": "bun scripts/build-native.js",
+    "profitctl": "bun bin/profitctl.js",
+    "test": "bun test"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "packageManager": "bun@1.3.3",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IntelIP/ProfitCtl.git",
+    "directory": "packages/profitctl"
+  }
+}
