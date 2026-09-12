@@ -54,6 +54,7 @@ for entry in "${MATRIX[@]}"; do
       -o "${PKG_DIR}/skills/profitctl-cost-aware/bin/${STANDARDS_BIN_NAME}" \
       "${ROOT}/scripts/judge_cost_standards.go"
   chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
+  cp "${PKG_DIR}/skills/profitctl-cost-aware/bin/${STANDARDS_BIN_NAME}" "${PKG_DIR}/${STANDARDS_BIN_NAME}"
   if [[ "${GOOS}" != "windows" ]]; then
     chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/bin/${BIN_NAME}"
     chmod 755 "${PKG_DIR}/skills/profitctl-cost-aware/bin/${STANDARDS_BIN_NAME}"

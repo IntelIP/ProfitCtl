@@ -72,6 +72,7 @@ jobs:
           bash scripts/release/build-artifacts.sh "${TAG}"
           bash scripts/release/create-checksums.sh "${TAG}"
           ARCHIVE_ROOT="profitctl_${TAG}_linux_amd64"
+          tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/profitctl-standards"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/SKILL.md"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/agents/openai.yaml"
           tar -tzf "dist/${TAG}/${ARCHIVE_ROOT}.tar.gz" | grep -Fx "${ARCHIVE_ROOT}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
@@ -114,6 +115,7 @@ jobs:
           test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py"
           test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/bin/profitctl"
           test -x "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/bin/profitctl-standards"
+          "${INSTALL_DIR}/profitctl" mcp --workspace-root "${GITHUB_WORKSPACE}" </dev/null
           PATH="/usr/bin:/bin" \
             python3 "${TEST_CODEX_HOME}/skills/profitctl-cost-aware/scripts/run_profitctl_scenarios.py" \
               --template cloud-run-ai-saas > "${RUNNER_TEMP}/skill-result.json"
