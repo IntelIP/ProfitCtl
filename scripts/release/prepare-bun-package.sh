@@ -52,9 +52,11 @@ for entry in "${MATRIX[@]}"; do
   UNPACK_DIR="${TMP_DIR}/unpack-${GOOS}-${GOARCH}"
   PACKAGE_BINARY_DIR="${PACKAGE_DIR}/native/${GOOS}-${GOARCH}"
   BINARY_NAME="profitctl"
+  STANDARDS_NAME="profitctl-standards"
 
   if [[ "${GOOS}" == "windows" ]]; then
     BINARY_NAME="profitctl.exe"
+    STANDARDS_NAME="profitctl-standards.exe"
   fi
 
   [[ -f "${ARCHIVE}" ]] || {
@@ -76,8 +78,10 @@ for entry in "${MATRIX[@]}"; do
   }
 
   cp "${SOURCE_BINARY}" "${PACKAGE_BINARY_DIR}/${BINARY_NAME}"
+  cp "${UNPACK_DIR}/profitctl_${TAG}_${GOOS}_${GOARCH}/skills/profitctl-cost-aware/bin/${STANDARDS_NAME}" "${PACKAGE_BINARY_DIR}/${STANDARDS_NAME}"
   if [[ "${GOOS}" != "windows" ]]; then
     chmod 755 "${PACKAGE_BINARY_DIR}/${BINARY_NAME}"
+    chmod 755 "${PACKAGE_BINARY_DIR}/${STANDARDS_NAME}"
   fi
 done
 

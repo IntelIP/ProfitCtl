@@ -1,7 +1,7 @@
 ---
 import ProductLayout from "../layouts/ProductLayout.astro";
 
-const repoUrl = import.meta.env.PUBLIC_REPO_URL || "#";
+const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
 const providers = [
   {
     name: "Cloudflare Workers",
@@ -250,7 +250,7 @@ const footerLinks = [
 
       <article class="decision-board" id="compare" aria-label="ProfitCtl compare preview">
         <div class="command-strip">
-          <span>$ profitctl compare ai-saas-default --currency USD</span>
+          <span>$ profitctl compare examples/mix_profit.yml examples/hybrid_profit.yml --json</span>
           <strong>recommended: Workers</strong>
         </div>
 
