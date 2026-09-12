@@ -193,6 +193,17 @@ TARGET_PATH="${INSTALL_DIR}/${BIN_NAME}"
 cp "$BIN_PATH" "$TARGET_PATH"
 chmod 755 "$TARGET_PATH"
 
+# Keep the MCP companion beside the installed CLI. Older archives may only
+# contain it inside the bundled skill; pre-MCP releases have no companion.
+STANDARDS_PATH="$(dirname "$BIN_PATH")/profitctl-standards"
+if [[ ! -f "$STANDARDS_PATH" && -n "$SKILL_SOURCE" ]]; then
+  STANDARDS_PATH="${SKILL_SOURCE}/bin/profitctl-standards"
+fi
+if [[ -f "$STANDARDS_PATH" ]]; then
+  cp "$STANDARDS_PATH" "${INSTALL_DIR}/profitctl-standards"
+  chmod 755 "${INSTALL_DIR}/profitctl-standards"
+fi
+
 log "Installed ${BIN_NAME} to ${TARGET_PATH}"
 
 if [[ -n "$SKILL_SOURCE" ]]; then
