@@ -86,6 +86,7 @@ jobs:
           BUN_INSTALL_BIN="${RUNNER_TEMP}/bun-bin" \
             bun add --global "${GITHUB_WORKSPACE}/dist/${TAG}/profitctl-0.0.0-ci.tgz"
           "${RUNNER_TEMP}/bun-bin/profitctl" --help >/dev/null
+          "${RUNNER_TEMP}/bun-bin/profitctl" mcp --workspace-root "${GITHUB_WORKSPACE}" </dev/null
 
       - name: Build local mirror layout
         run: |

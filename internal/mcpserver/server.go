@@ -300,6 +300,10 @@ func inputFor(scenarios ...loadedScenario) InputEvidence {
 	for _, scenario := range scenarios {
 		input.Paths = append(input.Paths, scenario.relative)
 		input.SHA256 = append(input.SHA256, scenario.digest)
+		if scenario.calibration != nil {
+			input.Paths = append(input.Paths, scenario.calibration.relative)
+			input.SHA256 = append(input.SHA256, scenario.calibration.digest)
+		}
 	}
 	return input
 }

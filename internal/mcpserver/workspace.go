@@ -37,8 +37,9 @@ var calibrationExtensions = map[string]bool{
 }
 
 type loadedScenario struct {
-	relative string
-	digest   string
+	relative    string
+	digest      string
+	calibration *loadedScenario
 }
 
 type preflightConfig struct {
@@ -88,14 +89,17 @@ func (s *Server) loadScenario(raw string) (loadedScenario, *scenarioError) {
 			field:   "scenario_path",
 		}
 	}
+	var calibration *loadedScenario
 	if strings.TrimSpace(preflight.CalibrationFile) != "" {
-		if calibrationErr := s.validateCalibrationReference(resolved, preflight.CalibrationFile); calibrationErr != nil {
+		var calibrationErr *scenarioError
+		calibration, calibrationErr = s.loadCalibrationReference(resolved, preflight.CalibrationFile)
+		if calibrationErr != nil {
 			return loadedScenario{}, calibrationErr
 		}
 	}
 
 	digest := sha256.Sum256(data)
-	return loadedScenario{relative: relative, digest: hex.EncodeToString(digest[:])}, nil
+	return loadedScenario{relative: relative, digest: hex.EncodeToString(digest[:]), calibration: calibration}, nil
 }
 
 func (s *Server) loadStandardsTarget(raw string) (loadedScenario, *scenarioError) {
@@ -113,6 +117,7 @@ func (s *Server) loadStandardsTarget(raw string) (loadedScenario, *scenarioError
 		}
 	}
 
+	var calibration *loadedScenario
 	if scenarioExtensions[strings.ToLower(filepath.Ext(relative))] {
 		var preflight preflightConfig
 		if err := yaml.Unmarshal(data, &preflight); err != nil {
@@ -124,14 +129,16 @@ func (s *Server) loadStandardsTarget(raw string) (loadedScenario, *scenarioError
 			}
 		}
 		if strings.TrimSpace(preflight.CalibrationFile) != "" {
-			if calibrationErr := s.validateCalibrationReference(resolved, preflight.CalibrationFile); calibrationErr != nil {
+			var calibrationErr *scenarioError
+			calibration, calibrationErr = s.loadCalibrationReference(resolved, preflight.CalibrationFile)
+			if calibrationErr != nil {
 				return loadedScenario{}, calibrationErr
 			}
 		}
 	}
 
 	digest := sha256.Sum256(data)
-	return loadedScenario{relative: relative, digest: hex.EncodeToString(digest[:])}, nil
+	return loadedScenario{relative: relative, digest: hex.EncodeToString(digest[:]), calibration: calibration}, nil
 }
 
 func (s *Server) resolveToolPath(raw string, allowedExtensions map[string]bool, field string) (string, string, *scenarioError) {
@@ -177,10 +184,10 @@ func (s *Server) resolveToolPath(raw string, allowedExtensions map[string]bool, 
 	return s.resolveExistingWorkspaceFile(filepath.Join(s.workspaceRoot, clean), allowedExtensions, field)
 }
 
-func (s *Server) validateCalibrationReference(scenarioPath, raw string) *scenarioError {
+func (s *Server) loadCalibrationReference(scenarioPath, raw string) (*loadedScenario, *scenarioError) {
 	path := strings.TrimSpace(raw)
 	if path == "" || strings.ContainsRune(path, 0) || filepath.IsAbs(path) {
-		return &scenarioError{
+		return nil, &scenarioError{
 			outcome: OutcomeInvalidInput,
 			code:    "calibration_path_outside_workspace",
 			message: "The referenced calibration file must stay inside the configured workspace root.",
@@ -189,7 +196,7 @@ func (s *Server) validateCalibrationReference(scenarioPath, raw string) *scenari
 	}
 	clean := filepath.Clean(path)
 	if clean == "." || !calibrationExtensions[strings.ToLower(filepath.Ext(clean))] {
-		return &scenarioError{
+		return nil, &scenarioError{
 			outcome: OutcomeInvalidScenario,
 			code:    "calibration_file_invalid",
 			message: "The referenced calibration file is not a supported local calibration artifact.",
@@ -197,22 +204,27 @@ func (s *Server) validateCalibrationReference(scenarioPath, raw string) *scenari
 		}
 	}
 
-	_, _, err := s.resolveExistingWorkspaceFile(filepath.Join(filepath.Dir(scenarioPath), clean), calibrationExtensions, "calibration_file")
+	resolved, relative, err := s.resolveExistingWorkspaceFile(filepath.Join(filepath.Dir(scenarioPath), clean), calibrationExtensions, "calibration_file")
 	if err == nil {
-		return nil
+		data, readErr := readBoundedFile(resolved, maxScenarioBytes)
+		if readErr != nil {
+			return nil, &scenarioError{outcome: OutcomeInvalidScenario, code: "calibration_file_unavailable", message: "The calibration file cannot be read within the local tool boundary.", field: "calibration_file"}
+		}
+		digest := sha256.Sum256(data)
+		return &loadedScenario{relative: relative, digest: hex.EncodeToString(digest[:])}, nil
 	}
 	if err.code == "path_escape_rejected" || err.code == "path_must_be_root_relative" {
 		err.outcome = OutcomeInvalidInput
 		err.code = "calibration_path_outside_workspace"
 		err.message = "The referenced calibration file must stay inside the configured workspace root."
 		err.field = "calibration_file"
-		return err
+		return nil, err
 	}
 	err.outcome = OutcomeInvalidScenario
 	err.code = "calibration_file_unavailable"
 	err.message = "The referenced calibration file is not available inside the configured workspace root."
 	err.field = "calibration_file"
-	return err
+	return nil, err
 }
 
 func (s *Server) resolveExistingWorkspaceFile(candidate string, allowedExtensions map[string]bool, field string) (string, string, *scenarioError) {

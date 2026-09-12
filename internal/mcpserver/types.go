@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -116,7 +117,7 @@ func newWithRunner(cfg Config, runner processRunner) (*Server, error) {
 
 	standardsBinary := cfg.StandardsBinary
 	if standardsBinary == "" {
-		standardsBinary = filepath.Join(filepath.Dir(binary), "profitctl-standards")
+		standardsBinary = filepath.Join(filepath.Dir(binary), standardsExecutableName(runtime.GOOS))
 	}
 	standardsBinary, err = resolveExecutable(standardsBinary)
 	if err != nil {
@@ -171,6 +172,13 @@ func resolveWorkspaceRoot(raw string) (string, error) {
 	return resolved, nil
 }
 
+func standardsExecutableName(goos string) string {
+	if goos == "windows" {
+		return "profitctl-standards.exe"
+	}
+	return "profitctl-standards"
+}
+
 func resolveExecutable(raw string) (string, error) {
 	abs, err := filepath.Abs(raw)
 	if err != nil {
@@ -187,7 +195,7 @@ func resolveExecutable(raw string) (string, error) {
 	if !info.Mode().IsRegular() {
 		return "", fmt.Errorf("must be a regular file")
 	}
-	if info.Mode().Perm()&0o111 == 0 {
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
 		return "", fmt.Errorf("must be executable")
 	}
 	return resolved, nil
