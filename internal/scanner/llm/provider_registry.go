@@ -9,6 +9,11 @@ type trustedProviderSpec struct {
 }
 
 var trustedProviderSpecs = map[string]trustedProviderSpec{
+	"modal": {
+		OfficialDomain:       "modal.com",
+		EvidenceMarkers:      []string{"modal"},
+		PricingPathFragments: []string{"/pricing"},
+	},
 	"anthropic": {
 		OfficialDomain:       "anthropic.com",
 		EvidenceMarkers:      []string{"anthropic"},

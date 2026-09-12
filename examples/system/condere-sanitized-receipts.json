@@ -1,0 +1,32 @@
+{
+  "schema_version": "condere.usage-export/v1",
+  "assessment_id": "synthetic-assessment",
+  "outcome": "failed",
+  "receipts": [
+    {
+      "provider": "openrouter",
+      "model": "synthetic-model",
+      "input_tokens": 100,
+      "cached_input_tokens": 0,
+      "output_tokens": 20,
+      "tool_calls": 1,
+      "cost_usd": 0.02,
+      "latency_ms": 100,
+      "metadata": {
+        "cost_status": "reported",
+        "source": "synthetic fixture"
+      }
+    },
+    {
+      "provider": "exa",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_calls": 1,
+      "cost_usd": 0,
+      "metadata": {
+        "cost_status": "not_reported",
+        "unknown_spend": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,422 @@
+{
+  "schema_version": "profitctl.system/v1",
+  "name": "Condere production planning \u2014 inputs uncollected",
+  "period": "monthly",
+  "currency": "USD",
+  "revenue_usd": {
+    "value": null,
+    "missing": {
+      "question": "What is forecast monthly revenue?",
+      "source": "Approved pricing and volume plan",
+      "owner": "product-owner"
+    }
+  },
+  "drivers": [
+    {
+      "id": "assessments",
+      "unit": "assessment",
+      "value": {
+        "value": null,
+        "missing": {
+          "question": "What is monthly assessments in assessment?",
+          "source": "Existing sanitized usage/billing export or explicit launch volume plan",
+          "owner": "launch-owner"
+        }
+      }
+    },
+    {
+      "id": "calls",
+      "unit": "model-call",
+      "inputs": [
+        {
+          "id": "assessments-to-calls",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "model-call",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many model-call per assessment for calls?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tokens",
+      "unit": "token",
+      "inputs": [
+        {
+          "id": "calls-to-tokens",
+          "from": "calls",
+          "input_unit": "model-call",
+          "output_unit": "token",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many token per model-call for tokens?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "job-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "calls-to-job-seconds",
+          "from": "calls",
+          "input_unit": "model-call",
+          "output_unit": "second",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many second per model-call for job-seconds?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sandbox-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "assessments-to-sandbox-seconds",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "second",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many second per assessment for sandbox-seconds?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "exa-calls",
+      "unit": "search",
+      "inputs": [
+        {
+          "id": "assessments-to-exa-calls",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "search",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many search per assessment for exa-calls?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "api-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "assessments-to-api-seconds",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "second",
+          "factor": {
+            "value": null,
+            "missing": {
+              "question": "How many second per assessment for api-seconds?",
+              "source": "Representative assessment traces; separate success, failure, retry and cache paths",
+              "owner": "application-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "database-units",
+      "unit": "compute-unit",
+      "value": {
+        "value": null,
+        "missing": {
+          "question": "What is monthly database-units in compute-unit?",
+          "source": "Existing sanitized usage/billing export or explicit launch volume plan",
+          "owner": "launch-owner"
+        }
+      }
+    },
+    {
+      "id": "storage",
+      "unit": "GB-month",
+      "value": {
+        "value": null,
+        "missing": {
+          "question": "What is monthly storage in GB-month?",
+          "source": "Existing sanitized usage/billing export or explicit launch volume plan",
+          "owner": "launch-owner"
+        }
+      }
+    },
+    {
+      "id": "month",
+      "unit": "month",
+      "value": {
+        "value": 1,
+        "evidence": {
+          "kind": "user_supplied",
+          "measurement": "declared",
+          "source": {
+            "type": "user_supplied",
+            "artifact_identity": "monthly-planning-window",
+            "captured_at": "2026-09-12"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Model covers one declared planning month."
+        }
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": "api",
+      "provider": "gcp",
+      "role": "AgentOS request admission and dispatch",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [
+        "jobs",
+        "neon"
+      ],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "api-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per second for api?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "jobs",
+      "provider": "gcp",
+      "role": "Assessment workflow execution",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [
+        "openrouter",
+        "exa",
+        "modal",
+        "neon",
+        "gcs"
+      ],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "job-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per second for jobs?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "openrouter",
+      "provider": "openrouter",
+      "role": "Model analysis and review",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "tokens",
+          "unit": "token",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per token for openrouter?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "exa",
+      "provider": "exa",
+      "role": "Public research",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "exa-calls",
+          "unit": "search",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per search for exa?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "modal",
+      "provider": "modal",
+      "role": "Repository sandboxes",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "sandbox-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per second for modal?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "neon",
+      "provider": "neon",
+      "role": "Assessment state",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "database-units",
+          "unit": "compute-unit",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per compute-unit for neon?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "gcs",
+      "provider": "gcp",
+      "role": "Evidence artifacts",
+      "evidence": [
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/deployment/cloudbuild.yaml",
+        "https://github.com/IntelIP/Condere/blob/32e9ec55269db3e1097ff70a945fcf04509bc823/src/condere/jobs/assessment_workflow.py"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "storage",
+          "unit": "GB-month",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What is effective USD per GB-month for gcs?",
+              "source": "Current regional provider terms and approved billing plan; validate units and tiers",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "frontend",
+      "provider": "unverified",
+      "role": "Product frontend hosting",
+      "evidence": [
+        "Launch inventory reconciliation required; do not infer deployment from package presence"
+      ],
+      "costs": [
+        {
+          "id": "monthly",
+          "driver": "month",
+          "unit": "month",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What are monthly product frontend hosting costs?",
+              "source": "Deployment inventory, account billing allocation and retention settings",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "supporting-infrastructure",
+      "provider": "unverified",
+      "role": "Logs, builds, registry, secrets and unallocated network charges",
+      "evidence": [
+        "Launch inventory reconciliation required; do not infer deployment from package presence"
+      ],
+      "costs": [
+        {
+          "id": "monthly",
+          "driver": "month",
+          "unit": "month",
+          "usd_per_unit": {
+            "value": null,
+            "missing": {
+              "question": "What are monthly logs, builds, registry, secrets and unallocated network charges costs?",
+              "source": "Deployment inventory, account billing allocation and retention settings",
+              "owner": "infrastructure-owner"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
