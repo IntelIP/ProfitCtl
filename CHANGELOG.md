@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0-rc.1] — candidate, not published
+
+### Added
+
+- Local system evidence inspection and versioned service/workload economics.
+- Explicit change propagation, missing-input acquisition reports and sanitized Condere receipt summaries.
+- Condere production template, synthetic cascading-cost examples and system-design walkthrough.
+
+### Changed
+
+- Exclude generated directories and symlinks from collection; include TOML and Dockerfile variants. Python source is opt-in for local inspection only.
+- Recognize Modal in the maintained official-domain provider registry.
+
 ## [Unreleased]
 
 ### Added

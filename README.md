@@ -47,6 +47,10 @@ You will see revenue, recurring revenue, fees, booked and operating margins, cos
 | CI checks | [Cost model standards](./docs/cost-model-standards.md) |
 | Scenario examples | [Benchmark scenarios](./benchmark_scenarios/README.md) |
 
+## Production economics planning
+
+Inspect service evidence, identify missing measurements, and compare explicitly modeled downstream effects with the new local `system` commands. Start with the [Condere walkthrough](./examples/system/README.md) and [system design](./docs/design/system-economics-v1.md). Synthetic examples are not production cost forecasts.
+
 ## Learn more
 
 - [Documentation index](./docs/DOCS_INDEX.md)

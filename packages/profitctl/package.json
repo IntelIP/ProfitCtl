@@ -1,6 +1,6 @@
 {
   "name": "profitctl",
-  "version": "0.0.0-development",
+  "version": "0.4.0-rc.1",
   "private": true,
   "description": "Bun launcher for the ProfitCtl unit-economics CLI",
   "license": "MIT",

@@ -1,0 +1,453 @@
+{
+  "schema_version": "profitctl.system/v1",
+  "name": "Condere SYNTHETIC baseline \u2014 not production prices",
+  "period": "monthly",
+  "currency": "USD",
+  "revenue_usd": {
+    "value": 1000,
+    "evidence": {
+      "kind": "predicted",
+      "measurement": "synthetic",
+      "source": {
+        "type": "synthetic_fixture",
+        "artifact_identity": "condere-capability-fixture-v1",
+        "captured_at": "2026-09-12"
+      },
+      "confidence": "low",
+      "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+    }
+  },
+  "drivers": [
+    {
+      "id": "assessments",
+      "unit": "assessment",
+      "value": {
+        "value": 1000,
+        "evidence": {
+          "kind": "predicted",
+          "measurement": "synthetic",
+          "source": {
+            "type": "synthetic_fixture",
+            "artifact_identity": "condere-capability-fixture-v1",
+            "captured_at": "2026-09-12"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+        }
+      }
+    },
+    {
+      "id": "calls",
+      "unit": "model-call",
+      "inputs": [
+        {
+          "id": "assessments-to-calls",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "model-call",
+          "factor": {
+            "value": 10,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tokens",
+      "unit": "token",
+      "inputs": [
+        {
+          "id": "calls-to-tokens",
+          "from": "calls",
+          "input_unit": "model-call",
+          "output_unit": "token",
+          "factor": {
+            "value": 1000,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "job-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "calls-to-job-seconds",
+          "from": "calls",
+          "input_unit": "model-call",
+          "output_unit": "second",
+          "factor": {
+            "value": 2,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sandbox-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "assessments-to-sandbox-seconds",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "second",
+          "factor": {
+            "value": 10,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "exa-calls",
+      "unit": "search",
+      "inputs": [
+        {
+          "id": "assessments-to-exa-calls",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "search",
+          "factor": {
+            "value": 2,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "api-seconds",
+      "unit": "second",
+      "inputs": [
+        {
+          "id": "assessments-to-api-seconds",
+          "from": "assessments",
+          "input_unit": "assessment",
+          "output_unit": "second",
+          "factor": {
+            "value": 1,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "database-units",
+      "unit": "compute-unit",
+      "value": {
+        "value": 10,
+        "evidence": {
+          "kind": "predicted",
+          "measurement": "synthetic",
+          "source": {
+            "type": "synthetic_fixture",
+            "artifact_identity": "condere-capability-fixture-v1",
+            "captured_at": "2026-09-12"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+        }
+      }
+    },
+    {
+      "id": "storage",
+      "unit": "GB-month",
+      "value": {
+        "value": 5,
+        "evidence": {
+          "kind": "predicted",
+          "measurement": "synthetic",
+          "source": {
+            "type": "synthetic_fixture",
+            "artifact_identity": "condere-capability-fixture-v1",
+            "captured_at": "2026-09-12"
+          },
+          "confidence": "low",
+          "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+        }
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": "api",
+      "provider": "gcp",
+      "role": "api cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [
+        "jobs",
+        "neon"
+      ],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "api-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": 0.001,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "jobs",
+      "provider": "gcp",
+      "role": "jobs cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [
+        "openrouter",
+        "exa",
+        "modal",
+        "neon",
+        "gcs"
+      ],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "job-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": 0.002,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "openrouter",
+      "provider": "openrouter",
+      "role": "openrouter cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "tokens",
+          "unit": "token",
+          "usd_per_unit": {
+            "value": 1e-05,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "exa",
+      "provider": "exa",
+      "role": "exa cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "exa-calls",
+          "unit": "search",
+          "usd_per_unit": {
+            "value": 0.01,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "modal",
+      "provider": "modal",
+      "role": "modal cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "sandbox-seconds",
+          "unit": "second",
+          "usd_per_unit": {
+            "value": 0.001,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "neon",
+      "provider": "neon",
+      "role": "neon cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "database-units",
+          "unit": "compute-unit",
+          "usd_per_unit": {
+            "value": 2,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "gcs",
+      "provider": "gcp",
+      "role": "gcs cost in explicitly simplified fixture",
+      "evidence": [
+        "synthetic-fixture; architecture orientation: Condere deployment/cloudbuild.yaml at 32e9ec5"
+      ],
+      "depends_on": [],
+      "costs": [
+        {
+          "id": "usage",
+          "driver": "storage",
+          "unit": "GB-month",
+          "usd_per_unit": {
+            "value": 0.1,
+            "evidence": {
+              "kind": "predicted",
+              "measurement": "synthetic",
+              "source": {
+                "type": "synthetic_fixture",
+                "artifact_identity": "condere-capability-fixture-v1",
+                "captured_at": "2026-09-12"
+              },
+              "confidence": "low",
+              "confidence_rationale": "Artificial arithmetic fixture; not Condere rates or measured usage."
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

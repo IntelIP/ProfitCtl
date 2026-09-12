@@ -9,6 +9,12 @@ import (
 )
 
 var excludedConfigDirectories = map[string]struct{}{
+	".next":               {},
+	".venv":               {},
+	"venv":                {},
+	"__pycache__":         {},
+	"dist":                {},
+	"build":               {},
 	".codex":              {},
 	".entire":             {},
 	".git":                {},
@@ -26,7 +32,11 @@ var excludedConfigDirectories = map[string]struct{}{
 
 // Collector gathers configuration files from a project directory
 type Collector struct {
-	MaxFileSize int64 // Maximum file size in bytes (default 1MB)
+	IncludeSource bool // Local inspection only, never implicit in provider prompts.
+	Strict        bool
+	MaxFiles      int
+	MaxTotalSize  int64
+	MaxFileSize   int64 // Maximum file size in bytes (default 1MB)
 }
 
 // NewCollector creates a new file collector with default settings
@@ -39,8 +49,9 @@ func NewCollector() *Collector {
 // Collect scans the directory and returns configuration files
 func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 	files := make(map[string]string)
+	var total int64
 
-	rootInfo, err := os.Stat(rootPath)
+	rootInfo, err := os.Lstat(rootPath)
 	if err != nil {
 		return files, fmt.Errorf("invalid root path: %w", err)
 	}
@@ -51,6 +62,9 @@ func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 	err = filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// Continue on errors but log them
+			if c.Strict {
+				return fmt.Errorf("cannot inspect path: %w", err)
+			}
 			return nil
 		}
 
@@ -61,8 +75,11 @@ func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 			return nil
 		}
 
-		// Check if this is a configuration file we want
-		if c.isConfigFile(d.Name()) {
+		if d.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+		// Source is opt-in for bounded local inspection.
+		if c.isConfigFile(d.Name()) || (c.IncludeSource && strings.HasSuffix(d.Name(), ".py")) {
 			relPath, err := filepath.Rel(rootPath, path)
 			if err != nil {
 				return nil // Skip files we can't make relative
@@ -71,9 +88,16 @@ func (c *Collector) Collect(rootPath string) (map[string]string, error) {
 			content, err := c.readFile(path)
 			if err != nil {
 				// Continue on read errors, return partial results
+				if c.Strict {
+					return fmt.Errorf("cannot inspect %s: %w", relPath, err)
+				}
 				return nil
 			}
 
+			total += int64(len(content))
+			if (c.MaxFiles > 0 && len(files) >= c.MaxFiles) || (c.MaxTotalSize > 0 && total > c.MaxTotalSize) {
+				return fmt.Errorf("inspection input limit exceeded")
+			}
 			files[relPath] = content
 		}
 
@@ -94,6 +118,9 @@ func (c *Collector) shouldSkipDirectory(name string) bool {
 
 // isConfigFile checks if the filename matches our target configuration files
 func (c *Collector) isConfigFile(filename string) bool {
+	if strings.HasPrefix(filename, "Dockerfile.") {
+		return true
+	}
 	configFiles := []string{
 		"go.mod",
 		"go.sum",
@@ -112,7 +139,7 @@ func (c *Collector) isConfigFile(filename string) bool {
 	}
 
 	// Check extensions
-	extensions := []string{".tf", ".yaml", ".yml"}
+	extensions := []string{".tf", ".yaml", ".yml", ".toml"}
 	for _, ext := range extensions {
 		if strings.HasSuffix(filename, ext) {
 			return true
