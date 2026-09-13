@@ -48,7 +48,9 @@ for archive in "${archives[@]}"; do
     --output "spdx-json=${OUT_DIR}/${stem}.spdx.json"
 done
 
-syft scan "dir:${ROOT}" \
+mkdir -p "${TMP_DIR}/source"
+git -C "${ROOT}" archive HEAD | tar -xf - -C "${TMP_DIR}/source"
+syft scan "dir:${TMP_DIR}/source" \
   --quiet \
   --exclude "./.git" \
   --exclude "./dist" \
