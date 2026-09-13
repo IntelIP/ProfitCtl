@@ -36,7 +36,7 @@ cd ProfitCtl
 go run . compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
 ```
 
-You will see revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric. For the release binary and private Bun package, see the [Install Guide](./docs/INSTALL.md).
+You will see revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric. For the signed release binary and Bun package, see the [Install Guide](./docs/INSTALL.md). Pin the evaluator prerelease `v0.4.0-rc.1`; GitHub's latest-release endpoint selects stable releases.
 
 ## Use it where decisions happen
 
