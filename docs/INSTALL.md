@@ -19,11 +19,34 @@ The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$H
 
 ## Pin a Version
 
+The current evaluator prerelease is `v0.4.0-rc.1`. GitHub's latest-release endpoint excludes prereleases, so install it explicitly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.4.0-rc.1 bash
+~/.local/bin/profitctl --version
+~/.local/bin/profitctl mcp --workspace-root "$PWD" </dev/null
+```
+
+Expected version: `profitctl v0.4.0-rc.1`. Native CLI and MCP startup require no provider key. Paid assessment features require separate configuration. The installer supports macOS and Linux on amd64 and arm64. Windows amd64 users can extract the release ZIP and keep `profitctl.exe` and `profitctl-standards.exe` together; the shell installer does not support Windows.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=<tag> bash
 ```
 
 ## Bun
+
+Install the release tarball with Bun:
+
+```bash
+curl -fSL https://github.com/IntelIP/ProfitCtl/releases/download/v0.4.0-rc.1/profitctl-0.4.0-rc.1.tgz -o profitctl-0.4.0-rc.1.tgz
+bun add --global ./profitctl-0.4.0-rc.1.tgz
+profitctl --version
+profitctl mcp --workspace-root "$PWD" </dev/null
+```
+
+The tarball, its detached signature, and `RELEASE-SHA256SUMS` are release assets. Verify the tarball with the pinned public key before installing when verifying release authenticity. Public npm registry publication remains disabled.
+
+For development from source:
 
 ```bash
 git clone https://github.com/IntelIP/ProfitCtl.git
@@ -39,7 +62,7 @@ bash scripts/release/build-artifacts.sh <tag>
 bash scripts/release/prepare-bun-package.sh <tag>
 ```
 
-Registry publication is intentionally disabled while the canonical repository remains private. No public npm package is created by these commands.
+Registry publication is intentionally disabled. GitHub visibility does not change this policy; these commands create no public npm package.
 
 ## Custom Prefix
 
@@ -104,7 +127,7 @@ Public GitHub releases include:
 Example verification flow for `darwin_arm64`:
 
 ```bash
-TAG=<tag>
+TAG=v0.4.0-rc.1
 curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.tar.gz"
 curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.tar.gz.sig"
 curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl_${TAG}_darwin_arm64.spdx.json"
@@ -113,10 +136,11 @@ curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/SHA25
 curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/SHA256SUMS.sig"
 curl -fsSLO "https://github.com/IntelIP/ProfitCtl/releases/download/${TAG}/profitctl-release-cosign.pub"
 
+printf '%s  %s\n' aebe6076c728012a09e7795ac9c76cfb1729db640bdc798932c00bd6b3c3023f profitctl-release-cosign.pub | shasum -a 256 -c -
 cosign verify-blob --key profitctl-release-cosign.pub --signature "profitctl_${TAG}_darwin_arm64.tar.gz.sig" --insecure-ignore-tlog=true "profitctl_${TAG}_darwin_arm64.tar.gz"
 cosign verify-blob --key profitctl-release-cosign.pub --signature "profitctl_${TAG}_darwin_arm64.spdx.json.sig" --insecure-ignore-tlog=true "profitctl_${TAG}_darwin_arm64.spdx.json"
 cosign verify-blob --key profitctl-release-cosign.pub --signature SHA256SUMS.sig --insecure-ignore-tlog=true SHA256SUMS
-shasum -a 256 -c SHA256SUMS
+awk -v asset="profitctl_${TAG}_darwin_arm64.tar.gz" '$2 == asset {print}' SHA256SUMS | shasum -a 256 -c -
 ```
 
 Use `brew install cosign` or the upstream Sigstore install path if `cosign` is not already available.

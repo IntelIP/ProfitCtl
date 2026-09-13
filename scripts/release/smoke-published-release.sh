@@ -57,7 +57,7 @@ gh release download "${TAG}" \
 
 ARCHIVE_PATH="${TMP_DIR}/${ARCHIVE_NAME}"
 CHECKSUM_PATH="${TMP_DIR}/SHA256SUMS"
-bash "${ROOT}/scripts/release/verify-release-assets.sh" "${TAG}" "${TMP_DIR}"
+bash "${ROOT}/scripts/release/verify-release-assets.sh" "${TAG}" "${TMP_DIR}" "${ROOT}/keys/profitctl-release-cosign.pub"
 
 EXTRACT_DIR="${TMP_DIR}/extract"
 mkdir -p "${EXTRACT_DIR}"
@@ -83,6 +83,7 @@ BIN_PATH="$(find "${EXTRACT_DIR}" -type f -name profitctl -perm -111 | head -n 1
 }
 
 "${BIN_PATH}" --help >/dev/null
+"${BIN_PATH}" mcp --workspace-root "${ROOT}" </dev/null
 test "$("${BIN_PATH}" --version)" = "profitctl ${TAG}"
 test "$("${BIN_PATH}" version)" = "profitctl ${TAG}"
 "${BIN_PATH}" validate -f "${ROOT}/examples/mix_profit.yml" >/dev/null
