@@ -18,7 +18,7 @@ import (
 func varianceFixture(t *testing.T, id string, quantity, price, total float64, kind costv1.DriverKind) (costv1.CostObservation, costv1.CostDriver) {
  t.Helper()
  source := costv1.SourceReference{Type: costv1.SourceSyntheticFixture, ArtifactIdentity: "fixture://variance", CapturedAt: "2026-08-01T00:00:00Z"}
- e := costv1.Evidence{Kind: costv1.EvidenceUserSupplied, Measurement: costv1.MeasurementDeclared, Source: source, Confidence: costv1.ConfidenceHigh, ConfidenceRationale: "deterministic fixture"}
+ e := costv1.Evidence{Kind: costv1.EvidencePredicted, Measurement: costv1.MeasurementSynthetic, Source: source, Confidence: costv1.ConfidenceLow, ConfidenceRationale: "deterministic fixture"}
  window := costv1.TimeWindow{Start:"2026-07-01T00:00:00Z", End:"2026-08-01T00:00:00Z"}
  q := costv1.Quantity{Value:quantity, Unit:"command"}
  p := costv1.UnitPrice{Amount:costv1.Money{Amount:price, Currency:"USD"}, Per:costv1.Quantity{Value:1, Unit:"command"}}
