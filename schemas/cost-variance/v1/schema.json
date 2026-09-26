@@ -1,0 +1,22 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "$id":"https://profitctl.dev/schemas/cost-variance/v1/schema.json",
+ "title":"Cost variance diff or explanation",
+ "type":"object",
+ "additionalProperties":false,
+ "required":["schema_version","forecast","actual","variance_absolute","variance_percent","driver_contributions","residual","confidence","periods"],
+ "properties":{
+  "schema_version":{"const":"profitctl.cost-variance/v1"},
+  "forecast":{"$ref":"#/$defs/money"},"actual":{"$ref":"#/$defs/money"},
+  "variance_absolute":{"$ref":"#/$defs/money"},"variance_percent":{"type":"number"},
+  "residual":{"$ref":"#/$defs/money"},"confidence":{"enum":["high","medium","low","unknown"]},
+  "driver_contributions":{"type":"array","items":{"$ref":"#/$defs/driver"}},
+  "periods":{"type":"array","minItems":1,"items":{"type":"object","required":["window","forecast","actual","variance_absolute","variance_percent","driver_contributions","residual","confidence"],"properties":{"window":{"$ref":"#/$defs/window"},"forecast":{"$ref":"#/$defs/observation"},"actual":{"$ref":"#/$defs/observation"},"variance_absolute":{"$ref":"#/$defs/money"},"variance_percent":{"type":"number"},"driver_contributions":{"type":"array","items":{"$ref":"#/$defs/driver"}},"residual":{"$ref":"#/$defs/money"},"confidence":{"enum":["high","medium","low","unknown"]}},"additionalProperties":false}}
+ },
+ "$defs":{
+  "money":{"type":"object","required":["amount","currency"],"properties":{"amount":{"type":"number"},"currency":{"type":"string","pattern":"^[A-Z]{3}$"}},"additionalProperties":false},
+  "window":{"type":"object","required":["start","end"],"properties":{"start":{"type":"string","format":"date-time"},"end":{"type":"string","format":"date-time"}}},
+  "observation":{"type":"object","required":["schema_version","id","driver_ids","window","quantity","unit_price","total_cost","dimensions","evidence"],"properties":{"schema_version":{"const":"profitctl.cost/v1"},"id":{"type":"string"},"driver_ids":{"type":"array"},"window":{"$ref":"#/$defs/window"},"quantity":{"type":"object"},"unit_price":{"type":"object"},"total_cost":{"$ref":"#/$defs/money"},"dimensions":{"type":"object"},"evidence":{"type":"object"}}},
+  "driver":{"type":"object","additionalProperties":false,"required":["driver","amount","confidence","confidence_score","attribution","evidence","missing_evidence","remedial_actions"],"properties":{"driver":{"type":"string"},"amount":{"$ref":"#/$defs/money"},"confidence":{"enum":["high","medium","low","unknown"]},"confidence_score":{"type":"number","minimum":0,"maximum":1},"attribution":{"const":"unknown"},"evidence":{"type":"array","minItems":2,"items":{"type":"object","required":["kind","measurement","source","confidence","confidence_rationale"],"properties":{"source":{"type":"object","required":["type","captured_at"],"properties":{"type":{"type":"string"},"captured_at":{"type":"string"},"artifact_identity":{"type":"string"}}}}}},"missing_evidence":{"type":"array","items":{"type":"string"}},"remedial_actions":{"type":"array","items":{"type":"string"}}}}
+ }
+}
