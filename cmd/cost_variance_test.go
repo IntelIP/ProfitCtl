@@ -169,6 +169,56 @@ func TestCostDiffUnavailableAndZeroJSON(t *testing.T) {
  require.Nil(t,result.Residual)
 }
 
+func TestCostExplainTotalCurrencies(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
+ a,_ := varianceFixture(t,"actual",10,3,30,costv1.DriverFixed)
+ base,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
+ require.NoError(t,err)
+ for _, field := range []string{"actual", "absolute_variance", "residual"} {
+  t.Run(field,func(t *testing.T){
+   result := base
+   actual, absolute, residual := *base.Actual, *base.AbsoluteVariance, *base.Residual
+   result.Actual, result.AbsoluteVariance, result.Residual = &actual, &absolute, &residual
+   switch field {
+   case "actual": result.Actual.Currency = "EUR"
+   case "absolute_variance": result.AbsoluteVariance.Currency = "EUR"
+   case "residual": result.Residual.Currency = "EUR"
+   }
+   _,err := Explain(context.Background(),&result)
+   require.ErrorContains(t,err,field)
+   require.ErrorContains(t,err,"EUR")
+   require.ErrorContains(t,err,"USD")
+   require.NotContains(t,err.Error(),"reconcile")
+  })
+ }
+ report,err := Explain(context.Background(),&base)
+ require.NoError(t,err)
+ require.Equal(t,"USD",report.Actual.Currency)
+ require.Equal(t,"USD",report.VarianceAbsolute.Currency)
+ require.Equal(t,"USD",report.Residual.Currency)
+}
+
+func TestCostExplainCapsStrongDriversByTotalEvidence(t *testing.T) {
+ f,fd := varianceFixture(t,"forecast",10,2,20,costv1.DriverVariable)
+ a,ad := varianceFixture(t,"actual",20,2,40,costv1.DriverVariable)
+ strong := costv1.Evidence{Kind:costv1.EvidenceObserved,Measurement:costv1.MeasurementMeasured,Source:costv1.SourceReference{Type:costv1.SourceTelemetry,ArtifactIdentity:"telemetry://driver",CapturedAt:"2026-08-01T00:00:00Z"},Confidence:costv1.ConfidenceHigh,ConfidenceRationale:"measured driver"}
+ fd.Evidence.Quantity,ad.Evidence.Quantity = strong,strong
+ strong.Source.Type = costv1.SourceInvoice
+ strong.Source.ArtifactIdentity = "invoice://driver"
+ strong.Kind = costv1.EvidenceBilled
+ fd.Evidence.UnitPrice,ad.Evidence.UnitPrice = strong,strong
+ result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
+ require.NoError(t,err)
+ require.Equal(t,costv1.ConfidenceHigh,result.Contributions[0].Confidence)
+ report,err := Explain(context.Background(),&result)
+ require.NoError(t,err)
+ require.Equal(t,costv1.ConfidenceLow,report.Confidence)
+ require.LessOrEqual(t,report.ConfidenceScore,.35)
+ require.Equal(t,costv1.ConfidenceHigh,report.DriverContributions[0].Confidence)
+ require.Contains(t,report.MissingEvidence,"forecast total cost: high-confidence claim evidence unavailable")
+ require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
+}
+
 func TestCostExplainInvalidReconciliation(t *testing.T) {
  result:=variancev1.Result{SchemaVersion:variancev1.SchemaVersion,Status:"available",Actual:&costv1.Money{Amount:2,Currency:"USD"},AbsoluteVariance:&costv1.Money{Amount:2,Currency:"USD"},Residual:&costv1.Money{Amount:math.NaN(),Currency:"USD"}}
  _,err:=Explain(context.Background(),&result)

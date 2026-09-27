@@ -43,12 +43,29 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
  if err := ctx.Err(); err != nil { return nil, err }
  if report == nil || report.SchemaVersion != variancev1.SchemaVersion || (report.Status != "available" && report.Status != "unavailable") { return nil, errors.New("valid cost variance result is required") }
  if report.Status == "available" && (report.Actual == nil || report.AbsoluteVariance == nil || report.Residual == nil) { return nil, errors.New("available result lacks actual, variance or residual") }
+ if report.Status == "available" {
+  for _, field := range []struct { name string; money *costv1.Money }{{"actual", report.Actual}, {"absolute_variance", report.AbsoluteVariance}, {"residual", report.Residual}} {
+   if field.money.Currency != report.Forecast.Currency { return nil, fmt.Errorf("%s currency %q differs from forecast currency %q", field.name, field.money.Currency, report.Forecast.Currency) }
+  }
+ }
  if report.Status == "available" && (math.IsNaN(report.Residual.Amount) || math.IsInf(report.Residual.Amount, 0) || math.IsNaN(report.AbsoluteVariance.Amount) || math.IsInf(report.AbsoluteVariance.Amount, 0)) { return nil, errors.New("non-finite variance or residual") }
  if report.Status == "unavailable" && (report.Actual != nil || report.AbsoluteVariance != nil || report.Residual != nil || len(report.Contributions) != 0) { return nil, errors.New("unavailable result cannot contain measured variance") }
  out := &ExplainReport{SchemaVersion: report.SchemaVersion, Status: report.Status, Window: report.Window, ForecastObservationID: report.ForecastObservationID, ActualObservationID: report.ActualObservationID, UnavailableReason: report.UnavailableReason, Forecast: report.Forecast, Actual: report.Actual, VarianceAbsolute: report.AbsoluteVariance, VariancePercent: report.PercentageVariance, Residual: report.Residual, DriverContributions: []DriverContribution{}, MissingEvidence: report.MissingEvidence, Sources: report.Sources, Confidence: costv1.ConfidenceLow, ConfidenceScore: 0}
  if out.MissingEvidence == nil { out.MissingEvidence = []string{} }
  if report.Status == "available" {
   out.ConfidenceScore = 1
+  // Result carries total-cost sources, not the observations' claim evidence.
+  // Provenance can limit confidence but cannot prove a high-confidence total.
+  for i, name := range []string{"forecast", "actual"} {
+   score := .35
+   if i < len(report.Sources) {
+    switch report.Sources[i].Type {
+    case costv1.SourceInvoice, costv1.SourceProfitCtlDerived: score = .7
+    }
+   }
+   out.MissingEvidence = append(out.MissingEvidence, name+" total cost: high-confidence claim evidence unavailable")
+   out.ConfidenceScore = math.Min(out.ConfidenceScore, score)
+  }
   sum := report.Residual.Amount
   for _, c := range report.Contributions {
    if c.Amount.Currency != report.Forecast.Currency || math.IsNaN(c.Amount.Amount) || math.IsInf(c.Amount.Amount, 0) || c.ConfidenceScore < 0 || c.ConfidenceScore > 1 || math.IsNaN(c.ConfidenceScore) || (c.Attribution != "unknown" && c.Attribution != "modeled") { return nil, errors.New("invalid driver contribution") }
