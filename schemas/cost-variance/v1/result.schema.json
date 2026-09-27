@@ -22,6 +22,10 @@
     "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
     "contributions": {"type": "array", "items": {"$ref": "#/$defs/contribution"}}
   },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "available"}}}, "then": {"required": ["actual_observation_id"], "properties": {"actual": {"$ref": "#/$defs/money"}, "absolute_variance": {"$ref": "#/$defs/money"}, "residual": {"$ref": "#/$defs/money"}}, "not": {"required": ["unavailable_reason"]}}},
+    {"if": {"properties": {"status": {"const": "unavailable"}}}, "then": {"required": ["unavailable_reason"], "properties": {"actual": {"type": "null"}, "absolute_variance": {"type": "null"}, "percentage_variance": {"type": "null"}, "residual": {"type": "null"}, "contributions": {"maxItems": 0}}, "not": {"required": ["actual_observation_id"]}}}
+  ],
   "$defs": {
     "money": {"type": "object", "additionalProperties": false, "required": ["amount", "currency"], "properties": {"amount": {"type": "number"}, "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}}},
     "window": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"type": "string", "format": "date-time"}, "end": {"type": "string", "format": "date-time"}}},

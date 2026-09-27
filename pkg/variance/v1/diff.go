@@ -27,7 +27,7 @@ type DiffPeriod struct {
 	Forecast            costv1.CostObservation `json:"forecast"`
 	Actual              costv1.CostObservation `json:"actual"`
 	VarianceAbsolute    costv1.Money           `json:"variance_absolute"`
-	VariancePercent     float64                `json:"variance_percent"`
+	VariancePercent     *float64               `json:"variance_percent"`
 	DriverContributions []DriverContribution   `json:"driver_contributions"`
 	Residual            costv1.Money           `json:"residual"`
 	Confidence          string                 `json:"confidence"`
@@ -40,7 +40,7 @@ type DiffReport struct {
 	Forecast            costv1.Money         `json:"forecast"`
 	Actual              costv1.Money         `json:"actual"`
 	VarianceAbsolute    costv1.Money         `json:"variance_absolute"`
-	VariancePercent     float64              `json:"variance_percent"`
+	VariancePercent     *float64             `json:"variance_percent"`
 	DriverContributions []DriverContribution `json:"driver_contributions"`
 	Residual            costv1.Money         `json:"residual"`
 	Confidence          string               `json:"confidence"`
@@ -52,7 +52,7 @@ type ExplainReport struct {
 	Forecast            costv1.Money         `json:"forecast"`
 	Actual              costv1.Money         `json:"actual"`
 	VarianceAbsolute    costv1.Money         `json:"variance_absolute"`
-	VariancePercent     float64              `json:"variance_percent"`
+	VariancePercent     *float64             `json:"variance_percent"`
 	DriverContributions []DriverContribution `json:"driver_contributions"`
 	Residual            costv1.Money         `json:"residual"`
 	Confidence          string               `json:"confidence"`
@@ -70,9 +70,6 @@ func Diff(forecast, actual []costv1.CostObservation) (*DiffReport, error) {
 	for i, f := range forecast {
 		if err := f.Validate(); err != nil {
 			return nil, fmt.Errorf("forecast[%d]: %w", i, err)
-		}
-		if f.TotalCost.Amount == 0 {
-			return nil, fmt.Errorf("forecast[%d]: zero total cost denominator", i)
 		}
 		match := -1
 		for j, a := range actual {
@@ -117,9 +114,13 @@ func Diff(forecast, actual []costv1.CostObservation) (*DiffReport, error) {
 				confidence = "unknown"
 			}
 		}
-		period := DiffPeriod{Window: f.Window, Forecast: f, Actual: a, VarianceAbsolute: costv1.Money{Amount: delta, Currency: currency}, VariancePercent: delta / f.TotalCost.Amount * 100, DriverContributions: contributions, Residual: costv1.Money{Amount: residual, Currency: currency}, Confidence: confidence}
-		if !finite(period.VariancePercent) {
-			return nil, fmt.Errorf("forecast[%d]: percentage overflow", i)
+		period := DiffPeriod{Window: f.Window, Forecast: f, Actual: a, VarianceAbsolute: costv1.Money{Amount: delta, Currency: currency}, DriverContributions: contributions, Residual: costv1.Money{Amount: residual, Currency: currency}, Confidence: confidence}
+		if f.TotalCost.Amount != 0 {
+			percentage := delta / f.TotalCost.Amount * 100
+			if !finite(percentage) {
+				return nil, fmt.Errorf("forecast[%d]: percentage overflow", i)
+			}
+			period.VariancePercent = &percentage
 		}
 		result.Periods = append(result.Periods, period)
 		result.DriverContributions = append(result.DriverContributions, contributions...)
@@ -139,9 +140,15 @@ func Diff(forecast, actual []costv1.CostObservation) (*DiffReport, error) {
 		}
 	}
 	result.VarianceAbsolute = costv1.Money{Amount: result.Actual.Amount - result.Forecast.Amount, Currency: result.Forecast.Currency}
-	result.VariancePercent = result.VarianceAbsolute.Amount / result.Forecast.Amount * 100
-	if !finite(result.VariancePercent) {
-		return nil, errors.New("aggregate percentage overflow")
+	if !finite(result.Forecast.Amount) || !finite(result.Actual.Amount) || !finite(result.Residual.Amount) || !finite(result.VarianceAbsolute.Amount) {
+		return nil, errors.New("aggregate variance overflow")
+	}
+	if result.Forecast.Amount != 0 {
+		percentage := result.VarianceAbsolute.Amount / result.Forecast.Amount * 100
+		if !finite(percentage) {
+			return nil, errors.New("aggregate percentage overflow")
+		}
+		result.VariancePercent = &percentage
 	}
 	sort.Slice(result.Periods, func(i, j int) bool { return result.Periods[i].Window.Start < result.Periods[j].Window.Start })
 	sort.SliceStable(result.DriverContributions, func(i, j int) bool {
@@ -198,7 +205,10 @@ func Explain(report DiffReport) (*ExplainReport, error) {
 		recomputedActual += p.Actual.TotalCost.Amount
 		recomputedResidual += p.Residual.Amount
 	}
-	if math.Abs(recomputedForecast-report.Forecast.Amount) > Rounding || math.Abs(recomputedActual-report.Actual.Amount) > Rounding || math.Abs(recomputedResidual-report.Residual.Amount) > Rounding || math.Abs(report.VarianceAbsolute.Amount-(recomputedActual-recomputedForecast)) > Rounding || report.Forecast.Amount == 0 || math.Abs(report.VariancePercent-100*(recomputedActual-recomputedForecast)/recomputedForecast) > Rounding {
+	if !finite(recomputedForecast) || !finite(recomputedActual) || !finite(recomputedResidual) || !finite(report.Forecast.Amount) || !finite(report.Actual.Amount) || !finite(report.Residual.Amount) || !finite(report.VarianceAbsolute.Amount) || math.Abs(recomputedForecast-report.Forecast.Amount) > Rounding || math.Abs(recomputedActual-report.Actual.Amount) > Rounding || math.Abs(recomputedResidual-report.Residual.Amount) > Rounding || math.Abs(report.VarianceAbsolute.Amount-(recomputedActual-recomputedForecast)) > Rounding {
+		return nil, errors.New("report totals do not reconcile")
+	}
+	if (recomputedForecast == 0 && report.VariancePercent != nil) || (recomputedForecast != 0 && (report.VariancePercent == nil || !finite(*report.VariancePercent) || math.Abs(*report.VariancePercent-100*(recomputedActual-recomputedForecast)/recomputedForecast) > Rounding)) {
 		return nil, errors.New("report totals do not reconcile")
 	}
 	forecasts := make([]costv1.CostObservation, len(report.Periods))

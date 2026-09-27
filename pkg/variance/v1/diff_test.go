@@ -132,8 +132,4 @@ func TestCostDiffVarianceResidualAndValidation(t *testing.T) {
 	if _, err = Diff([]cost.CostObservation{f}, nil); err == nil {
 		t.Fatal("unavailable actual accepted as zero")
 	}
-	f.TotalCost.Amount = 0
-	if _, err = Diff([]cost.CostObservation{f}, []cost.CostObservation{observation("a", 20, 3, 60)}); err == nil {
-		t.Fatal("zero denominator accepted")
-	}
 }
