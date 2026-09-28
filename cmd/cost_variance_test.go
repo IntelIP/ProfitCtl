@@ -301,9 +301,41 @@ func TestCostExplainSuppliedTotalsAndPercentages(t *testing.T) {
  unavailable:=base
  unavailable.Status="unavailable"
  unavailable.Actual,unavailable.AbsoluteVariance,unavailable.Residual,unavailable.PercentageVariance=nil,nil,nil,nil
+ unavailable.UnavailableReason="invoice not delivered"
+ unavailable.MissingEvidence=[]string{"actual cost: invoice not delivered"}
  report,err=Explain(context.Background(),&unavailable)
  require.NoError(t,err)
  require.Nil(t,report.VariancePercent)
+}
+
+func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
+ base,err := Diff(context.Background(),&f,nil)
+ require.NoError(t,err)
+ for _, tc := range []struct{name,reason string; evidence []string; errorField string}{
+  {"missing reason","",[]string{"actual cost unavailable"},"unavailable_reason"},
+  {"blank reason"," \t ",[]string{"actual cost:  \t "},"unavailable_reason"},
+  {"missing evidence","invoice not delivered",nil,"missing_evidence"},
+  {"unrelated evidence","invoice not delivered",[]string{"actual cost: ledger pending"},"missing_evidence"},
+  {"blank evidence","invoice not delivered",[]string{"  "},"missing_evidence"},
+  {"valid supplied reason","invoice not delivered",[]string{"actual cost: invoice not delivered"},""},
+ } {
+  t.Run(tc.name,func(t *testing.T){
+   result := *base
+   result.UnavailableReason = tc.reason
+   result.MissingEvidence = tc.evidence
+   report,err := Explain(context.Background(),&result)
+   if tc.errorField != "" {
+    require.ErrorContains(t,err,tc.errorField)
+    return
+   }
+   require.NoError(t,err)
+   require.Equal(t,tc.reason,report.UnavailableReason)
+   require.Contains(t,report.MissingEvidence,"actual cost: "+tc.reason)
+   require.Nil(t,report.Actual)
+   require.Nil(t,report.VariancePercent)
+  })
+ }
 }
 
 func TestCostExplainInvalidReconciliation(t *testing.T) {
