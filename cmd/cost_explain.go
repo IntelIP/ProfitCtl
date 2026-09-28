@@ -42,13 +42,32 @@ type ExplainReport struct {
 func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, error) {
  if err := ctx.Err(); err != nil { return nil, err }
  if report == nil || report.SchemaVersion != variancev1.SchemaVersion || (report.Status != "available" && report.Status != "unavailable") { return nil, errors.New("valid cost variance result is required") }
+ for _, field := range []struct { name string; money *costv1.Money }{{"forecast", &report.Forecast}, {"actual", report.Actual}, {"absolute_variance", report.AbsoluteVariance}, {"residual", report.Residual}} {
+  if field.money != nil && (math.IsNaN(field.money.Amount) || math.IsInf(field.money.Amount, 0)) { return nil, fmt.Errorf("%s.amount must be finite", field.name) }
+ }
+ if report.PercentageVariance != nil && (math.IsNaN(*report.PercentageVariance) || math.IsInf(*report.PercentageVariance, 0)) { return nil, errors.New("percentage_variance must be finite") }
+ if report.Status == "unavailable" && report.PercentageVariance != nil { return nil, errors.New("percentage_variance must be null when actual is unavailable") }
  if report.Status == "available" && (report.Actual == nil || report.AbsoluteVariance == nil || report.Residual == nil) { return nil, errors.New("available result lacks actual, variance or residual") }
  if report.Status == "available" {
   for _, field := range []struct { name string; money *costv1.Money }{{"actual", report.Actual}, {"absolute_variance", report.AbsoluteVariance}, {"residual", report.Residual}} {
    if field.money.Currency != report.Forecast.Currency { return nil, fmt.Errorf("%s currency %q differs from forecast currency %q", field.name, field.money.Currency, report.Forecast.Currency) }
   }
  }
- if report.Status == "available" && (math.IsNaN(report.Residual.Amount) || math.IsInf(report.Residual.Amount, 0) || math.IsNaN(report.AbsoluteVariance.Amount) || math.IsInf(report.AbsoluteVariance.Amount, 0)) { return nil, errors.New("non-finite variance or residual") }
+ if report.Status == "available" {
+  delta := report.Actual.Amount - report.Forecast.Amount
+  if math.IsNaN(delta) || math.IsInf(delta, 0) || math.Abs(delta-report.AbsoluteVariance.Amount) > variancev1.Rounding {
+   return nil, errors.New("absolute_variance.amount must equal actual.amount minus forecast.amount within rounding tolerance")
+  }
+  if report.Forecast.Amount == 0 {
+   if report.PercentageVariance != nil { return nil, errors.New("percentage_variance must be null when forecast.amount is zero") }
+  } else {
+   expected := 100 * report.AbsoluteVariance.Amount / report.Forecast.Amount
+   if math.IsNaN(expected) || math.IsInf(expected, 0) { return nil, errors.New("percentage_variance overflows for supplied amounts") }
+   if report.PercentageVariance == nil || math.Abs(*report.PercentageVariance-expected) > 100*variancev1.Rounding/math.Abs(report.Forecast.Amount) {
+    return nil, fmt.Errorf("percentage_variance must equal 100 * absolute_variance.amount / forecast.amount (%.12g) within rounding tolerance", expected)
+   }
+  }
+ }
  if report.Status == "unavailable" && (report.Actual != nil || report.AbsoluteVariance != nil || report.Residual != nil || len(report.Contributions) != 0) { return nil, errors.New("unavailable result cannot contain measured variance") }
  out := &ExplainReport{SchemaVersion: report.SchemaVersion, Status: report.Status, Window: report.Window, ForecastObservationID: report.ForecastObservationID, ActualObservationID: report.ActualObservationID, UnavailableReason: report.UnavailableReason, Forecast: report.Forecast, Actual: report.Actual, VarianceAbsolute: report.AbsoluteVariance, VariancePercent: report.PercentageVariance, Residual: report.Residual, DriverContributions: []DriverContribution{}, MissingEvidence: report.MissingEvidence, Sources: report.Sources, Confidence: costv1.ConfidenceLow, ConfidenceScore: 0}
  if out.MissingEvidence == nil { out.MissingEvidence = []string{} }
@@ -60,8 +79,9 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
    out.MissingEvidence = append(out.MissingEvidence, name+" total cost: high-confidence claim evidence unavailable")
   }
   sum := report.Residual.Amount
-  for _, c := range report.Contributions {
-   if c.Amount.Currency != report.Forecast.Currency || math.IsNaN(c.Amount.Amount) || math.IsInf(c.Amount.Amount, 0) || c.ConfidenceScore < 0 || c.ConfidenceScore > 1 || math.IsNaN(c.ConfidenceScore) || (c.Attribution != "unknown" && c.Attribution != "modeled") { return nil, errors.New("invalid driver contribution") }
+  for i, c := range report.Contributions {
+   if math.IsNaN(c.Amount.Amount) || math.IsInf(c.Amount.Amount, 0) { return nil, fmt.Errorf("contributions[%d].amount.amount must be finite", i) }
+   if c.Amount.Currency != report.Forecast.Currency || c.ConfidenceScore < 0 || c.ConfidenceScore > 1 || math.IsNaN(c.ConfidenceScore) || (c.Attribution != "unknown" && c.Attribution != "modeled") { return nil, errors.New("invalid driver contribution") }
    sum += c.Amount.Amount
    out.ConfidenceScore = math.Min(out.ConfidenceScore, c.ConfidenceScore)
    action := "Review workload measurements and cost evidence before adjusting this driver"

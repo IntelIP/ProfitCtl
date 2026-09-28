@@ -112,7 +112,7 @@ func TestCostVarianceResidualZeroAndUnavailable(t *testing.T) {
  require.NotEmpty(t,report.MissingEvidence)
  result.AbsoluteVariance.Amount++
  _,err = Explain(context.Background(),&result)
- require.ErrorContains(t,err,"reconcile")
+ require.ErrorContains(t,err,"absolute_variance")
  f.TotalCost.Amount = 0
  result,err = variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
  require.NoError(t,err)
@@ -256,6 +256,54 @@ func TestCostExplainSourceLabelsCannotPromoteTotalConfidence(t *testing.T) {
    require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
   })
  }
+}
+
+func TestCostExplainSuppliedTotalsAndPercentages(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
+ a,_ := varianceFixture(t,"actual",20,2,40,costv1.DriverFixed)
+ base,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
+ require.NoError(t,err)
+ require.Equal(t,100.0,*base.PercentageVariance)
+ require.Equal(t,20.0,base.Residual.Amount)
+ for _, tc := range []struct{name string; change func(*variancev1.Result); errorField string}{
+  {"concealed total mismatch",func(r *variancev1.Result){r.AbsoluteVariance.Amount=10;r.Residual.Amount=10},"absolute_variance"},
+  {"incorrect percentage",func(r *variancev1.Result){p:=50.0;r.PercentageVariance=&p},"percentage_variance"},
+  {"missing defined percentage",func(r *variancev1.Result){r.PercentageVariance=nil},"percentage_variance"},
+  {"numeric zero forecast",func(r *variancev1.Result){r.Forecast.Amount=0;r.AbsoluteVariance.Amount=40;r.Residual.Amount=40;p:=0.0;r.PercentageVariance=&p},"percentage_variance"},
+  {"numeric unavailable",func(r *variancev1.Result){r.Status="unavailable";r.Actual=nil;r.AbsoluteVariance=nil;r.Residual=nil;p:=100.0;r.PercentageVariance=&p},"percentage_variance"},
+  {"nonfinite forecast",func(r *variancev1.Result){r.Forecast.Amount=math.NaN()},"forecast.amount"},
+  {"nonfinite actual",func(r *variancev1.Result){r.Actual.Amount=math.Inf(1)},"actual.amount"},
+  {"nonfinite absolute",func(r *variancev1.Result){r.AbsoluteVariance.Amount=math.NaN()},"absolute_variance.amount"},
+  {"nonfinite residual",func(r *variancev1.Result){r.Residual.Amount=math.Inf(-1)},"residual.amount"},
+  {"nonfinite percentage",func(r *variancev1.Result){p:=math.NaN();r.PercentageVariance=&p},"percentage_variance"},
+  {"nonfinite contribution",func(r *variancev1.Result){r.Contributions=[]variancev1.Contribution{{Amount:costv1.Money{Amount:math.NaN(),Currency:"USD"},Attribution:"modeled",ConfidenceScore:.35}}},"contributions[0].amount.amount"},
+ } {
+  t.Run(tc.name,func(t *testing.T){
+   r:=base
+   actual,absolute,residual:=*base.Actual,*base.AbsoluteVariance,*base.Residual
+   r.Actual,r.AbsoluteVariance,r.Residual=&actual,&absolute,&residual
+   tc.change(&r)
+   _,err:=Explain(context.Background(),&r)
+   require.ErrorContains(t,err,tc.errorField)
+  })
+ }
+ report,err:=Explain(context.Background(),&base)
+ require.NoError(t,err)
+ require.Equal(t,100.0,*report.VariancePercent)
+ zero:=base
+ zero.Forecast.Amount=0
+ zero.AbsoluteVariance=&costv1.Money{Amount:40,Currency:"USD"}
+ zero.Residual=&costv1.Money{Amount:40,Currency:"USD"}
+ zero.PercentageVariance=nil
+ report,err=Explain(context.Background(),&zero)
+ require.NoError(t,err)
+ require.Nil(t,report.VariancePercent)
+ unavailable:=base
+ unavailable.Status="unavailable"
+ unavailable.Actual,unavailable.AbsoluteVariance,unavailable.Residual,unavailable.PercentageVariance=nil,nil,nil,nil
+ report,err=Explain(context.Background(),&unavailable)
+ require.NoError(t,err)
+ require.Nil(t,report.VariancePercent)
 }
 
 func TestCostExplainInvalidReconciliation(t *testing.T) {
