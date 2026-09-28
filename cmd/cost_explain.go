@@ -54,17 +54,10 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
  if out.MissingEvidence == nil { out.MissingEvidence = []string{} }
  if report.Status == "available" {
   out.ConfidenceScore = 1
-  // Result carries total-cost sources, not the observations' claim evidence.
-  // Provenance can limit confidence but cannot prove a high-confidence total.
-  for i, name := range []string{"forecast", "actual"} {
-   score := .35
-   if i < len(report.Sources) {
-    switch report.Sources[i].Type {
-    case costv1.SourceInvoice, costv1.SourceProfitCtlDerived: score = .7
-    }
-   }
+  // Result has sources but no total-cost claim confidence; provenance cannot establish it.
+  out.ConfidenceScore = .35
+  for _, name := range []string{"forecast", "actual"} {
    out.MissingEvidence = append(out.MissingEvidence, name+" total cost: high-confidence claim evidence unavailable")
-   out.ConfidenceScore = math.Min(out.ConfidenceScore, score)
   }
   sum := report.Residual.Amount
   for _, c := range report.Contributions {

@@ -219,6 +219,45 @@ func TestCostExplainCapsStrongDriversByTotalEvidence(t *testing.T) {
  require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
 }
 
+func TestCostExplainSourceLabelsCannotPromoteTotalConfidence(t *testing.T) {
+ for _, sourceType := range []costv1.SourceType{costv1.SourceInvoice, costv1.SourceProfitCtlDerived} {
+  t.Run(string(sourceType),func(t *testing.T){
+   f,fd := varianceFixture(t,"forecast",10,2,20,costv1.DriverVariable)
+   a,ad := varianceFixture(t,"actual",20,2,40,costv1.DriverVariable)
+   for _, observation := range []*costv1.CostObservation{&f,&a} {
+    observation.Evidence.TotalCost.Source.Type = sourceType
+    if sourceType == costv1.SourceInvoice {
+     observation.Evidence.TotalCost.Kind = costv1.EvidenceBilled
+     observation.Evidence.TotalCost.Measurement = costv1.MeasurementMeasured
+    } else {
+     observation.Evidence.TotalCost.Measurement = costv1.MeasurementDerived
+    }
+   }
+   strong := costv1.Evidence{Kind:costv1.EvidenceObserved,Measurement:costv1.MeasurementMeasured,Source:costv1.SourceReference{Type:costv1.SourceTelemetry,ArtifactIdentity:"telemetry://driver",CapturedAt:"2026-08-01T00:00:00Z"},Confidence:costv1.ConfidenceHigh,ConfidenceRationale:"measured driver"}
+   fd.Evidence.Quantity,ad.Evidence.Quantity = strong,strong
+   strong.Source.Type = costv1.SourceInvoice
+   strong.Source.ArtifactIdentity = "invoice://driver"
+   strong.Kind = costv1.EvidenceBilled
+   fd.Evidence.UnitPrice,ad.Evidence.UnitPrice = strong,strong
+   result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
+   require.NoError(t,err)
+   require.Equal(t,"available",result.Status)
+   require.InDelta(t,0,result.Residual.Amount,variancev1.Rounding)
+   require.Equal(t,costv1.ConfidenceHigh,result.Contributions[0].Confidence)
+   require.Greater(t,result.Contributions[0].ConfidenceScore,.7)
+   require.Equal(t,sourceType,result.Sources[0].Type)
+   require.Equal(t,sourceType,result.Sources[1].Type)
+   report,err := Explain(context.Background(),&result)
+   require.NoError(t,err)
+   require.Equal(t,costv1.ConfidenceLow,report.Confidence)
+   require.LessOrEqual(t,report.ConfidenceScore,.35)
+   require.Equal(t,result.Contributions[0].ConfidenceScore,report.DriverContributions[0].ConfidenceScore)
+   require.Contains(t,report.MissingEvidence,"forecast total cost: high-confidence claim evidence unavailable")
+   require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
+  })
+ }
+}
+
 func TestCostExplainInvalidReconciliation(t *testing.T) {
  result:=variancev1.Result{SchemaVersion:variancev1.SchemaVersion,Status:"available",Actual:&costv1.Money{Amount:2,Currency:"USD"},AbsoluteVariance:&costv1.Money{Amount:2,Currency:"USD"},Residual:&costv1.Money{Amount:math.NaN(),Currency:"USD"}}
  _,err:=Explain(context.Background(),&result)
