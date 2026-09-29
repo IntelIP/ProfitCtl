@@ -459,3 +459,47 @@ func TestCostExplainTinyForecastCannotHidePercentage(t *testing.T) {
 	_, err = Explain(context.Background(), &supplied)
 	require.ErrorContains(t, err, "percentage_variance")
 }
+
+func TestCostExplainRejectsUnsupportedDriverEvidence(t *testing.T) {
+	f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverCadence)
+	a, ad := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverCadence)
+	base, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	_, err = Explain(context.Background(), &base)
+	require.NoError(t, err)
+	receipt := variancev1.Receipt{DriverID: "driver", Kind: "deployment", ForecastObservationID: f.ID, ActualObservationID: a.ID, Source: costv1.SourceReference{Type: costv1.SourceRuntimeLedger, ArtifactIdentity: "deployment://exact", CapturedAt: "2026-08-01T00:00:00Z"}}
+	for _, tc := range []struct {
+		name   string
+		change func(*variancev1.Contribution)
+		field  string
+	}{
+		{"modeled without receipt", func(c *variancev1.Contribution) { c.Attribution = "modeled" }, "exact receipt"},
+		{"wrong observation receipt", func(c *variancev1.Contribution) {
+			r := receipt
+			r.ActualObservationID = "other"
+			c.Receipts = []variancev1.Receipt{r}
+			c.Attribution = "modeled"
+		}, "exact receipt"},
+		{"invalid receipt date", func(c *variancev1.Contribution) {
+			r := receipt
+			r.Source.CapturedAt = "invalid"
+			c.Receipts = []variancev1.Receipt{r}
+			c.Attribution = "modeled"
+		}, "exact receipt"},
+		{"synthetic high confidence", func(c *variancev1.Contribution) { c.Confidence = costv1.ConfidenceHigh; c.ConfidenceScore = 1 }, "synthetic"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := base
+			result.Contributions = append([]variancev1.Contribution(nil), base.Contributions...)
+			tc.change(&result.Contributions[0])
+			_, err := Explain(context.Background(), &result)
+			require.ErrorContains(t, err, tc.field)
+		})
+	}
+	valid := base
+	valid.Contributions = append([]variancev1.Contribution(nil), base.Contributions...)
+	valid.Contributions[0].Receipts = []variancev1.Receipt{receipt}
+	valid.Contributions[0].Attribution = "modeled"
+	_, err = Explain(context.Background(), &valid)
+	require.NoError(t, err)
+}

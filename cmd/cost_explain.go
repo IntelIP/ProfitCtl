@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	costv1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
 	variancev1 "github.com/IntelIP/ProfitCtl/pkg/variance/v1"
@@ -130,6 +131,25 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
 			}
 			if c.Amount.Currency != report.Forecast.Currency || c.ConfidenceScore < 0 || c.ConfidenceScore > 1 || math.IsNaN(c.ConfidenceScore) || (c.Attribution != "unknown" && c.Attribution != "modeled") {
 				return nil, errors.New("invalid driver contribution")
+			}
+
+			for _, receipt := range c.Receipts {
+				_, timestampErr := time.Parse(time.RFC3339, receipt.Source.CapturedAt)
+				if timestampErr != nil {
+					_, timestampErr = time.Parse(time.DateOnly, receipt.Source.CapturedAt)
+				}
+				validKind := receipt.Kind == "commit" || receipt.Kind == "pull_request" || receipt.Kind == "release" || receipt.Kind == "deployment"
+				if receipt.DriverID != c.DriverID || receipt.ForecastObservationID != report.ForecastObservationID || receipt.ActualObservationID != report.ActualObservationID || report.ForecastObservationID == "" || report.ActualObservationID == "" || strings.TrimSpace(receipt.Source.ArtifactIdentity) == "" || receipt.Source.Type != costv1.SourceRuntimeLedger || timestampErr != nil || !validKind {
+					return nil, fmt.Errorf("contributions[%d] has an invalid exact receipt", i)
+				}
+			}
+			if (c.Kind == costv1.DriverCadence || c.Kind == costv1.DriverConcurrency || c.Kind == costv1.DriverUptime) && c.Attribution == "modeled" && len(c.Receipts) == 0 {
+				return nil, fmt.Errorf("contributions[%d] modeled attribution requires an exact receipt", i)
+			}
+			for _, source := range c.Sources {
+				if source.Type == costv1.SourceSyntheticFixture && (c.Confidence != costv1.ConfidenceLow || c.ConfidenceScore > .35) {
+					return nil, fmt.Errorf("contributions[%d] synthetic evidence requires low confidence", i)
+				}
 			}
 			sum += c.Amount.Amount
 			out.ConfidenceScore = math.Min(out.ConfidenceScore, c.ConfidenceScore)
