@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	cost "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
@@ -88,7 +89,7 @@ func Compare(in Input) (Result, error) {
 	}
 	result := Result{SchemaVersion: SchemaVersion, Status: "unavailable", Window: in.Forecast.Window, ForecastObservationID: in.Forecast.ID, Forecast: in.Forecast.TotalCost, RoundingTolerance: Rounding, Contributions: []Contribution{}, MissingEvidence: []string{}, Sources: []cost.SourceReference{in.Forecast.Evidence.TotalCost.Source}}
 	if in.Actual == nil {
-		if in.UnavailableReason == "" {
+		if strings.TrimSpace(in.UnavailableReason) == "" {
 			return Result{}, errors.New("actual is unavailable: unavailable_reason is required")
 		}
 		if len(in.Drivers) > 0 || len(in.Receipts) > 0 {
