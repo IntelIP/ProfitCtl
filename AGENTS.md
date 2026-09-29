@@ -27,3 +27,8 @@
 - Pricing correctness, simulation integrity, maintained reference cost standards, CLI output, structured LLM parsing, and zero-cost validation are explicit boundaries.
 - Never call OpenRouter, deploy, publish, or mutate billing during validation. Upload generated evidence from CI; do not commit it.
 - Track rollout and failures in Plane item `PCTL-17`.
+
+## Code cleanup
+
+- Run `bash scripts/check-dead-code.sh` after removing code and before review.
+- For cross-file changes, run `graphify update .`, inspect callers and dependencies, and verify findings in current source and framework registrations.
