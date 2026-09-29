@@ -308,6 +308,54 @@ func TestCostExplainSuppliedTotalsAndPercentages(t *testing.T) {
  require.Nil(t,report.VariancePercent)
 }
 
+func TestCostExplainTinyForecastPercentage(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",1,0.000001,0.000001,costv1.DriverFixed)
+ a,_ := varianceFixture(t,"actual",2,0.000001,0.000002,costv1.DriverFixed)
+ result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
+ require.NoError(t,err)
+ require.Equal(t,100.0,*result.PercentageVariance)
+ supplied := result
+ zero := 0.0
+ supplied.PercentageVariance = &zero
+ _,err = Explain(context.Background(),&supplied)
+ require.ErrorContains(t,err,"percentage_variance")
+ correct := 100.0
+ supplied.PercentageVariance = &correct
+ report,err := Explain(context.Background(),&supplied)
+ require.NoError(t,err)
+ require.Equal(t,100.0,*report.VariancePercent)
+}
+
+func TestCostExplainRanksSuppliedContributions(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
+ a,_ := varianceFixture(t,"actual",20,2,40,costv1.DriverFixed)
+ result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
+ require.NoError(t,err)
+ source := costv1.SourceReference{Type:costv1.SourceRuntimeLedger,ArtifactIdentity:"receipt://small",CapturedAt:"2026-08-01T00:00:00Z"}
+ receipt := variancev1.Receipt{DriverID:"small",Kind:"deployment",ForecastObservationID:f.ID,ActualObservationID:a.ID,Source:source}
+ small := variancev1.Contribution{DriverID:"small",Kind:costv1.DriverCadence,Amount:costv1.Money{Amount:-5,Currency:"USD"},Confidence:costv1.ConfidenceLow,ConfidenceScore:.35,Attribution:"unknown",MissingEvidence:[]string{"exact delivery receipt"},Sources:[]costv1.SourceReference{source},Receipts:[]variancev1.Receipt{receipt}}
+ large := variancev1.Contribution{DriverID:"large",Kind:costv1.DriverVariable,Amount:costv1.Money{Amount:25,Currency:"USD"},Confidence:costv1.ConfidenceLow,ConfidenceScore:.35,Attribution:"modeled",Sources:[]costv1.SourceReference{{Type:costv1.SourceSyntheticFixture,ArtifactIdentity:"fixture://large",CapturedAt:source.CapturedAt}}}
+ result.Contributions = []variancev1.Contribution{small,large}
+ result.Residual.Amount = 0
+ report,err := Explain(context.Background(),&result)
+ require.NoError(t,err)
+ require.Equal(t,[]string{"large","small"},[]string{report.DriverContributions[0].DriverID,report.DriverContributions[1].DriverID})
+ require.Equal(t,large,report.DriverContributions[0].Contribution)
+ require.Equal(t,small,report.DriverContributions[1].Contribution)
+ require.Contains(t,report.DriverContributions[0].RemedialActions[0],"request volume")
+ require.Contains(t,report.DriverContributions[1].RemedialActions[0],"polling interval")
+ require.Equal(t,[]variancev1.Contribution{small,large},result.Contributions)
+
+ result.Contributions = []variancev1.Contribution{small,large}
+ result.Contributions[0].Amount.Amount = -10
+ result.Contributions[1].Amount.Amount = 10
+ result.Residual.Amount = 20
+ report,err = Explain(context.Background(),&result)
+ require.NoError(t,err)
+ require.Equal(t,[]string{"large","small"},[]string{report.DriverContributions[0].DriverID,report.DriverContributions[1].DriverID})
+ require.Equal(t,"small",result.Contributions[0].DriverID)
+}
+
 func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
  f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
  base,err := Diff(context.Background(),&f,nil)

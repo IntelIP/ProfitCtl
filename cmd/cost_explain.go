@@ -5,6 +5,7 @@ import (
  "errors"
  "fmt"
  "math"
+ "sort"
  "strings"
 
  costv1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
@@ -63,7 +64,7 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
   } else {
    expected := 100 * report.AbsoluteVariance.Amount / report.Forecast.Amount
    if math.IsNaN(expected) || math.IsInf(expected, 0) { return nil, errors.New("percentage_variance overflows for supplied amounts") }
-   if report.PercentageVariance == nil || math.Abs(*report.PercentageVariance-expected) > 100*variancev1.Rounding/math.Abs(report.Forecast.Amount) {
+   if report.PercentageVariance == nil || math.Abs(*report.PercentageVariance-expected) > variancev1.Rounding {
     return nil, fmt.Errorf("percentage_variance must equal 100 * absolute_variance.amount / forecast.amount (%.12g) within rounding tolerance", expected)
    }
   }
@@ -104,6 +105,11 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
    out.DriverContributions = append(out.DriverContributions, DriverContribution{Contribution: c, RemedialActions: []string{action}})
   }
   if math.Abs(sum-report.AbsoluteVariance.Amount) > variancev1.Rounding { return nil, errors.New("driver contributions and residual do not reconcile") }
+  sort.SliceStable(out.DriverContributions, func(i, j int) bool {
+   x, y := out.DriverContributions[i].Contribution, out.DriverContributions[j].Contribution
+   if math.Abs(x.Amount.Amount) == math.Abs(y.Amount.Amount) { return x.DriverID < y.DriverID }
+   return math.Abs(x.Amount.Amount) > math.Abs(y.Amount.Amount)
+  })
   if math.Abs(report.Residual.Amount) > variancev1.Rounding || len(report.Contributions) == 0 { out.ConfidenceScore = math.Min(out.ConfidenceScore, .35) }
   switch { case out.ConfidenceScore >= .85: out.Confidence = costv1.ConfidenceHigh; case out.ConfidenceScore >= .55: out.Confidence = costv1.ConfidenceMedium; default: out.Confidence = costv1.ConfidenceLow }
  }
