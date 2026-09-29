@@ -338,6 +338,22 @@ func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
  }
 }
 
+func TestCostExplainMissingActualEvidenceIdentity(t *testing.T) {
+ f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
+ result,err := Diff(context.Background(),&f,nil)
+ require.NoError(t,err)
+ result.UnavailableReason = "invoice not delivered"
+ result.MissingEvidence = []string{"forecast invoice not delivered"}
+ _,err = Explain(context.Background(),result)
+ require.ErrorContains(t,err,"missing_evidence")
+ require.ErrorContains(t,err,"actual cost")
+
+ result.MissingEvidence = []string{"actual cost: invoice not delivered"}
+ report,err := Explain(context.Background(),result)
+ require.NoError(t,err)
+ require.Contains(t,report.MissingEvidence,"actual cost: invoice not delivered")
+}
+
 func TestCostExplainInvalidReconciliation(t *testing.T) {
  result:=variancev1.Result{SchemaVersion:variancev1.SchemaVersion,Status:"available",Actual:&costv1.Money{Amount:2,Currency:"USD"},AbsoluteVariance:&costv1.Money{Amount:2,Currency:"USD"},Residual:&costv1.Money{Amount:math.NaN(),Currency:"USD"}}
  _,err:=Explain(context.Background(),&result)

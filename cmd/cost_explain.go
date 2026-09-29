@@ -73,9 +73,10 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
   if strings.TrimSpace(report.UnavailableReason) == "" { return nil, errors.New("unavailable_reason is required when actual is unavailable") }
   visible := false
   for _, evidence := range report.MissingEvidence {
-   if strings.Contains(evidence, report.UnavailableReason) { visible = true; break }
+   detail := strings.TrimLeft(evidence, " \t\n\r")
+   if strings.HasPrefix(detail, "actual cost:") && strings.Contains(detail[len("actual cost:"):], report.UnavailableReason) { visible = true; break }
   }
-  if !visible { return nil, errors.New("missing_evidence must name unavailable_reason when actual is unavailable") }
+  if !visible { return nil, errors.New("missing_evidence must identify actual cost and name unavailable_reason when actual is unavailable") }
  }
  out := &ExplainReport{SchemaVersion: report.SchemaVersion, Status: report.Status, Window: report.Window, ForecastObservationID: report.ForecastObservationID, ActualObservationID: report.ActualObservationID, UnavailableReason: report.UnavailableReason, Forecast: report.Forecast, Actual: report.Actual, VarianceAbsolute: report.AbsoluteVariance, VariancePercent: report.PercentageVariance, Residual: report.Residual, DriverContributions: []DriverContribution{}, MissingEvidence: report.MissingEvidence, Sources: report.Sources, Confidence: costv1.ConfidenceLow, ConfidenceScore: 0}
  if out.MissingEvidence == nil { out.MissingEvidence = []string{} }
