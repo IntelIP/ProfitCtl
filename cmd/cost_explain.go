@@ -84,12 +84,12 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
 				return nil, errors.New("percentage_variance must be null when forecast.amount is zero")
 			}
 		} else {
-			expected := 100 * report.AbsoluteVariance.Amount / report.Forecast.Amount
+			expected := delta / report.Forecast.Amount * 100
 			if math.IsNaN(expected) || math.IsInf(expected, 0) {
 				return nil, errors.New("percentage_variance overflows for supplied amounts")
 			}
 			if report.PercentageVariance == nil || math.Abs(*report.PercentageVariance-expected) > variancev1.Rounding {
-				return nil, fmt.Errorf("percentage_variance must equal 100 * absolute_variance.amount / forecast.amount (%.12g) within rounding tolerance", expected)
+				return nil, fmt.Errorf("percentage_variance must equal 100 * (actual.amount - forecast.amount) / forecast.amount (%.12g) within rounding tolerance", expected)
 			}
 		}
 	}

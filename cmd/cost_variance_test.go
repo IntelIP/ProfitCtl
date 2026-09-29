@@ -441,3 +441,21 @@ func TestCostExplainInvalidReconciliation(t *testing.T) {
 	_, err := Explain(context.Background(), &result)
 	require.Error(t, err)
 }
+
+func TestCostExplainTinyForecastCannotHidePercentage(t *testing.T) {
+	f, _ := varianceFixture(t, "forecast", 1, 0.0000001, 0.0000001, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 2, 0.0000001, 0.0000002, costv1.DriverFixed)
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *result.PercentageVariance)
+	report, err := Explain(context.Background(), &result)
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *report.VariancePercent)
+	supplied := result
+	supplied.AbsoluteVariance = &costv1.Money{Amount: 0, Currency: "USD"}
+	supplied.Residual = &costv1.Money{Amount: 0, Currency: "USD"}
+	zero := 0.0
+	supplied.PercentageVariance = &zero
+	_, err = Explain(context.Background(), &supplied)
+	require.ErrorContains(t, err, "percentage_variance")
+}
