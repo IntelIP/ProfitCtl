@@ -1,409 +1,443 @@
 package cmd
 
 import (
- "bytes"
- "context"
- "encoding/json"
- "math"
- "os"
- "path/filepath"
- "testing"
+	"bytes"
+	"context"
+	"encoding/json"
+	"math"
+	"os"
+	"path/filepath"
+	"testing"
 
- costv1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
- variancev1 "github.com/IntelIP/ProfitCtl/pkg/variance/v1"
- "github.com/spf13/cobra"
- "github.com/stretchr/testify/require"
+	costv1 "github.com/IntelIP/ProfitCtl/pkg/contracts/cost/v1"
+	variancev1 "github.com/IntelIP/ProfitCtl/pkg/variance/v1"
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/require"
 )
 
 func varianceFixture(t *testing.T, id string, quantity, price, total float64, kind costv1.DriverKind) (costv1.CostObservation, costv1.CostDriver) {
- t.Helper()
- source := costv1.SourceReference{Type: costv1.SourceSyntheticFixture, ArtifactIdentity: "fixture://variance", CapturedAt: "2026-08-01T00:00:00Z"}
- e := costv1.Evidence{Kind: costv1.EvidencePredicted, Measurement: costv1.MeasurementSynthetic, Source: source, Confidence: costv1.ConfidenceLow, ConfidenceRationale: "deterministic fixture"}
- window := costv1.TimeWindow{Start:"2026-07-01T00:00:00Z", End:"2026-08-01T00:00:00Z"}
- q := costv1.Quantity{Value:quantity, Unit:"command"}
- p := costv1.UnitPrice{Amount:costv1.Money{Amount:price, Currency:"USD"}, Per:costv1.Quantity{Value:1, Unit:"command"}}
- o := costv1.CostObservation{SchemaVersion:costv1.SchemaVersion, ID:id, DriverIDs:[]string{"driver"}, Window:window, Quantity:q, UnitPrice:p, TotalCost:costv1.Money{Amount:total, Currency:"USD"}, Dimensions:costv1.Dimensions{Workload:"worker"}, Evidence:costv1.ClaimEvidence{Quantity:e, UnitPrice:e, TotalCost:e}}
- d := costv1.CostDriver{SchemaVersion:costv1.SchemaVersion, ID:"driver", Name:"fixture driver", Kind:kind, Quantity:q, UnitPrice:p, Window:window, Dimensions:o.Dimensions, Evidence:costv1.DriverEvidence{Quantity:e, UnitPrice:e}}
- if kind == costv1.DriverVariable || kind == costv1.DriverCadence { d.Per = &costv1.Quantity{Value:1, Unit:"second"} }
- require.NoError(t, o.Validate())
- require.NoError(t, d.Validate())
- return o, d
+	t.Helper()
+	source := costv1.SourceReference{Type: costv1.SourceSyntheticFixture, ArtifactIdentity: "fixture://variance", CapturedAt: "2026-08-01T00:00:00Z"}
+	e := costv1.Evidence{Kind: costv1.EvidencePredicted, Measurement: costv1.MeasurementSynthetic, Source: source, Confidence: costv1.ConfidenceLow, ConfidenceRationale: "deterministic fixture"}
+	window := costv1.TimeWindow{Start: "2026-07-01T00:00:00Z", End: "2026-08-01T00:00:00Z"}
+	q := costv1.Quantity{Value: quantity, Unit: "command"}
+	p := costv1.UnitPrice{Amount: costv1.Money{Amount: price, Currency: "USD"}, Per: costv1.Quantity{Value: 1, Unit: "command"}}
+	o := costv1.CostObservation{SchemaVersion: costv1.SchemaVersion, ID: id, DriverIDs: []string{"driver"}, Window: window, Quantity: q, UnitPrice: p, TotalCost: costv1.Money{Amount: total, Currency: "USD"}, Dimensions: costv1.Dimensions{Workload: "worker"}, Evidence: costv1.ClaimEvidence{Quantity: e, UnitPrice: e, TotalCost: e}}
+	d := costv1.CostDriver{SchemaVersion: costv1.SchemaVersion, ID: "driver", Name: "fixture driver", Kind: kind, Quantity: q, UnitPrice: p, Window: window, Dimensions: o.Dimensions, Evidence: costv1.DriverEvidence{Quantity: e, UnitPrice: e}}
+	if kind == costv1.DriverVariable || kind == costv1.DriverCadence {
+		d.Per = &costv1.Quantity{Value: 1, Unit: "second"}
+	}
+	require.NoError(t, o.Validate())
+	require.NoError(t, d.Validate())
+	return o, d
 }
 
 func varianceWriteJSON(t *testing.T, file string, value any) {
- t.Helper()
- data, err := json.Marshal(value)
- require.NoError(t, err)
- require.NoError(t, os.WriteFile(file, data, 0600))
+	t.Helper()
+	data, err := json.Marshal(value)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(file, data, 0600))
 }
 func varianceExecute(t *testing.T, command *cobra.Command, args ...string) ([]byte, error) {
- t.Helper()
- var output bytes.Buffer
- command.SetOut(&output)
- command.SetErr(&bytes.Buffer{})
- command.SetArgs(args)
- err := command.Execute()
- return output.Bytes(), err
+	t.Helper()
+	var output bytes.Buffer
+	command.SetOut(&output)
+	command.SetErr(&bytes.Buffer{})
+	command.SetArgs(args)
+	err := command.Execute()
+	return output.Bytes(), err
 }
 
 func TestCostDiffExplainJSON(t *testing.T) {
- for _, kind := range []costv1.DriverKind{costv1.DriverFixed, costv1.DriverVariable, costv1.DriverCadence, costv1.DriverConcurrency} {
-  t.Run(string(kind),func(t *testing.T){
-   f, fd := varianceFixture(t,"forecast",10,2,20,kind)
-   a, ad := varianceFixture(t,"actual",20,2,40,kind)
-   dir := t.TempDir()
-   input, diffPath := filepath.Join(dir,"input.json"),filepath.Join(dir,"diff.json")
-   varianceWriteJSON(t,input,variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
-   payload, err := varianceExecute(t,newCostDiffCommand(),"--input",input,"--output",diffPath)
-   require.NoError(t,err)
-   disk, err := os.ReadFile(diffPath); require.NoError(t,err); require.Equal(t,payload,disk)
-   var diff variancev1.Result
-   require.NoError(t,json.Unmarshal(payload,&diff))
-   require.Equal(t,variancev1.SchemaVersion,diff.SchemaVersion)
-   require.Equal(t,f.Window,diff.Window)
-   require.Equal(t,20.0,diff.AbsoluteVariance.Amount)
-   require.InDelta(t,0,diff.Residual.Amount,variancev1.Rounding)
-   require.Equal(t,"USD",diff.Contributions[0].Amount.Currency)
-   require.NotEmpty(t,diff.Contributions[0].Sources[0].ArtifactIdentity)
-   require.NotEmpty(t,diff.Contributions[0].Sources[0].CapturedAt)
-   explain,err := varianceExecute(t,newCostExplainCommand(),"--input",diffPath)
-   require.NoError(t,err)
-   var report ExplainReport
-   require.NoError(t,json.Unmarshal(explain,&report))
-   require.Len(t,report.DriverContributions,1)
-   require.NotEmpty(t,report.DriverContributions[0].RemedialActions)
-   require.Greater(t,report.DriverContributions[0].ConfidenceScore,0.0)
-   if kind == costv1.DriverCadence || kind == costv1.DriverConcurrency {
-    require.Equal(t,"unknown",report.DriverContributions[0].Attribution)
-    require.Contains(t,report.DriverContributions[0].MissingEvidence,"exact delivery receipt")
-   }
-  })
- }
+	for _, kind := range []costv1.DriverKind{costv1.DriverFixed, costv1.DriverVariable, costv1.DriverCadence, costv1.DriverConcurrency} {
+		t.Run(string(kind), func(t *testing.T) {
+			f, fd := varianceFixture(t, "forecast", 10, 2, 20, kind)
+			a, ad := varianceFixture(t, "actual", 20, 2, 40, kind)
+			dir := t.TempDir()
+			input, diffPath := filepath.Join(dir, "input.json"), filepath.Join(dir, "diff.json")
+			varianceWriteJSON(t, input, variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+			payload, err := varianceExecute(t, newCostDiffCommand(), "--input", input, "--output", diffPath)
+			require.NoError(t, err)
+			disk, err := os.ReadFile(diffPath)
+			require.NoError(t, err)
+			require.Equal(t, payload, disk)
+			var diff variancev1.Result
+			require.NoError(t, json.Unmarshal(payload, &diff))
+			require.Equal(t, variancev1.SchemaVersion, diff.SchemaVersion)
+			require.Equal(t, f.Window, diff.Window)
+			require.Equal(t, 20.0, diff.AbsoluteVariance.Amount)
+			require.InDelta(t, 0, diff.Residual.Amount, variancev1.Rounding)
+			require.Equal(t, "USD", diff.Contributions[0].Amount.Currency)
+			require.NotEmpty(t, diff.Contributions[0].Sources[0].ArtifactIdentity)
+			require.NotEmpty(t, diff.Contributions[0].Sources[0].CapturedAt)
+			explain, err := varianceExecute(t, newCostExplainCommand(), "--input", diffPath)
+			require.NoError(t, err)
+			var report ExplainReport
+			require.NoError(t, json.Unmarshal(explain, &report))
+			require.Len(t, report.DriverContributions, 1)
+			require.NotEmpty(t, report.DriverContributions[0].RemedialActions)
+			require.Greater(t, report.DriverContributions[0].ConfidenceScore, 0.0)
+			if kind == costv1.DriverCadence || kind == costv1.DriverConcurrency {
+				require.Equal(t, "unknown", report.DriverContributions[0].Attribution)
+				require.Contains(t, report.DriverContributions[0].MissingEvidence, "exact delivery receipt")
+			}
+		})
+	}
 }
 
 func TestCostVariancePriceAndReceipts(t *testing.T) {
- f,fd := varianceFixture(t,"forecast",10,2,20,costv1.DriverVariable)
- a,ad := varianceFixture(t,"actual",10,3,30,costv1.DriverVariable)
- result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
- require.NoError(t,err)
- require.Greater(t,math.Abs(result.Contributions[0].UnitPrice),math.Abs(result.Contributions[0].Quantity))
- require.InDelta(t,0,result.Residual.Amount,variancev1.Rounding)
- f,fd = varianceFixture(t,"forecast",10,2,20,costv1.DriverCadence)
- a,ad = varianceFixture(t,"actual",20,2,40,costv1.DriverCadence)
- receipt := variancev1.Receipt{DriverID:"driver",Kind:"deployment",ForecastObservationID:f.ID,ActualObservationID:a.ID,Source:costv1.SourceReference{Type:costv1.SourceRuntimeLedger,ArtifactIdentity:"deployment://exact",CapturedAt:"2026-08-01T00:00:00Z"}}
- result,err = variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}},Receipts:[]variancev1.Receipt{receipt}})
- require.NoError(t,err)
- require.Equal(t,"modeled",result.Contributions[0].Attribution)
- require.Len(t,result.Contributions[0].Receipts,1)
- receipt.ActualObservationID = "other"
- _,err = variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}},Receipts:[]variancev1.Receipt{receipt}})
- require.Error(t,err)
+	f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverVariable)
+	a, ad := varianceFixture(t, "actual", 10, 3, 30, costv1.DriverVariable)
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	require.Greater(t, math.Abs(result.Contributions[0].UnitPrice), math.Abs(result.Contributions[0].Quantity))
+	require.InDelta(t, 0, result.Residual.Amount, variancev1.Rounding)
+	f, fd = varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverCadence)
+	a, ad = varianceFixture(t, "actual", 20, 2, 40, costv1.DriverCadence)
+	receipt := variancev1.Receipt{DriverID: "driver", Kind: "deployment", ForecastObservationID: f.ID, ActualObservationID: a.ID, Source: costv1.SourceReference{Type: costv1.SourceRuntimeLedger, ArtifactIdentity: "deployment://exact", CapturedAt: "2026-08-01T00:00:00Z"}}
+	result, err = variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}, Receipts: []variancev1.Receipt{receipt}})
+	require.NoError(t, err)
+	require.Equal(t, "modeled", result.Contributions[0].Attribution)
+	require.Len(t, result.Contributions[0].Receipts, 1)
+	receipt.ActualObservationID = "other"
+	_, err = variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}, Receipts: []variancev1.Receipt{receipt}})
+	require.Error(t, err)
 }
 
 func TestCostVarianceResidualZeroAndUnavailable(t *testing.T) {
- f,fd := varianceFixture(t,"forecast",10,2,21,costv1.DriverVariable)
- a,ad := varianceFixture(t,"actual",20,3,65,costv1.DriverVariable)
- result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
- require.NoError(t,err)
- require.InDelta(t,4,result.Residual.Amount,variancev1.Rounding)
- report,err := Explain(context.Background(),&result)
- require.NoError(t,err)
- require.Equal(t,4.0,report.Residual.Amount)
- require.NotEmpty(t,report.MissingEvidence)
- result.AbsoluteVariance.Amount++
- _,err = Explain(context.Background(),&result)
- require.ErrorContains(t,err,"absolute_variance")
- f.TotalCost.Amount = 0
- result,err = variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
- require.NoError(t,err)
- require.Nil(t,result.PercentageVariance)
- unavailable,err := Diff(context.Background(),&f,nil)
- require.NoError(t,err)
- require.Equal(t,"unavailable",unavailable.Status)
- require.Nil(t,unavailable.Actual)
- require.Nil(t,unavailable.AbsoluteVariance)
- _,err = Explain(context.Background(),unavailable)
- require.NoError(t,err)
+	f, fd := varianceFixture(t, "forecast", 10, 2, 21, costv1.DriverVariable)
+	a, ad := varianceFixture(t, "actual", 20, 3, 65, costv1.DriverVariable)
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	require.InDelta(t, 4, result.Residual.Amount, variancev1.Rounding)
+	report, err := Explain(context.Background(), &result)
+	require.NoError(t, err)
+	require.Equal(t, 4.0, report.Residual.Amount)
+	require.NotEmpty(t, report.MissingEvidence)
+	result.AbsoluteVariance.Amount++
+	_, err = Explain(context.Background(), &result)
+	require.ErrorContains(t, err, "absolute_variance")
+	f.TotalCost.Amount = 0
+	result, err = variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	require.Nil(t, result.PercentageVariance)
+	unavailable, err := Diff(context.Background(), &f, nil)
+	require.NoError(t, err)
+	require.Equal(t, "unavailable", unavailable.Status)
+	require.Nil(t, unavailable.Actual)
+	require.Nil(t, unavailable.AbsoluteVariance)
+	_, err = Explain(context.Background(), unavailable)
+	require.NoError(t, err)
 }
 
 func TestCostDiffInvalidInputAndAliases(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",10,3,30,costv1.DriverFixed)
- dir:=t.TempDir(); forecast:=filepath.Join(dir,"forecast.json"); actual:=filepath.Join(dir,"actual.json")
- varianceWriteJSON(t,forecast,f); varianceWriteJSON(t,actual,a)
- _,err:=varianceExecute(t,newCostDiffCommand(),"--forecast",forecast,"--actual",actual)
- require.NoError(t,err)
- _,err=varianceExecute(t,newCostDiffCommand(),"--forecast",forecast,"--actual",actual,"--output",forecast)
- require.Equal(t,2,ExitCode(err))
- _,err=varianceExecute(t,newCostDiffCommand())
- require.Equal(t,2,ExitCode(err))
- require.NoError(t,os.WriteFile(actual,[]byte("{}{}"),0600))
- _,err=varianceExecute(t,newCostDiffCommand(),"--forecast",forecast,"--actual",actual)
- require.Equal(t,2,ExitCode(err))
- a.Evidence.Quantity = costv1.Evidence{}
- varianceWriteJSON(t,actual,a)
- _,err=varianceExecute(t,newCostDiffCommand(),"--forecast",forecast,"--actual",actual)
- require.Equal(t,2,ExitCode(err))
- _,err=varianceExecute(t,newCostExplainCommand(),"--input",actual)
- require.Equal(t,2,ExitCode(err))
- _,err=varianceExecute(t,newCostExplainCommand(),"--input",actual,"--output",actual)
- require.Equal(t,2,ExitCode(err))
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 10, 3, 30, costv1.DriverFixed)
+	dir := t.TempDir()
+	forecast := filepath.Join(dir, "forecast.json")
+	actual := filepath.Join(dir, "actual.json")
+	varianceWriteJSON(t, forecast, f)
+	varianceWriteJSON(t, actual, a)
+	_, err := varianceExecute(t, newCostDiffCommand(), "--forecast", forecast, "--actual", actual)
+	require.NoError(t, err)
+	_, err = varianceExecute(t, newCostDiffCommand(), "--forecast", forecast, "--actual", actual, "--output", forecast)
+	require.Equal(t, 2, ExitCode(err))
+	_, err = varianceExecute(t, newCostDiffCommand())
+	require.Equal(t, 2, ExitCode(err))
+	require.NoError(t, os.WriteFile(actual, []byte("{}{}"), 0600))
+	_, err = varianceExecute(t, newCostDiffCommand(), "--forecast", forecast, "--actual", actual)
+	require.Equal(t, 2, ExitCode(err))
+	a.Evidence.Quantity = costv1.Evidence{}
+	varianceWriteJSON(t, actual, a)
+	_, err = varianceExecute(t, newCostDiffCommand(), "--forecast", forecast, "--actual", actual)
+	require.Equal(t, 2, ExitCode(err))
+	_, err = varianceExecute(t, newCostExplainCommand(), "--input", actual)
+	require.Equal(t, 2, ExitCode(err))
+	_, err = varianceExecute(t, newCostExplainCommand(), "--input", actual, "--output", actual)
+	require.Equal(t, 2, ExitCode(err))
 }
 
 func TestCostDiffUnavailableAndZeroJSON(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",0,2,0,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",1,2,2,costv1.DriverFixed)
- dir:=t.TempDir(); input:=filepath.Join(dir,"input.json")
- varianceWriteJSON(t,input,variancev1.Input{Forecast:f,Actual:&a})
- payload,err:=varianceExecute(t,newCostDiffCommand(),"--input",input)
- require.NoError(t,err)
- var result variancev1.Result
- require.NoError(t,json.Unmarshal(payload,&result))
- require.Nil(t,result.PercentageVariance)
- varianceWriteJSON(t,input,variancev1.Input{Forecast:f,UnavailableReason:"invoice not delivered"})
- payload,err=varianceExecute(t,newCostDiffCommand(),"--input",input)
- require.NoError(t,err)
- require.NoError(t,json.Unmarshal(payload,&result))
- require.Equal(t,"unavailable",result.Status)
- require.Nil(t,result.Actual)
- require.Nil(t,result.Residual)
+	f, _ := varianceFixture(t, "forecast", 0, 2, 0, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 1, 2, 2, costv1.DriverFixed)
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.json")
+	varianceWriteJSON(t, input, variancev1.Input{Forecast: f, Actual: &a})
+	payload, err := varianceExecute(t, newCostDiffCommand(), "--input", input)
+	require.NoError(t, err)
+	var result variancev1.Result
+	require.NoError(t, json.Unmarshal(payload, &result))
+	require.Nil(t, result.PercentageVariance)
+	varianceWriteJSON(t, input, variancev1.Input{Forecast: f, UnavailableReason: "invoice not delivered"})
+	payload, err = varianceExecute(t, newCostDiffCommand(), "--input", input)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(payload, &result))
+	require.Equal(t, "unavailable", result.Status)
+	require.Nil(t, result.Actual)
+	require.Nil(t, result.Residual)
 }
 
 func TestCostExplainTotalCurrencies(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",10,3,30,costv1.DriverFixed)
- base,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
- require.NoError(t,err)
- for _, field := range []string{"actual", "absolute_variance", "residual"} {
-  t.Run(field,func(t *testing.T){
-   result := base
-   actual, absolute, residual := *base.Actual, *base.AbsoluteVariance, *base.Residual
-   result.Actual, result.AbsoluteVariance, result.Residual = &actual, &absolute, &residual
-   switch field {
-   case "actual": result.Actual.Currency = "EUR"
-   case "absolute_variance": result.AbsoluteVariance.Currency = "EUR"
-   case "residual": result.Residual.Currency = "EUR"
-   }
-   _,err := Explain(context.Background(),&result)
-   require.ErrorContains(t,err,field)
-   require.ErrorContains(t,err,"EUR")
-   require.ErrorContains(t,err,"USD")
-   require.NotContains(t,err.Error(),"reconcile")
-  })
- }
- report,err := Explain(context.Background(),&base)
- require.NoError(t,err)
- require.Equal(t,"USD",report.Actual.Currency)
- require.Equal(t,"USD",report.VarianceAbsolute.Currency)
- require.Equal(t,"USD",report.Residual.Currency)
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 10, 3, 30, costv1.DriverFixed)
+	base, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	for _, field := range []string{"actual", "absolute_variance", "residual"} {
+		t.Run(field, func(t *testing.T) {
+			result := base
+			actual, absolute, residual := *base.Actual, *base.AbsoluteVariance, *base.Residual
+			result.Actual, result.AbsoluteVariance, result.Residual = &actual, &absolute, &residual
+			switch field {
+			case "actual":
+				result.Actual.Currency = "EUR"
+			case "absolute_variance":
+				result.AbsoluteVariance.Currency = "EUR"
+			case "residual":
+				result.Residual.Currency = "EUR"
+			}
+			_, err := Explain(context.Background(), &result)
+			require.ErrorContains(t, err, field)
+			require.ErrorContains(t, err, "EUR")
+			require.ErrorContains(t, err, "USD")
+			require.NotContains(t, err.Error(), "reconcile")
+		})
+	}
+	report, err := Explain(context.Background(), &base)
+	require.NoError(t, err)
+	require.Equal(t, "USD", report.Actual.Currency)
+	require.Equal(t, "USD", report.VarianceAbsolute.Currency)
+	require.Equal(t, "USD", report.Residual.Currency)
 }
 
 func TestCostExplainCapsStrongDriversByTotalEvidence(t *testing.T) {
- f,fd := varianceFixture(t,"forecast",10,2,20,costv1.DriverVariable)
- a,ad := varianceFixture(t,"actual",20,2,40,costv1.DriverVariable)
- strong := costv1.Evidence{Kind:costv1.EvidenceObserved,Measurement:costv1.MeasurementMeasured,Source:costv1.SourceReference{Type:costv1.SourceTelemetry,ArtifactIdentity:"telemetry://driver",CapturedAt:"2026-08-01T00:00:00Z"},Confidence:costv1.ConfidenceHigh,ConfidenceRationale:"measured driver"}
- fd.Evidence.Quantity,ad.Evidence.Quantity = strong,strong
- strong.Source.Type = costv1.SourceInvoice
- strong.Source.ArtifactIdentity = "invoice://driver"
- strong.Kind = costv1.EvidenceBilled
- fd.Evidence.UnitPrice,ad.Evidence.UnitPrice = strong,strong
- result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
- require.NoError(t,err)
- require.Equal(t,costv1.ConfidenceHigh,result.Contributions[0].Confidence)
- report,err := Explain(context.Background(),&result)
- require.NoError(t,err)
- require.Equal(t,costv1.ConfidenceLow,report.Confidence)
- require.LessOrEqual(t,report.ConfidenceScore,.35)
- require.Equal(t,costv1.ConfidenceHigh,report.DriverContributions[0].Confidence)
- require.Contains(t,report.MissingEvidence,"forecast total cost: high-confidence claim evidence unavailable")
- require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
+	f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverVariable)
+	a, ad := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverVariable)
+	strong := costv1.Evidence{Kind: costv1.EvidenceObserved, Measurement: costv1.MeasurementMeasured, Source: costv1.SourceReference{Type: costv1.SourceTelemetry, ArtifactIdentity: "telemetry://driver", CapturedAt: "2026-08-01T00:00:00Z"}, Confidence: costv1.ConfidenceHigh, ConfidenceRationale: "measured driver"}
+	fd.Evidence.Quantity, ad.Evidence.Quantity = strong, strong
+	strong.Source.Type = costv1.SourceInvoice
+	strong.Source.ArtifactIdentity = "invoice://driver"
+	strong.Kind = costv1.EvidenceBilled
+	fd.Evidence.UnitPrice, ad.Evidence.UnitPrice = strong, strong
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	require.Equal(t, costv1.ConfidenceHigh, result.Contributions[0].Confidence)
+	report, err := Explain(context.Background(), &result)
+	require.NoError(t, err)
+	require.Equal(t, costv1.ConfidenceLow, report.Confidence)
+	require.LessOrEqual(t, report.ConfidenceScore, .35)
+	require.Equal(t, costv1.ConfidenceHigh, report.DriverContributions[0].Confidence)
+	require.Contains(t, report.MissingEvidence, "forecast total cost: high-confidence claim evidence unavailable")
+	require.Contains(t, report.MissingEvidence, "actual total cost: high-confidence claim evidence unavailable")
 }
 
 func TestCostExplainSourceLabelsCannotPromoteTotalConfidence(t *testing.T) {
- for _, sourceType := range []costv1.SourceType{costv1.SourceInvoice, costv1.SourceProfitCtlDerived} {
-  t.Run(string(sourceType),func(t *testing.T){
-   f,fd := varianceFixture(t,"forecast",10,2,20,costv1.DriverVariable)
-   a,ad := varianceFixture(t,"actual",20,2,40,costv1.DriverVariable)
-   for _, observation := range []*costv1.CostObservation{&f,&a} {
-    observation.Evidence.TotalCost.Source.Type = sourceType
-    if sourceType == costv1.SourceInvoice {
-     observation.Evidence.TotalCost.Kind = costv1.EvidenceBilled
-     observation.Evidence.TotalCost.Measurement = costv1.MeasurementMeasured
-    } else {
-     observation.Evidence.TotalCost.Measurement = costv1.MeasurementDerived
-    }
-   }
-   strong := costv1.Evidence{Kind:costv1.EvidenceObserved,Measurement:costv1.MeasurementMeasured,Source:costv1.SourceReference{Type:costv1.SourceTelemetry,ArtifactIdentity:"telemetry://driver",CapturedAt:"2026-08-01T00:00:00Z"},Confidence:costv1.ConfidenceHigh,ConfidenceRationale:"measured driver"}
-   fd.Evidence.Quantity,ad.Evidence.Quantity = strong,strong
-   strong.Source.Type = costv1.SourceInvoice
-   strong.Source.ArtifactIdentity = "invoice://driver"
-   strong.Kind = costv1.EvidenceBilled
-   fd.Evidence.UnitPrice,ad.Evidence.UnitPrice = strong,strong
-   result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a,Drivers:[]variancev1.DriverPair{{Forecast:fd,Actual:ad}}})
-   require.NoError(t,err)
-   require.Equal(t,"available",result.Status)
-   require.InDelta(t,0,result.Residual.Amount,variancev1.Rounding)
-   require.Equal(t,costv1.ConfidenceHigh,result.Contributions[0].Confidence)
-   require.Greater(t,result.Contributions[0].ConfidenceScore,.7)
-   require.Equal(t,sourceType,result.Sources[0].Type)
-   require.Equal(t,sourceType,result.Sources[1].Type)
-   report,err := Explain(context.Background(),&result)
-   require.NoError(t,err)
-   require.Equal(t,costv1.ConfidenceLow,report.Confidence)
-   require.LessOrEqual(t,report.ConfidenceScore,.35)
-   require.Equal(t,result.Contributions[0].ConfidenceScore,report.DriverContributions[0].ConfidenceScore)
-   require.Contains(t,report.MissingEvidence,"forecast total cost: high-confidence claim evidence unavailable")
-   require.Contains(t,report.MissingEvidence,"actual total cost: high-confidence claim evidence unavailable")
-  })
- }
+	for _, sourceType := range []costv1.SourceType{costv1.SourceInvoice, costv1.SourceProfitCtlDerived} {
+		t.Run(string(sourceType), func(t *testing.T) {
+			f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverVariable)
+			a, ad := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverVariable)
+			for _, observation := range []*costv1.CostObservation{&f, &a} {
+				observation.Evidence.TotalCost.Source.Type = sourceType
+				if sourceType == costv1.SourceInvoice {
+					observation.Evidence.TotalCost.Kind = costv1.EvidenceBilled
+					observation.Evidence.TotalCost.Measurement = costv1.MeasurementMeasured
+				} else {
+					observation.Evidence.TotalCost.Measurement = costv1.MeasurementDerived
+				}
+			}
+			strong := costv1.Evidence{Kind: costv1.EvidenceObserved, Measurement: costv1.MeasurementMeasured, Source: costv1.SourceReference{Type: costv1.SourceTelemetry, ArtifactIdentity: "telemetry://driver", CapturedAt: "2026-08-01T00:00:00Z"}, Confidence: costv1.ConfidenceHigh, ConfidenceRationale: "measured driver"}
+			fd.Evidence.Quantity, ad.Evidence.Quantity = strong, strong
+			strong.Source.Type = costv1.SourceInvoice
+			strong.Source.ArtifactIdentity = "invoice://driver"
+			strong.Kind = costv1.EvidenceBilled
+			fd.Evidence.UnitPrice, ad.Evidence.UnitPrice = strong, strong
+			result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+			require.NoError(t, err)
+			require.Equal(t, "available", result.Status)
+			require.InDelta(t, 0, result.Residual.Amount, variancev1.Rounding)
+			require.Equal(t, costv1.ConfidenceHigh, result.Contributions[0].Confidence)
+			require.Greater(t, result.Contributions[0].ConfidenceScore, .7)
+			require.Equal(t, sourceType, result.Sources[0].Type)
+			require.Equal(t, sourceType, result.Sources[1].Type)
+			report, err := Explain(context.Background(), &result)
+			require.NoError(t, err)
+			require.Equal(t, costv1.ConfidenceLow, report.Confidence)
+			require.LessOrEqual(t, report.ConfidenceScore, .35)
+			require.Equal(t, result.Contributions[0].ConfidenceScore, report.DriverContributions[0].ConfidenceScore)
+			require.Contains(t, report.MissingEvidence, "forecast total cost: high-confidence claim evidence unavailable")
+			require.Contains(t, report.MissingEvidence, "actual total cost: high-confidence claim evidence unavailable")
+		})
+	}
 }
 
 func TestCostExplainSuppliedTotalsAndPercentages(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",20,2,40,costv1.DriverFixed)
- base,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
- require.NoError(t,err)
- require.Equal(t,100.0,*base.PercentageVariance)
- require.Equal(t,20.0,base.Residual.Amount)
- for _, tc := range []struct{name string; change func(*variancev1.Result); errorField string}{
-  {"concealed total mismatch",func(r *variancev1.Result){r.AbsoluteVariance.Amount=10;r.Residual.Amount=10},"absolute_variance"},
-  {"incorrect percentage",func(r *variancev1.Result){p:=50.0;r.PercentageVariance=&p},"percentage_variance"},
-  {"missing defined percentage",func(r *variancev1.Result){r.PercentageVariance=nil},"percentage_variance"},
-  {"numeric zero forecast",func(r *variancev1.Result){r.Forecast.Amount=0;r.AbsoluteVariance.Amount=40;r.Residual.Amount=40;p:=0.0;r.PercentageVariance=&p},"percentage_variance"},
-  {"numeric unavailable",func(r *variancev1.Result){r.Status="unavailable";r.Actual=nil;r.AbsoluteVariance=nil;r.Residual=nil;p:=100.0;r.PercentageVariance=&p},"percentage_variance"},
-  {"nonfinite forecast",func(r *variancev1.Result){r.Forecast.Amount=math.NaN()},"forecast.amount"},
-  {"nonfinite actual",func(r *variancev1.Result){r.Actual.Amount=math.Inf(1)},"actual.amount"},
-  {"nonfinite absolute",func(r *variancev1.Result){r.AbsoluteVariance.Amount=math.NaN()},"absolute_variance.amount"},
-  {"nonfinite residual",func(r *variancev1.Result){r.Residual.Amount=math.Inf(-1)},"residual.amount"},
-  {"nonfinite percentage",func(r *variancev1.Result){p:=math.NaN();r.PercentageVariance=&p},"percentage_variance"},
-  {"nonfinite contribution",func(r *variancev1.Result){r.Contributions=[]variancev1.Contribution{{Amount:costv1.Money{Amount:math.NaN(),Currency:"USD"},Attribution:"modeled",ConfidenceScore:.35}}},"contributions[0].amount.amount"},
- } {
-  t.Run(tc.name,func(t *testing.T){
-   r:=base
-   actual,absolute,residual:=*base.Actual,*base.AbsoluteVariance,*base.Residual
-   r.Actual,r.AbsoluteVariance,r.Residual=&actual,&absolute,&residual
-   tc.change(&r)
-   _,err:=Explain(context.Background(),&r)
-   require.ErrorContains(t,err,tc.errorField)
-  })
- }
- report,err:=Explain(context.Background(),&base)
- require.NoError(t,err)
- require.Equal(t,100.0,*report.VariancePercent)
- zero:=base
- zero.Forecast.Amount=0
- zero.AbsoluteVariance=&costv1.Money{Amount:40,Currency:"USD"}
- zero.Residual=&costv1.Money{Amount:40,Currency:"USD"}
- zero.PercentageVariance=nil
- report,err=Explain(context.Background(),&zero)
- require.NoError(t,err)
- require.Nil(t,report.VariancePercent)
- unavailable:=base
- unavailable.Status="unavailable"
- unavailable.Actual,unavailable.AbsoluteVariance,unavailable.Residual,unavailable.PercentageVariance=nil,nil,nil,nil
- unavailable.UnavailableReason="invoice not delivered"
- unavailable.MissingEvidence=[]string{"actual cost: invoice not delivered"}
- report,err=Explain(context.Background(),&unavailable)
- require.NoError(t,err)
- require.Nil(t,report.VariancePercent)
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverFixed)
+	base, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *base.PercentageVariance)
+	require.Equal(t, 20.0, base.Residual.Amount)
+	for _, tc := range []struct {
+		name       string
+		change     func(*variancev1.Result)
+		errorField string
+	}{
+		{"concealed total mismatch", func(r *variancev1.Result) { r.AbsoluteVariance.Amount = 10; r.Residual.Amount = 10 }, "absolute_variance"},
+		{"incorrect percentage", func(r *variancev1.Result) { p := 50.0; r.PercentageVariance = &p }, "percentage_variance"},
+		{"missing defined percentage", func(r *variancev1.Result) { r.PercentageVariance = nil }, "percentage_variance"},
+		{"numeric zero forecast", func(r *variancev1.Result) {
+			r.Forecast.Amount = 0
+			r.AbsoluteVariance.Amount = 40
+			r.Residual.Amount = 40
+			p := 0.0
+			r.PercentageVariance = &p
+		}, "percentage_variance"},
+		{"numeric unavailable", func(r *variancev1.Result) {
+			r.Status = "unavailable"
+			r.Actual = nil
+			r.AbsoluteVariance = nil
+			r.Residual = nil
+			p := 100.0
+			r.PercentageVariance = &p
+		}, "percentage_variance"},
+		{"nonfinite forecast", func(r *variancev1.Result) { r.Forecast.Amount = math.NaN() }, "forecast.amount"},
+		{"nonfinite actual", func(r *variancev1.Result) { r.Actual.Amount = math.Inf(1) }, "actual.amount"},
+		{"nonfinite absolute", func(r *variancev1.Result) { r.AbsoluteVariance.Amount = math.NaN() }, "absolute_variance.amount"},
+		{"nonfinite residual", func(r *variancev1.Result) { r.Residual.Amount = math.Inf(-1) }, "residual.amount"},
+		{"nonfinite percentage", func(r *variancev1.Result) { p := math.NaN(); r.PercentageVariance = &p }, "percentage_variance"},
+		{"nonfinite contribution", func(r *variancev1.Result) {
+			r.Contributions = []variancev1.Contribution{{Amount: costv1.Money{Amount: math.NaN(), Currency: "USD"}, Attribution: "modeled", ConfidenceScore: .35}}
+		}, "contributions[0].amount.amount"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := base
+			actual, absolute, residual := *base.Actual, *base.AbsoluteVariance, *base.Residual
+			r.Actual, r.AbsoluteVariance, r.Residual = &actual, &absolute, &residual
+			tc.change(&r)
+			_, err := Explain(context.Background(), &r)
+			require.ErrorContains(t, err, tc.errorField)
+		})
+	}
+	report, err := Explain(context.Background(), &base)
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *report.VariancePercent)
+	zero := base
+	zero.Forecast.Amount = 0
+	zero.AbsoluteVariance = &costv1.Money{Amount: 40, Currency: "USD"}
+	zero.Residual = &costv1.Money{Amount: 40, Currency: "USD"}
+	zero.PercentageVariance = nil
+	report, err = Explain(context.Background(), &zero)
+	require.NoError(t, err)
+	require.Nil(t, report.VariancePercent)
+	unavailable := base
+	unavailable.Status = "unavailable"
+	unavailable.Actual, unavailable.AbsoluteVariance, unavailable.Residual, unavailable.PercentageVariance = nil, nil, nil, nil
+	unavailable.UnavailableReason = "invoice not delivered"
+	unavailable.MissingEvidence = []string{"actual cost: invoice not delivered"}
+	report, err = Explain(context.Background(), &unavailable)
+	require.NoError(t, err)
+	require.Nil(t, report.VariancePercent)
 }
 
 func TestCostExplainTinyForecastPercentage(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",1,0.000001,0.000001,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",2,0.000001,0.000002,costv1.DriverFixed)
- result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
- require.NoError(t,err)
- require.Equal(t,100.0,*result.PercentageVariance)
- supplied := result
- zero := 0.0
- supplied.PercentageVariance = &zero
- _,err = Explain(context.Background(),&supplied)
- require.ErrorContains(t,err,"percentage_variance")
- correct := 100.0
- supplied.PercentageVariance = &correct
- report,err := Explain(context.Background(),&supplied)
- require.NoError(t,err)
- require.Equal(t,100.0,*report.VariancePercent)
+	f, _ := varianceFixture(t, "forecast", 1, 0.000001, 0.000001, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 2, 0.000001, 0.000002, costv1.DriverFixed)
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *result.PercentageVariance)
+	supplied := result
+	zero := 0.0
+	supplied.PercentageVariance = &zero
+	_, err = Explain(context.Background(), &supplied)
+	require.ErrorContains(t, err, "percentage_variance")
+	correct := 100.0
+	supplied.PercentageVariance = &correct
+	report, err := Explain(context.Background(), &supplied)
+	require.NoError(t, err)
+	require.Equal(t, 100.0, *report.VariancePercent)
 }
 
 func TestCostExplainRanksSuppliedContributions(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- a,_ := varianceFixture(t,"actual",20,2,40,costv1.DriverFixed)
- result,err := variancev1.Compare(variancev1.Input{Forecast:f,Actual:&a})
- require.NoError(t,err)
- source := costv1.SourceReference{Type:costv1.SourceRuntimeLedger,ArtifactIdentity:"receipt://small",CapturedAt:"2026-08-01T00:00:00Z"}
- receipt := variancev1.Receipt{DriverID:"small",Kind:"deployment",ForecastObservationID:f.ID,ActualObservationID:a.ID,Source:source}
- small := variancev1.Contribution{DriverID:"small",Kind:costv1.DriverCadence,Amount:costv1.Money{Amount:-5,Currency:"USD"},Confidence:costv1.ConfidenceLow,ConfidenceScore:.35,Attribution:"unknown",MissingEvidence:[]string{"exact delivery receipt"},Sources:[]costv1.SourceReference{source},Receipts:[]variancev1.Receipt{receipt}}
- large := variancev1.Contribution{DriverID:"large",Kind:costv1.DriverVariable,Amount:costv1.Money{Amount:25,Currency:"USD"},Confidence:costv1.ConfidenceLow,ConfidenceScore:.35,Attribution:"modeled",Sources:[]costv1.SourceReference{{Type:costv1.SourceSyntheticFixture,ArtifactIdentity:"fixture://large",CapturedAt:source.CapturedAt}}}
- result.Contributions = []variancev1.Contribution{small,large}
- result.Residual.Amount = 0
- report,err := Explain(context.Background(),&result)
- require.NoError(t,err)
- require.Equal(t,[]string{"large","small"},[]string{report.DriverContributions[0].DriverID,report.DriverContributions[1].DriverID})
- require.Equal(t,large,report.DriverContributions[0].Contribution)
- require.Equal(t,small,report.DriverContributions[1].Contribution)
- require.Contains(t,report.DriverContributions[0].RemedialActions[0],"request volume")
- require.Contains(t,report.DriverContributions[1].RemedialActions[0],"polling interval")
- require.Equal(t,[]variancev1.Contribution{small,large},result.Contributions)
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	a, _ := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverFixed)
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a})
+	require.NoError(t, err)
+	source := costv1.SourceReference{Type: costv1.SourceRuntimeLedger, ArtifactIdentity: "receipt://small", CapturedAt: "2026-08-01T00:00:00Z"}
+	receipt := variancev1.Receipt{DriverID: "small", Kind: "deployment", ForecastObservationID: f.ID, ActualObservationID: a.ID, Source: source}
+	small := variancev1.Contribution{DriverID: "small", Kind: costv1.DriverCadence, Amount: costv1.Money{Amount: -5, Currency: "USD"}, Confidence: costv1.ConfidenceLow, ConfidenceScore: .35, Attribution: "unknown", MissingEvidence: []string{"exact delivery receipt"}, Sources: []costv1.SourceReference{source}, Receipts: []variancev1.Receipt{receipt}}
+	large := variancev1.Contribution{DriverID: "large", Kind: costv1.DriverVariable, Amount: costv1.Money{Amount: 25, Currency: "USD"}, Confidence: costv1.ConfidenceLow, ConfidenceScore: .35, Attribution: "modeled", Sources: []costv1.SourceReference{{Type: costv1.SourceSyntheticFixture, ArtifactIdentity: "fixture://large", CapturedAt: source.CapturedAt}}}
+	result.Contributions = []variancev1.Contribution{small, large}
+	result.Residual.Amount = 0
+	report, err := Explain(context.Background(), &result)
+	require.NoError(t, err)
+	require.Equal(t, []string{"large", "small"}, []string{report.DriverContributions[0].DriverID, report.DriverContributions[1].DriverID})
+	require.Equal(t, large, report.DriverContributions[0].Contribution)
+	require.Equal(t, small, report.DriverContributions[1].Contribution)
+	require.Contains(t, report.DriverContributions[0].RemedialActions[0], "request volume")
+	require.Contains(t, report.DriverContributions[1].RemedialActions[0], "polling interval")
+	require.Equal(t, []variancev1.Contribution{small, large}, result.Contributions)
 
- result.Contributions = []variancev1.Contribution{small,large}
- result.Contributions[0].Amount.Amount = -10
- result.Contributions[1].Amount.Amount = 10
- result.Residual.Amount = 20
- report,err = Explain(context.Background(),&result)
- require.NoError(t,err)
- require.Equal(t,[]string{"large","small"},[]string{report.DriverContributions[0].DriverID,report.DriverContributions[1].DriverID})
- require.Equal(t,"small",result.Contributions[0].DriverID)
+	result.Contributions = []variancev1.Contribution{small, large}
+	result.Contributions[0].Amount.Amount = -10
+	result.Contributions[1].Amount.Amount = 10
+	result.Residual.Amount = 20
+	report, err = Explain(context.Background(), &result)
+	require.NoError(t, err)
+	require.Equal(t, []string{"large", "small"}, []string{report.DriverContributions[0].DriverID, report.DriverContributions[1].DriverID})
+	require.Equal(t, "small", result.Contributions[0].DriverID)
 }
 
 func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- base,err := Diff(context.Background(),&f,nil)
- require.NoError(t,err)
- for _, tc := range []struct{name,reason string; evidence []string; errorField string}{
-  {"missing reason","",[]string{"actual cost unavailable"},"unavailable_reason"},
-  {"blank reason"," \t ",[]string{"actual cost:  \t "},"unavailable_reason"},
-  {"missing evidence","invoice not delivered",nil,"missing_evidence"},
-  {"unrelated evidence","invoice not delivered",[]string{"actual cost: ledger pending"},"missing_evidence"},
-  {"blank evidence","invoice not delivered",[]string{"  "},"missing_evidence"},
-  {"valid supplied reason","invoice not delivered",[]string{"actual cost: invoice not delivered"},""},
- } {
-  t.Run(tc.name,func(t *testing.T){
-   result := *base
-   result.UnavailableReason = tc.reason
-   result.MissingEvidence = tc.evidence
-   report,err := Explain(context.Background(),&result)
-   if tc.errorField != "" {
-    require.ErrorContains(t,err,tc.errorField)
-    return
-   }
-   require.NoError(t,err)
-   require.Equal(t,tc.reason,report.UnavailableReason)
-   require.Contains(t,report.MissingEvidence,"actual cost: "+tc.reason)
-   require.Nil(t,report.Actual)
-   require.Nil(t,report.VariancePercent)
-  })
- }
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	base, err := Diff(context.Background(), &f, nil)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name, reason string
+		evidence     []string
+		errorField   string
+	}{
+		{"missing reason", "", []string{"actual cost unavailable"}, "unavailable_reason"},
+		{"blank reason", " \t ", []string{"actual cost:  \t "}, "unavailable_reason"},
+		{"missing evidence", "invoice not delivered", nil, "missing_evidence"},
+		{"unrelated evidence", "invoice not delivered", []string{"actual cost: ledger pending"}, "missing_evidence"},
+		{"blank evidence", "invoice not delivered", []string{"  "}, "missing_evidence"},
+		{"valid supplied reason", "invoice not delivered", []string{"actual cost: invoice not delivered"}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := *base
+			result.UnavailableReason = tc.reason
+			result.MissingEvidence = tc.evidence
+			report, err := Explain(context.Background(), &result)
+			if tc.errorField != "" {
+				require.ErrorContains(t, err, tc.errorField)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.reason, report.UnavailableReason)
+			require.Contains(t, report.MissingEvidence, "actual cost: "+tc.reason)
+			require.Nil(t, report.Actual)
+			require.Nil(t, report.VariancePercent)
+		})
+	}
 }
 
 func TestCostExplainMissingActualEvidenceIdentity(t *testing.T) {
- f,_ := varianceFixture(t,"forecast",10,2,20,costv1.DriverFixed)
- result,err := Diff(context.Background(),&f,nil)
- require.NoError(t,err)
- result.UnavailableReason = "invoice not delivered"
- result.MissingEvidence = []string{"forecast invoice not delivered"}
- _,err = Explain(context.Background(),result)
- require.ErrorContains(t,err,"missing_evidence")
- require.ErrorContains(t,err,"actual cost")
+	f, _ := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	result, err := Diff(context.Background(), &f, nil)
+	require.NoError(t, err)
+	result.UnavailableReason = "invoice not delivered"
+	result.MissingEvidence = []string{"forecast invoice not delivered"}
+	_, err = Explain(context.Background(), result)
+	require.ErrorContains(t, err, "missing_evidence")
+	require.ErrorContains(t, err, "actual cost")
 
- result.MissingEvidence = []string{"actual cost: invoice not delivered"}
- report,err := Explain(context.Background(),result)
- require.NoError(t,err)
- require.Contains(t,report.MissingEvidence,"actual cost: invoice not delivered")
+	result.MissingEvidence = []string{"actual cost: invoice not delivered"}
+	report, err := Explain(context.Background(), result)
+	require.NoError(t, err)
+	require.Contains(t, report.MissingEvidence, "actual cost: invoice not delivered")
 }
 
 func TestCostExplainInvalidReconciliation(t *testing.T) {
- result:=variancev1.Result{SchemaVersion:variancev1.SchemaVersion,Status:"available",Actual:&costv1.Money{Amount:2,Currency:"USD"},AbsoluteVariance:&costv1.Money{Amount:2,Currency:"USD"},Residual:&costv1.Money{Amount:math.NaN(),Currency:"USD"}}
- _,err:=Explain(context.Background(),&result)
- require.Error(t,err)
+	result := variancev1.Result{SchemaVersion: variancev1.SchemaVersion, Status: "available", Actual: &costv1.Money{Amount: 2, Currency: "USD"}, AbsoluteVariance: &costv1.Money{Amount: 2, Currency: "USD"}, Residual: &costv1.Money{Amount: math.NaN(), Currency: "USD"}}
+	_, err := Explain(context.Background(), &result)
+	require.Error(t, err)
 }
