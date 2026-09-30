@@ -104,7 +104,7 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
 		visible := false
 		for _, evidence := range report.MissingEvidence {
 			detail := strings.TrimLeft(evidence, " \t\n\r")
-			if strings.HasPrefix(detail, "actual cost:") && strings.Contains(detail[len("actual cost:"):], report.UnavailableReason) {
+			if strings.HasPrefix(detail, "actual cost:") && strings.TrimSpace(detail[len("actual cost:"):]) == strings.TrimSpace(report.UnavailableReason) {
 				visible = true
 				break
 			}
@@ -152,6 +152,9 @@ func Explain(ctx context.Context, report *variancev1.Result) (*ExplainReport, er
 				}
 			}
 			sum += c.Amount.Amount
+			if math.IsNaN(sum) || math.IsInf(sum, 0) {
+				return nil, fmt.Errorf("contributions[%d] and residual total must be finite", i)
+			}
 			out.ConfidenceScore = math.Min(out.ConfidenceScore, c.ConfidenceScore)
 			action := "Review workload measurements and cost evidence before adjusting this driver"
 			switch c.Kind {
