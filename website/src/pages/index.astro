@@ -250,8 +250,8 @@ const footerLinks = [
 
       <article class="decision-board" id="compare" aria-label="ProfitCtl compare preview">
         <div class="command-strip">
-          <span>$ profitctl compare examples/mix_profit.yml examples/hybrid_profit.yml --json</span>
-          <strong>recommended: Workers</strong>
+          <span>$ profitctl compare baseline.yml candidate.yml</span>
+          <strong>Illustrative example</strong>
         </div>
 
         <div class="metrics-strip">
@@ -282,39 +282,39 @@ const footerLinks = [
 
           <svg
             class="compare-chart"
-            viewBox="0 0 420 244"
+            viewBox="0 0 560 244"
             role="img"
             aria-label="Projected monthly cost comparison from May to October with covenant threshold"
           >
-            <path class="axis-grid" d="M56 36H392 M56 72H392 M56 108H392 M56 144H392 M56 180H392" />
-            <path class="axis-rule" d="M56 180V36 M56 180H392" />
-            <path class="threshold-line" d="M56 90H392" />
-            <text class="threshold-label" x="398" y="86">$150 threshold</text>
+            <path class="axis-grid" d="M56 36H520 M56 72H520 M56 108H520 M56 144H520 M56 180H520" />
+            <path class="axis-rule" d="M56 180V36 M56 180H520" />
+            <path class="threshold-line" d="M56 90H520" />
+            <text class="threshold-label" x="64" y="84">$150 threshold</text>
 
-            <path class="workers-area" d="M56 180 L56 160 L120 156 L184 152 L248 148 L312 142 L376 136 L376 180 Z" />
+            <path class="workers-area" d="M56 180 L56 160 L149 156 L242 152 L334 148 L427 142 L520 136 L520 180 Z" />
 
-            <polyline class="workers-line" points="56,160 120,156 184,152 248,148 312,142 376,136" />
-            <polyline class="cloud-line" points="56,148 120,140 184,132 248,124 312,116 376,108" />
-            <polyline class="vercel-line" points="56,136 120,122 184,114 248,98 312,84 376,68" />
+            <polyline class="workers-line" points="56,160 149,156 242,152 334,148 427,142 520,136" />
+            <polyline class="cloud-line" points="56,148 149,140 242,132 334,124 427,116 520,108" />
+            <polyline class="vercel-line" points="56,136 149,122 242,114 334,98 427,84 520,68" />
 
-            <circle class="workers-point" cx="312" cy="142" r="6" />
-            <circle class="cloud-point" cx="312" cy="116" r="5" />
-            <circle class="vercel-point" cx="312" cy="84" r="5" />
-            <path class="active-guide" d="M312 180V56" />
-            <text class="active-label" x="312" y="48">$87</text>
+            <circle class="workers-point" cx="427" cy="142" r="6" />
+            <circle class="cloud-point" cx="427" cy="116" r="5" />
+            <circle class="vercel-point" cx="427" cy="84" r="5" />
+            <path class="active-guide" d="M427 180V56" />
+            <text class="active-label" x="427" y="48">$87</text>
 
-            <text class="axis-label" x="14" y="40">$200</text>
-            <text class="axis-label" x="18" y="76">$160</text>
-            <text class="axis-label" x="18" y="112">$120</text>
-            <text class="axis-label" x="24" y="148">$80</text>
-            <text class="axis-label" x="30" y="184">$0</text>
+            <text class="axis-label" x="44" y="40">$200</text>
+            <text class="axis-label" x="44" y="76">$160</text>
+            <text class="axis-label" x="44" y="112">$120</text>
+            <text class="axis-label" x="44" y="148">$80</text>
+            <text class="axis-label" x="44" y="184">$0</text>
 
             <text class="month-label" x="56" y="212">May</text>
-            <text class="month-label" x="120" y="212">Jun</text>
-            <text class="month-label" x="184" y="212">Jul</text>
-            <text class="month-label" x="248" y="212">Aug</text>
-            <text class="month-label" x="312" y="212">Sep</text>
-            <text class="month-label" x="376" y="212">Oct</text>
+            <text class="month-label" x="149" y="212">Jun</text>
+            <text class="month-label" x="242" y="212">Jul</text>
+            <text class="month-label" x="334" y="212">Aug</text>
+            <text class="month-label" x="427" y="212">Sep</text>
+            <text class="month-label" x="520" y="212">Oct</text>
           </svg>
         </div>
 
@@ -534,7 +534,22 @@ const footerLinks = [
     color: hsl(var(--pc-text));
   }
 
+  .profitctl-page :is(h1, h2, h3, p, dl, dd) {
+    margin: 0;
+  }
+
+  .profitctl-page :is(section, article, div) {
+    min-width: 0;
+  }
+
+  .profitctl-page a:focus-visible {
+    outline: 3px solid hsl(var(--pc-profit-deep));
+    outline-offset: 4px;
+  }
+
   .hero-shell,
+  .site-header-inner,
+  .product-footer-inner,
   .evidence-band,
   .standards-section,
   .open-core-section,
@@ -552,12 +567,12 @@ const footerLinks = [
     background: hsl(var(--pc-bg-2) / 0.86);
     backdrop-filter: blur(18px);
     width: 100%;
-    padding-inline: 24px;
+    padding-inline: 0;
   }
 
   .site-header-inner,
   .product-footer-inner {
-    width: min(1280px, 100%);
+    width: min(1280px, calc(100% - 64px));
     margin-inline: auto;
   }
 
@@ -648,19 +663,19 @@ const footerLinks = [
 
   .hero-shell {
     display: grid;
-    grid-template-columns: minmax(340px, 0.94fr) minmax(560px, 1.06fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     gap: 40px;
     align-items: start;
-    padding: 24px 0 28px;
+    padding: 56px 0 48px;
     min-height: auto;
   }
 
   .hero-copy h1 {
     max-width: 520px;
-    font-size: clamp(54px, 6.2vw, 80px);
+    font-size: clamp(48px, 4.6vw, 64px);
     font-weight: 520;
-    line-height: 0.94;
-    letter-spacing: 0;
+    line-height: 1.04;
+    letter-spacing: -0.035em;
     font-family: "Instrument Sans", sans-serif;
   }
 
@@ -747,12 +762,15 @@ const footerLinks = [
   .proof-points {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-rows: auto auto auto;
+    gap: 5px 14px;
     margin-top: 20px;
   }
 
   .proof-points article {
     display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
     gap: 5px;
   }
 
@@ -791,7 +809,10 @@ const footerLinks = [
     overflow: hidden;
     border-radius: 22px;
     max-width: 720px;
-    justify-self: end;
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    scroll-margin-top: 120px;
   }
 
   .command-strip {
@@ -803,11 +824,14 @@ const footerLinks = [
     color: hsl(var(--pc-muted));
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   .command-strip strong {
     color: hsl(var(--pc-text));
     font-weight: 760;
+    white-space: nowrap;
   }
 
   .metrics-strip {
@@ -822,6 +846,8 @@ const footerLinks = [
     border-radius: 14px;
     background: hsl(var(--pc-panel-2));
     padding: 11px 13px;
+    display: grid;
+    grid-template-rows: minmax(28px, auto) auto auto;
   }
 
   .metrics-strip span,
@@ -859,8 +885,9 @@ const footerLinks = [
   .chart-header {
     display: flex;
     justify-content: space-between;
-    gap: 18px;
-    align-items: end;
+    gap: 8px;
+    align-items: start;
+    flex-direction: column;
     margin-bottom: 12px;
   }
 
@@ -926,6 +953,7 @@ const footerLinks = [
 
   .compare-chart {
     width: 100%;
+    display: block;
     height: auto;
     border: 1px solid hsl(var(--pc-line));
     border-radius: 18px;
@@ -1007,8 +1035,11 @@ const footerLinks = [
   }
 
   .threshold-label {
-    text-anchor: end;
+    text-anchor: start;
   }
+
+  .axis-label { text-anchor: end; }
+  .month-label { text-anchor: middle; }
 
   .active-label {
     fill: hsl(var(--pc-profit-deep));
@@ -1130,6 +1161,7 @@ const footerLinks = [
 
   .evidence-band {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto 34px auto auto auto;
     margin-top: 12px;
     scroll-margin-top: 96px;
   }
@@ -1140,7 +1172,16 @@ const footerLinks = [
     gap: 14px;
     border-radius: 20px;
     padding: 16px;
+    grid-row: span 6;
+    grid-template-rows: subgrid;
   }
+
+  .evidence-card .card-badge { grid-row: 1; }
+  .evidence-card h2 { grid-row: 2; }
+  .evidence-card .card-logos { grid-row: 3; }
+  .evidence-card .mini-chart { grid-row: 4; }
+  .evidence-card .card-metrics { grid-row: 5; }
+  .evidence-card > a { grid-row: 6; }
 
   .card-badge {
     display: inline-flex;
@@ -1164,6 +1205,8 @@ const footerLinks = [
   }
 
   .mini-chart {
+    --mini-label: 108px;
+    --mini-value: 42px;
     border: 1px solid hsl(var(--pc-line));
     border-radius: 16px;
     background: hsl(var(--pc-panel-2));
@@ -1172,8 +1215,8 @@ const footerLinks = [
 
   .mini-row {
     display: grid;
-    grid-template-columns: minmax(92px, 1fr) minmax(0, 1.5fr) auto;
-    gap: 12px;
+    grid-template-columns: var(--mini-label) minmax(0, 1fr) var(--mini-value);
+    gap: 10px;
     align-items: center;
     margin-bottom: 12px;
   }
@@ -1221,11 +1264,15 @@ const footerLinks = [
   .mini-row strong {
     font-size: 11px;
     font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
   }
 
   .mini-axis {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
+    justify-content: space-between;
+    margin-left: calc(var(--mini-label) + 10px);
+    margin-right: calc(var(--mini-value) + 10px);
     margin-top: 14px;
     color: hsl(var(--pc-subtle));
     font-size: 10px;
@@ -1288,8 +1335,8 @@ const footerLinks = [
 
   .standards-section,
   .open-core-section {
-    margin-top: 18px;
-    padding: 28px 0 0;
+    margin-top: 0;
+    padding: 64px 0 0;
     scroll-margin-top: 96px;
   }
 
@@ -1336,12 +1383,16 @@ const footerLinks = [
 
   .core-map {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto auto auto;
+    row-gap: 12px;
     align-items: stretch;
     margin-top: 24px;
   }
 
   .surface-card {
     display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
     align-content: start;
     border-radius: 20px;
     padding: 18px;
@@ -1363,21 +1414,21 @@ const footerLinks = [
   }
 
   .surface-card h3 {
-    margin-top: 14px;
+    margin-top: 0;
     font-size: 21px;
     font-weight: 690;
     line-height: 1.04;
   }
 
   .surface-card p {
-    margin-top: 8px;
+    margin-top: 0;
     color: hsl(var(--pc-muted));
     font-size: 13px;
     line-height: 1.5;
   }
 
   .surface-card ul {
-    margin: 14px 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
@@ -1462,7 +1513,7 @@ const footerLinks = [
     width: 100%;
     margin-top: 20px;
     border-top: 1px solid hsl(var(--pc-line));
-    padding: 20px 24px 40px;
+    padding: 24px 0 32px;
   }
 
   .product-footer-inner {
@@ -1483,29 +1534,28 @@ const footerLinks = [
     text-align: right;
   }
 
-  @media (max-width: 1180px) {
-    .hero-shell,
-    .evidence-band,
+  @media (max-width: 1100px) {
     .standards-grid,
-    .core-map,
-    .final-cta,
-    .product-footer-inner {
-      grid-template-columns: 1fr;
+    .core-map {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .product-footer nav,
-    .product-footer p {
-      justify-content: start;
-      text-align: left;
+    .standards-grid article:last-child {
+      grid-column: 1 / -1;
     }
 
     .metrics-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .mini-chart { --mini-label: 90px; --mini-value: 36px; }
+    .mini-axis span:not(:first-child):not(:last-child) { display: none; }
   }
 
   @media (max-width: 980px) {
     .hero-shell,
+    .site-header-inner,
+    .product-footer-inner,
     .evidence-band,
     .standards-section,
     .open-core-section,
@@ -1515,52 +1565,67 @@ const footerLinks = [
 
     .site-header {
       height: auto;
-      padding-inline: 16px;
+      padding-inline: 0;
     }
 
     .site-header-inner {
       grid-template-columns: auto auto;
-      gap: 16px;
-      padding: 14px 0;
+      gap: 8px;
+      padding: 12px 0;
     }
 
     .site-nav {
       order: 3;
       grid-column: 1 / -1;
       justify-content: flex-start;
-      gap: 20px;
+      gap: clamp(12px, 3vw, 24px);
       overflow-x: auto;
       padding-bottom: 2px;
     }
 
     .hero-shell {
+      grid-template-columns: 1fr;
       gap: 28px;
-      padding-top: 28px;
+      padding: 32px 0;
     }
 
-    .proof-points,
-    .standards-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hero-copy {
+      max-width: 620px;
     }
 
-    .provider-summary {
+    .decision-board {
+      max-width: none;
+    }
+
+    .evidence-band {
       grid-template-columns: 1fr;
+      grid-template-rows: none;
     }
 
-    .recommendation-bar {
-      grid-template-columns: 1fr;
+    .evidence-card {
+      grid-row: auto;
+      grid-template-rows: auto auto auto auto auto auto;
+      padding: 24px;
     }
 
+    .mini-chart { --mini-label: 132px; --mini-value: 52px; }
+    .mini-axis span:not(:first-child):not(:last-child) { display: inline; }
+    .metrics-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .final-cta { grid-template-columns: 1fr; padding: 24px; }
+    .product-footer-inner { grid-template-columns: 1fr auto; }
+    .product-footer p { grid-column: 1 / -1; text-align: left; }
+    .product-footer nav { justify-content: end; }
     .cta-actions {
       justify-content: start;
     }
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 600px) {
     .hero-copy h1,
     .section-copy h2,
     .final-cta h2 {
-      font-size: clamp(38px, 12vw, 52px);
+      font-size: clamp(36px, 10vw, 48px);
+      line-height: 1.08;
     }
 
     .hero-copy p,
@@ -1568,12 +1633,32 @@ const footerLinks = [
       font-size: 15px;
     }
 
-    .metrics-strip,
-    .proof-points,
-    .card-metrics,
-    .standards-grid {
+    .standards-grid,
+    .core-map {
       grid-template-columns: 1fr;
     }
+
+    .core-map { grid-template-rows: none; }
+    .surface-card { grid-row: auto; grid-template-rows: auto auto auto auto; gap: 12px; }
+
+    .metrics-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .metrics-strip span { letter-spacing: 0.04em; }
+    .provider-summary { grid-template-columns: 1fr; }
+    .summary-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+    .summary-id { grid-row: 1 / span 2; }
+    .summary-card strong { margin-top: 0; text-align: right; }
+    .summary-card small { margin-top: 4px; text-align: right; }
+    .recommendation-bar { grid-template-columns: 1fr; }
+    .hero-actions { flex-wrap: wrap; gap: 12px; }
+    .proof-points { gap: 5px 12px; }
+    .proof-points strong { font-size: 12px; }
+    .proof-points small { font-size: 11px; }
+    .standards-section, .open-core-section { padding-top: 40px; }
+    .evidence-card { padding: 18px; }
+    .card-metrics div { padding: 12px 8px; }
+    .card-metrics dd { font-size: 14px; }
+    .command-strip span { overflow-wrap: anywhere; }
+    .compare-chart { min-height: 176px; }
 
     .chart-header,
     .chart-legend {
@@ -1581,23 +1666,26 @@ const footerLinks = [
       justify-content: start;
     }
 
+    .chart-legend {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      gap: 8px 12px;
+    }
+
+    .chart-legend span { font-size: 10px; white-space: normal; }
+    .threshold-label, .axis-label, .month-label, .active-label { font-size: 17px; }
+
     .product-footer {
-      padding-inline: 16px;
+      padding-inline: 0;
     }
 
-    .mini-row {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
+    .mini-chart { --mini-label: 100px; --mini-value: 44px; }
+    .mini-row { gap: 8px; }
+    .mini-axis { margin-left: calc(var(--mini-label) + 8px); margin-right: calc(var(--mini-value) + 8px); }
+    .mini-axis span:not(:first-child):not(:last-child) { display: none; }
 
-    .mini-axis {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .entry-strip div,
     .cta-actions {
-      display: grid;
-      grid-template-columns: 1fr;
+      flex-wrap: wrap;
     }
   }
 </style>
