@@ -1,0 +1,33 @@
+---
+import ProductLayout from "../layouts/ProductLayout.astro";
+const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
+const quickStart = ["git clone " + repoUrl, "cd ProfitCtl", "go run . compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml"].join("\n");
+---
+<ProductLayout title="ProfitCtl Docs | Install, Model Costs & Compare Scenarios" description="Install ProfitCtl, run a saved cost comparison, read recurring margin results, and build your own scenario with clear assumptions and profitability targets." pageType="docs">
+  <article class="site-shell docs-page">
+    <header class="docs-intro"><p class="eyebrow">ProfitCtl documentation</p><h1>Start with a saved scenario.<br />Then make it your own.</h1><p>ProfitCtl is an open-source command-line tool for comparing product costs and testing profitability assumptions. This guide takes you from setup to a useful first result.</p></header>
+    <section id="install"><h2>1. Choose how to run it.</h2><p>For a native binary, use the release installation guide. It covers version pinning, checksum verification, macOS and Linux installation, and Windows archives. Evaluator prereleases must be selected explicitly.</p><a class="doc-link" href={repoUrl + "/blob/main/docs/INSTALL.md"} target="_blank" rel="noopener noreferrer">Release installation guide ↗</a><p>To run the current source, install Git and Go, then use the commands below in your terminal.</p><pre><code>{quickStart}</code></pre><p class="note">Native CLI startup needs no provider key. Paid assessment features use separate provider configuration.</p></section>
+    <section id="first-comparison"><h2>2. Read the decision, not just the revenue.</h2><p>The saved examples compare a steady-state contract with a pilot contract. These are synthetic fixtures, so their numbers illustrate the model.</p><div class="fixture-result"><div><span>Steady-state recurring revenue</span><strong>$2,000 / month</strong></div><div><span>Operating margin</span><strong>95%</strong></div><div><span>Cost per user</span><strong>$2.00</strong></div></div><p>The pilot example books more revenue, while the steady-state example has the higher operating margin and lower cost per user. This shows why an up-front payment and sustainable recurring economics are different questions.</p><p>The comparison output includes revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric.</p></section>
+    <section id="your-scenario"><h2>3. Replace the assumptions.</h2><p>A scenario is a YAML file containing the business inputs you want to test.</p><ul><li><strong>Costs:</strong> fixed and variable costs, including infrastructure, model calls, tools, and payment fees.</li><li><strong>Pricing:</strong> subscriptions, usage pricing, plan mixes, or contract terms.</li><li><strong>Usage:</strong> users, growth, and simulation inputs.</li><li><strong>Targets:</strong> the margin and cost limits that define an acceptable outcome.</li><li><strong>Evidence:</strong> sources, capture dates, confidence, and notes for your cost assumptions.</li></ul><pre><code>profitctl simulate -f your-scenario.yml
+profitctl compare baseline.yml candidate.yml
+profitctl validate -f your-scenario.yml</code></pre><p>Use the installed CLI for these commands. The equivalent source invocation begins with <code>go run .</code>.</p></section>
+    <section id="limits"><h2>4. Know what the website demo shows.</h2><p>The interactive demo calculates a basic gross-margin comparison with fixed sample costs. It runs in your browser. It does not fetch provider prices or run the full CLI simulation.</p><p>Your CLI scenarios can include payment fees, contract effects, cost provenance, and simulation settings. Treat an estimate as decision evidence only after you check its assumptions against your own usage and rates.</p><p>The local CLI, Codex skill, and CI output are available today. Hosted team workspaces and approvals are planned.</p></section>
+  </article>
+</ProductLayout>
+<style>
+  .docs-page { padding-top: 56px; }
+  .docs-intro, .docs-page section { max-width: 820px; }
+  .eyebrow { color: var(--green); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  h1 { margin-top: 18px; font-size: clamp(36px,4.5vw,56px); line-height: 1.1; letter-spacing: -.055em; font-weight: 550; text-wrap: balance; }
+  .docs-intro > p:last-child { margin-top: 24px; font-size: 17px; line-height: 1.7; color: var(--muted); }
+  .docs-page section { padding-top: 50px; }
+  h2 { font-size: 26px; line-height: 1.3; font-weight: 550; letter-spacing: -.025em; }
+  section > p { margin-top: 18px; font-size: 15px; line-height: 1.8; color: var(--muted); text-wrap: pretty; }
+  .doc-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 10px; font-size: 14px; color: var(--green); text-underline-offset: 4px; }
+  pre { margin: 24px 0 0; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fafbf6; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.8; }
+  p code { padding: 2px 5px; border-radius: 4px; background: #e8ede0; font-size: 13px; }
+  .note { padding: 14px 18px; border-left: 3px solid #b6ce9c; background: #edf2e4; font-size: 13px; }
+  .fixture-result { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 24px; }.fixture-result > div { display: grid; grid-template-rows: minmax(38px,auto) auto; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: white; }.fixture-result span { color: var(--muted); font-size: 11px; line-height: 1.5; }.fixture-result strong { margin-top: 10px; font-size: 21px; font-weight: 550; line-height: 1.4; }
+  ul { padding-left: 20px; margin-top: 22px; font-size: 14px; line-height: 1.8; color: var(--muted); }li + li { margin-top: 12px; }li strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 620px) { .docs-page { padding-top: 36px; }.docs-intro > p:last-child { font-size: 15px; }.fixture-result { grid-template-columns: 1fr; }.fixture-result > div { grid-template-rows: auto; gap: 4px; }pre { padding: 16px; font-size: 11px; }h2 { font-size: 24px; } }
+</style>

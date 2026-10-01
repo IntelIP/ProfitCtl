@@ -1,6 +1,7 @@
 # ProfitCtl Website
 
-Standalone landing page app for ProfitCtl.
+Static product website for ProfitCtl, with an interactive example and local
+documentation at `/docs/`.
 
 ## Env
 
@@ -12,16 +13,21 @@ Standalone landing page app for ProfitCtl.
 ## Run
 
 ```bash
-npm install
-npm run dev
+bun install --frozen-lockfile
+bun run dev
 ```
 
 ## Build
 
 ```bash
-npm run build
+bun run build
+bun run typecheck
 ```
 
 The build produces static files in `dist/`, including `robots.txt` and
-`sitemap.xml`. Local source and a successful build do not establish publication
+`sitemap.xml`. It checks the demo calculations, page metadata, social image,
+headings, structured data, and local links. The browser demo uses illustrative
+costs; it does not run the CLI simulation or fetch live provider prices.
+
+Local source and a successful build do not establish publication
 or search indexing. Deployment and domain changes require maintainer approval.
