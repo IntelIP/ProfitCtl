@@ -29,5 +29,9 @@ The build produces static files in `dist/`, including `robots.txt` and
 headings, structured data, and local links. The browser demo uses illustrative
 costs; it does not run the CLI simulation or fetch live provider prices.
 
+The page uses the ProfitCTL wordmark. Browser icons share its forest and lime
+colors and are served at stable public paths. Development credit appears on
+both pages and in their structured metadata: Intel IP and Hudson Aikman.
+
 Local source and a successful build do not establish publication
 or search indexing. Deployment and domain changes require maintainer approval.

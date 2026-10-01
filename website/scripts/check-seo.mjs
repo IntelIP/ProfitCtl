@@ -38,6 +38,18 @@ for (const route of routes) {
   const data = JSON.parse(page.match(/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/s)[1]);
   assert.equal(data["@type"], route === "/" ? "SoftwareApplication" : "TechArticle");
   assert.equal(data.url, url);
+  assert.equal(data.author.name, "Hudson Aikman");
+  assert.equal(data.publisher.name, "Intel IP");
+  assert.ok(page.includes('name="author" content="Intel IP and Hudson Aikman"'));
+  assert.ok(page.includes('Developed by <a href="https://github.com/IntelIP">Intel IP</a> and Hudson Aikman.'));
+  assert.ok(page.includes('>GitHub <span aria-hidden="true">↗</span></a>'));
+  assert.ok(page.includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"'), `Missing crawlable favicon: ${route}`);
+  assert.ok(page.includes('rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"'));
+  assert.ok(page.includes('rel="shortcut icon" href="/favicon.ico"'));
+  assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"'));
+  assert.ok(page.includes('name="theme-color" content="#20251d"'));
+  assert.ok(!page.includes('class="brand-mark"'), `Old letter badge: ${route}`);
+  assert.ok(page.includes('aria-label="ProfitCTL home">ProfitCTL</a>'));
 }
 
 for (const [route, page] of pages) {
@@ -51,4 +63,15 @@ for (const [route, page] of pages) {
 }
 assert.ok(html.includes('id="demo"') && html.includes("Interactive example"));
 assert.ok((await stat(new URL("images/profitctl-social.jpg", output))).size > 10000);
-console.log("Both pages: metadata, social image, structured data, sitemap, and internal destinations verified.");
+for (const [file, size] of [["favicon-96.png", 96], ["icons/profitctl-192.png", 192], ["apple-touch-icon.png", 180]]) {
+  const icon = await readFile(new URL(file, output));
+  assert.equal(icon.subarray(1, 4).toString(), "PNG", `Invalid icon: ${file}`);
+  assert.equal(icon.readUInt32BE(16), size, `Wrong icon width: ${file}`);
+  assert.equal(icon.readUInt32BE(20), size, `Wrong icon height: ${file}`);
+}
+const legacyIcon = await readFile(new URL("favicon.ico", output));
+assert.equal(legacyIcon.readUInt16LE(2), 1);
+assert.equal(legacyIcon.readUInt16LE(4), 4);
+assert.ok((await readFile(new URL("favicon.svg", output), "utf8")).includes('viewBox="0 0 96 96"'));
+assert.ok(schema.image.includes(new URL("/icons/profitctl-192.png", origin).href));
+console.log("Both pages: metadata, brand icons, social image, structured data, sitemap, and internal destinations verified.");
