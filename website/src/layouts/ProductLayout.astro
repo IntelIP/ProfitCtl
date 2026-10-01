@@ -7,7 +7,7 @@ export interface Props {
 }
 
 const { title, description } = Astro.props;
-const canonicalOrigin = import.meta.env.PUBLIC_SITE_ORIGIN || Astro.url.origin;
+const canonicalOrigin = Astro.site || Astro.url.origin;
 const canonicalURL = new URL(Astro.url.pathname, canonicalOrigin);
 const favicon =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23090B05'/%3E%3Crect x='12' y='12' width='40' height='40' rx='8' fill='none' stroke='%23B8FF18' stroke-width='4'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-family='Arial,sans-serif' font-size='30' font-weight='700' fill='%23B8FF18'%3EP%3C/text%3E%3C/svg%3E";
