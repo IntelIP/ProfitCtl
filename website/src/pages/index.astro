@@ -3,184 +3,84 @@ import ProductLayout from "../layouts/ProductLayout.astro";
 
 const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
 const providers = [
-  {
-    name: "Cloudflare Workers",
-    shortName: "Workers",
-    logo: "/logos/profitctl/cloudflare-workers.svg",
-    logoAlt: "Cloudflare Workers",
-    fixed: "$24",
-    variable: "$6.30",
-    monthly: "$87",
-    margin: "78%",
-    p95: "62%",
-    activeCost: "$9.40",
-    delta: "best",
-    state: "pass",
-    stateLabel: "Pass",
-    series: "workers",
-  },
-  {
-    name: "Google Cloud Run",
-    shortName: "Cloud Run",
-    logo: "/logos/profitctl/google-cloud.svg",
-    logoAlt: "Google Cloud",
-    fixed: "$38",
-    variable: "$8.10",
-    monthly: "$128",
-    margin: "66%",
-    p95: "52%",
-    activeCost: "$12.30",
-    delta: "+47%",
-    state: "pass",
-    stateLabel: "Pass",
-    series: "cloud",
-  },
-  {
-    name: "Vercel",
-    shortName: "Vercel",
-    logo: "/logos/profitctl/vercel.svg",
-    logoAlt: "Vercel",
-    fixed: "$52",
-    variable: "$11.40",
-    monthly: "$162",
-    margin: "58%",
-    p95: "41%",
-    activeCost: "$16.80",
-    delta: "+86%",
-    state: "watch",
-    stateLabel: "Watch",
-    series: "vercel",
-  },
+  { name: "Workers", logo: "/logos/profitctl/cloudflare-workers.svg", monthly: "$94k", margin: "76.5%", state: "pass", stateLabel: "Within budget" },
+  { name: "Cloud Run", logo: "/logos/profitctl/google-cloud.svg", monthly: "$123k", margin: "69.3%", state: "pass", stateLabel: "Within budget" },
+  { name: "Vercel", logo: "/logos/profitctl/vercel.svg", monthly: "$168k", margin: "58.0%", state: "watch", stateLabel: "Over budget" },
 ];
-
 const heroMetrics = [
-  { label: "Monthly cost", value: "$87", detail: "best option" },
-  { label: "Gross margin", value: "78%", detail: "meets >= 60%" },
-  { label: "p95 margin", value: "62%", detail: "meets >= 40%" },
-  { label: "Cost / active user", value: "$9.40", detail: "meets <= $18" },
+  { label: "Monthly cost", value: "$94k", detail: "lowest sample cost" },
+  { label: "Gross margin", value: "76.5%", detail: "target ≥ 60%" },
+  { label: "Budget headroom", value: "$56k", detail: "below $150k / month" },
+  { label: "Cost / active user", value: "$9.40", detail: "target ≤ $18" },
 ];
-
-const deliveryModes = ["CLI today", "Codex skill", "CI output"];
-
 const evidenceCards = [
   {
-    badge: "Deploy choice",
-    title: "Workers vs Vercel for this Next.js app",
-    logos: [
-      { src: "/logos/profitctl/cloudflare-workers.svg", alt: "Cloudflare Workers" },
-      { src: "/logos/profitctl/vercel.svg", alt: "Vercel" },
-    ],
-    bars: [
-      { label: "Workers", value: 31, amount: "$87", tone: "workers" },
-      { label: "Cloud Run", value: 46, amount: "$128", tone: "cloud" },
-      { label: "Vercel", value: 58, amount: "$162", tone: "vercel" },
-    ],
-    metrics: [
-      { label: "Margin", value: "78%" },
-      { label: "p95", value: "62%" },
-      { label: "Cost / user", value: "$9.40" },
-    ],
-    action: "See comparison",
+    badge: "AI features",
+    title: "Price a feature before launch.",
+    detail: "Model token, API, and research costs. See what each request leaves toward your margin.",
+    items: ["Model and API usage", "Cost per active user", "Evidence behind each assumption"],
+    action: "Read the simulation guide",
+    href: repoUrl + "/blob/main/docs/QUICK_START.md",
   },
   {
-    badge: "Deep research risk",
-    title: "What is the cost risk of adding deep research?",
-    logos: [
-      { src: "/logos/profitctl/openai.svg", alt: "OpenAI" },
-      { src: "/logos/profitctl/google-cloud.svg", alt: "Google Cloud" },
-    ],
-    bars: [
-      { label: "Base", value: 18, amount: "$9.40", tone: "neutral" },
-      { label: "+ light research", value: 36, amount: "$17.80", tone: "cloud" },
-      { label: "+ deep research", value: 52, amount: "$26.60", tone: "risk" },
-    ],
-    metrics: [
-      { label: "Margin", value: "42%" },
-      { label: "p95", value: "28%" },
-      { label: "Cost / user", value: "$26.60" },
-    ],
-    action: "Run this scenario",
+    badge: "Pricing",
+    title: "Choose a plan that pays for itself.",
+    detail: "Compare subscriptions and usage pricing against the same cost model.",
+    items: ["Revenue and payment fees", "Plan mix and recurring margin", "Side-by-side scenario output"],
+    action: "Read a pricing comparison",
+    href: repoUrl + "/blob/main/benchmark_scenarios/reports/open_core_tiered_vs_mix.md",
   },
   {
-    badge: "Pricing model",
-    title: "Which pricing model keeps 60%+ margin?",
-    pricingRows: [
-      { label: "Pro plan ($20/mo)", value: 78, tone: "workers" },
-      { label: "Team plan ($40/mo)", value: 64, tone: "cloud" },
-      { label: "Usage ($0.10 / msg)", value: 38, tone: "risk" },
-    ],
-    metrics: [
-      { label: "Best option", value: "Pro plan" },
-      { label: "ARR potential", value: "$2.4M" },
-      { label: "Confidence", value: "Medium" },
-    ],
-    action: "Model your pricing",
+    badge: "Growth risk",
+    title: "Find where higher usage breaks margin.",
+    detail: "Stress your assumptions before growth turns a profitable feature into a cost problem.",
+    items: ["Growth and stress scenarios", "Tail-risk margin checks", "Explicit limits for acceptable costs"],
+    action: "Browse benchmark scenarios",
+    href: repoUrl + "/blob/main/benchmark_scenarios/README.md",
   },
 ];
-
 const standards = [
-  { label: "Provenance", detail: "Every cost line has source, capture date, and note." },
-  { label: "Confidence", detail: "Low, medium, high based on actual evidence, not guesswork." },
-  { label: "Covenants", detail: "Margins, p95, and user cost tracked against explicit targets." },
-  { label: "Decision artifact", detail: "Shareable output with assumptions, tables, and charts." },
-  { label: "No hand-wave claims", detail: "Judge blocks precise claims without trustworthy evidence." },
+  { label: "Provenance", detail: "Every cost line has a source, capture date, and note." },
+  { label: "Confidence", detail: "Low, medium, or high based on the available evidence." },
+  { label: "Covenants", detail: "Check margin, tail risk, and user cost against explicit targets." },
+  { label: "Decision artifact", detail: "Share assumptions, tables, and charts with your decision." },
+  { label: "Evidence checks", detail: "The standards judge flags claims without trustworthy evidence." },
 ];
-
 const productSurfaces = [
   {
     status: "Open source now",
     title: "CLI",
-    detail: "Run compare, simulate, and validate locally.",
-    items: [
-      "compare, simulate, validate",
-      "Scenario templates",
-      "Local modeling",
-      "JSON output",
-      "Standards judge",
-    ],
+    detail: "Compare choices and test assumptions on your machine.",
+    items: ["compare, simulate, validate", "Scenario templates", "JSON output", "Cost model standards"],
   },
   {
     status: "Open source now",
     title: "Codex skill",
-    detail: "Pull repo context into cost-aware agent decisions.",
-    items: [
-      "Repo-aware cost decisions",
-      "Architecture comparisons",
-      "Assumption-aware output",
-      "Temporary scenario edits",
-      "No new CLI command in v1",
-    ],
+    detail: "Bring cost evidence into agent decisions about your code.",
+    items: ["Architecture comparisons", "Assumption-aware output", "Temporary scenario edits", "Evidence from your repository"],
   },
   {
     status: "Open source now",
     title: "CI / PR check",
-    detail: "Turn scenarios into gates before spend lands.",
-    items: [
-      "JSON output in CI",
-      "Recurring margin checks",
-      "Covenant failures in PRs",
-      "Saved scenario files",
-      "Decision evidence in reviews",
-    ],
+    detail: "Use JSON output to check margins before changes land.",
+    items: ["Recurring margin checks", "Covenant failures in pull requests", "Saved scenario files", "Decision evidence in reviews"],
   },
   {
     status: "Hosted later",
     title: "Team workflow",
-    detail: "Keep history, approvals, and calibration in one place.",
-    items: [
-      "Team workspaces",
-      "Saved runs and history",
-      "Policies and approvals",
-      "Calibration connectors",
-      "RBAC and SSO",
-    ],
+    detail: "Keep team history, approvals, and calibration in one place.",
+    items: ["Workspaces and saved runs", "Policies and approvals", "Calibration connectors", "Roles and single sign-on"],
   },
 ];
-
 const footerLinks = [
   { label: "GitHub", href: repoUrl, external: true },
   { label: "Get started", href: "#get-started" },
 ];
+const quickStartCommand = [
+  "git clone " + repoUrl + ".git",
+  "cd ProfitCtl",
+  "go run . compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml",
+].join("\n");
 ---
 
 <ProductLayout
@@ -210,213 +110,65 @@ const footerLinks = [
     <section class="hero-shell">
       <div class="hero-copy">
         <h1>Compare spend before it ships.</h1>
-        <p>
-          ProfitCtl helps AI-native teams compare infrastructure, model, API, and pricing
-          choices with unit economics that hold under real usage.
-        </p>
-
+        <p>Compare infrastructure, AI, and pricing choices against the margins your business needs.</p>
         <div class="hero-actions">
-          <a class="primary-action" href={repoUrl} rel="noopener noreferrer" target="_blank">
-            Try ProfitCtl locally
-          </a>
-          <a class="secondary-action" href="#demos">View examples</a>
+          <a class="primary-action" href="#get-started">Get started</a>
+          <a class="secondary-action" href="#demos">Explore use cases</a>
         </div>
-
-        <div class="entry-strip" aria-label="ProfitCtl delivery modes">
-          <strong>Use it as</strong>
-          <div>
-            {deliveryModes.map((mode) => <span>{mode}</span>)}
-          </div>
-        </div>
-
-        <div class="proof-points" aria-label="ProfitCtl proof points">
-          <article>
-            <span aria-hidden="true" />
-            <strong>Open source</strong>
-            <small>MIT licensed</small>
-          </article>
-          <article>
-            <span aria-hidden="true" />
-            <strong>Unit economics</strong>
-            <small>Not vibes</small>
-          </article>
-          <article>
-            <span aria-hidden="true" />
-            <strong>Decision evidence</strong>
-            <small>For teams and agents</small>
-          </article>
-        </div>
+        <p class="hero-note">MIT licensed. Open source. Runs locally.</p>
       </div>
 
       <article class="decision-board" id="compare" aria-label="ProfitCtl compare preview">
         <div class="command-strip">
-          <span>$ profitctl compare baseline.yml candidate.yml</span>
+          <span>Infrastructure · monthly comparison</span>
           <strong>Illustrative example</strong>
         </div>
-
         <div class="metrics-strip">
-          {
-            heroMetrics.map((metric) => (
-              <article>
-                <span>{metric.label}</span>
-                <strong>{metric.value}</strong>
-                <small>{metric.detail}</small>
-              </article>
-            ))
-          }
+          {heroMetrics.map((metric) => (
+            <article><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></article>
+          ))}
         </div>
-
         <div class="chart-shell">
-          <div class="chart-header">
-            <div>
-              <p>Projected monthly cost</p>
-              <h2>Based on 10k active users</h2>
-            </div>
-            <div class="chart-legend" aria-hidden="true">
-              <span class="workers">Cloudflare Workers</span>
-              <span class="cloud">Google Cloud Run</span>
-              <span class="vercel">Vercel</span>
-              <span class="threshold">Threshold</span>
-            </div>
-          </div>
-
-          <svg
-            class="compare-chart"
-            viewBox="0 0 560 244"
-            role="img"
-            aria-label="Projected monthly cost comparison from May to October with covenant threshold"
-          >
-            <path class="axis-grid" d="M56 36H520 M56 72H520 M56 108H520 M56 144H520 M56 180H520" />
-            <path class="axis-rule" d="M56 180V36 M56 180H520" />
-            <path class="threshold-line" d="M56 90H520" />
-            <text class="threshold-label" x="64" y="84">$150 threshold</text>
-
-            <path class="workers-area" d="M56 180 L56 160 L149 156 L242 152 L334 148 L427 142 L520 136 L520 180 Z" />
-
-            <polyline class="workers-line" points="56,160 149,156 242,152 334,148 427,142 520,136" />
-            <polyline class="cloud-line" points="56,148 149,140 242,132 334,124 427,116 520,108" />
-            <polyline class="vercel-line" points="56,136 149,122 242,114 334,98 427,84 520,68" />
-
-            <circle class="workers-point" cx="427" cy="142" r="6" />
-            <circle class="cloud-point" cx="427" cy="116" r="5" />
-            <circle class="vercel-point" cx="427" cy="84" r="5" />
-            <path class="active-guide" d="M427 180V56" />
-            <text class="active-label" x="427" y="48">$87</text>
-
-            <text class="axis-label" x="44" y="40">$200</text>
-            <text class="axis-label" x="44" y="76">$160</text>
-            <text class="axis-label" x="44" y="112">$120</text>
-            <text class="axis-label" x="44" y="148">$80</text>
-            <text class="axis-label" x="44" y="184">$0</text>
-
-            <text class="month-label" x="56" y="212">May</text>
-            <text class="month-label" x="149" y="212">Jun</text>
-            <text class="month-label" x="242" y="212">Jul</text>
-            <text class="month-label" x="334" y="212">Aug</text>
-            <text class="month-label" x="427" y="212">Sep</text>
-            <text class="month-label" x="520" y="212">Oct</text>
-          </svg>
+          <div class="chart-header"><div><p>One scenario, three options</p><h2>Compare cost and margin.</h2></div></div>
+          <table class="comparison-table" aria-label="Illustrative monthly infrastructure costs">
+            <thead><tr><th scope="col">Provider</th><th scope="col">Cost / month</th><th scope="col">Gross margin</th></tr></thead>
+            <tbody>
+              {providers.map((provider) => (
+                <tr>
+                  <th scope="row"><div class="provider-id">
+                    <img src={provider.logo} alt="" width="24" height="24" decoding="async" />
+                    <div><span>{provider.name}</span><small class={provider.state}>{provider.stateLabel}</small></div>
+                  </div></th>
+                  <td>{provider.monthly}</td><td>{provider.margin}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="chart-note">Sample inputs: 10k active users, $40 revenue per user, $150k monthly budget. Costs are illustrative.</p>
         </div>
-
-        <div class="provider-summary" aria-label="Compare provider summary">
-          {
-            providers.map((provider) => (
-              <article class={`summary-card ${provider.series}`}>
-                <div class="summary-id">
-                  <img src={provider.logo} alt={provider.logoAlt} loading="eager" decoding="async" />
-                  <div>
-                    <h3>{provider.shortName}</h3>
-                    <p>{provider.stateLabel}</p>
-                  </div>
-                </div>
-                <strong>{provider.monthly}</strong>
-                <small>{provider.margin} gross margin</small>
-              </article>
-            ))
-          }
-        </div>
-
-        <div class="recommendation-bar">
-          <div class="recommendation-copy">
-            <strong>Workers clears every covenant.</strong>
-            <p>Save $75 / month vs Vercel at 10k active users.</p>
-          </div>
-          <a href="#demos">View examples</a>
-        </div>
+        <div class="recommendation-bar"><div class="recommendation-copy">
+          <strong>Workers has the lowest sample cost.</strong>
+          <p>$74k less per month than Vercel in this illustration.</p>
+        </div></div>
       </article>
     </section>
 
-    <section class="evidence-band" id="demos" aria-label="ProfitCtl decision examples">
-      {
-        evidenceCards.map((card) => (
+    <section class="evidence-section" id="demos">
+      <div class="section-copy">
+        <h2>Decisions you can model.</h2>
+        <p>Start with the question your business needs to answer.</p>
+      </div>
+      <div class="evidence-band">
+        {evidenceCards.map((card) => (
           <article class="evidence-card">
             <span class="card-badge">{card.badge}</span>
-            <h2>{card.title}</h2>
-
-            {
-              card.logos && (
-                <div class="card-logos">
-                  {card.logos.map((logo) => <img src={logo.src} alt={logo.alt} loading="lazy" decoding="async" />)}
-                </div>
-              )
-            }
-
-            {
-              card.bars && (
-                <div class="mini-chart">
-                  {card.bars.map((bar) => (
-                    <div class={`mini-row ${bar.tone}`}>
-                      <span>{bar.label}</span>
-                      <div class="mini-track">
-                        <i style={`--mini-width:${bar.value}%`} />
-                      </div>
-                      <strong>{bar.amount}</strong>
-                    </div>
-                  ))}
-                  <div class="mini-axis" aria-hidden="true">
-                    <span>$0</span>
-                    <span>$100</span>
-                    <span>$200</span>
-                    <span>$300</span>
-                  </div>
-                </div>
-              )
-            }
-
-            {
-              card.pricingRows && (
-                <div class="mini-chart pricing-chart">
-                  {card.pricingRows.map((row) => (
-                    <div class={`mini-row ${row.tone}`}>
-                      <span>{row.label}</span>
-                      <div class="mini-track">
-                        <i style={`--mini-width:${row.value}%`} />
-                      </div>
-                      <strong>{row.value}%</strong>
-                    </div>
-                  ))}
-                  <div class="mini-axis" aria-hidden="true">
-                    <span>0%</span>
-                    <span>50%</span>
-                    <span>100%</span>
-                  </div>
-                </div>
-              )
-            }
-
-            <dl class="card-metrics">
-              {card.metrics.map((metric) => (
-                <div>
-                  <dt>{metric.label}</dt>
-                  <dd>{metric.value}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <a href="#compare">{card.action}</a>
+            <h3>{card.title}</h3>
+            <p>{card.detail}</p>
+            <ul>{card.items.map((item) => <li>{item}</li>)}</ul>
+            <a href={card.href} rel="noopener noreferrer" target="_blank">{card.action}<span aria-hidden="true">↗</span></a>
           </article>
-        ))
-      }
+        ))}
+      </div>
     </section>
 
     <section class="standards-section" id="standards">
@@ -440,44 +192,31 @@ const footerLinks = [
 
     <section class="open-core-section" id="open-core">
       <div class="section-copy">
-        <h2>ProfitCtl ships today as a CLI, a Codex skill, and a CI check.</h2>
-        <p>
-          Same scenario engine, different delivery surface. Open source covers local compare,
-          repo-aware agent decisions, and PR gates now. Hosted workflow later adds saved history,
-          approvals, and calibration.
-        </p>
+        <h2>Use it where you make decisions.</h2>
+        <p>Start locally. Bring your scenarios into agent work and pull request checks. Hosted team workflows are planned.</p>
       </div>
-
       <div class="core-map">
-        {
-          productSurfaces.map((surface) => (
-            <article class={`surface-card ${surface.status === "Hosted later" ? "later" : "current"}`}>
-              <span class="side-label">{surface.status}</span>
-              <h3>{surface.title}</h3>
-              <p>{surface.detail}</p>
-              <ul>
-                {surface.items.map((item) => <li>{item}</li>)}
-              </ul>
-            </article>
-          ))
-        }
+        {productSurfaces.map((surface) => (
+          <article class={"surface-card " + (surface.status === "Hosted later" ? "later" : "current")}>
+            <span class="side-label">{surface.status}</span>
+            <h3>{surface.title}</h3>
+            <p>{surface.detail}</p>
+            <ul>{surface.items.map((item) => <li>{item}</li>)}</ul>
+          </article>
+        ))}
       </div>
     </section>
 
     <section class="final-cta" id="get-started">
       <div>
         <span class="section-chip">First step</span>
-        <h2>Run one compare from the CLI.</h2>
-        <p>
-          Start with one local scenario and one real choice. Keep the output as your decision
-          artifact. Add the Codex skill or CI gate after the workflow proves useful.
-        </p>
+        <h2>Run your first comparison.</h2>
+        <p>Requires Git and Go. Run the saved examples in your terminal.</p>
+        <pre class="start-command"><code>{quickStartCommand}</code></pre>
       </div>
       <div class="cta-actions">
-        <a href={repoUrl} rel="noopener noreferrer" target="_blank">
-          Open GitHub
-        </a>
-        <a class="cta-secondary" href="#compare">See compare output</a>
+        <a href={repoUrl + "/blob/main/docs/INSTALL.md"} rel="noopener noreferrer" target="_blank">Install a release</a>
+        <a class="cta-secondary" href={repoUrl + "/tree/main/examples"} rel="noopener noreferrer" target="_blank">Browse examples</a>
       </div>
     </section>
 
@@ -550,7 +289,7 @@ const footerLinks = [
   .hero-shell,
   .site-header-inner,
   .product-footer-inner,
-  .evidence-band,
+  .evidence-section,
   .standards-section,
   .open-core-section,
   .final-cta {
@@ -589,8 +328,7 @@ const footerLinks = [
   .nav-button,
   .hero-actions,
   .product-footer,
-  .product-footer nav,
-  .card-logos {
+  .product-footer nav {
     display: flex;
     align-items: center;
   }
@@ -697,46 +435,6 @@ const footerLinks = [
     margin-top: 28px;
   }
 
-  .entry-strip {
-    display: grid;
-    gap: 12px;
-    margin-top: 24px;
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 18px;
-    background:
-      linear-gradient(135deg, hsl(var(--pc-profit) / 0.08), transparent 52%),
-      hsl(var(--pc-panel) / 0.94);
-    padding: 14px 16px;
-    box-shadow: 0 18px 38px hsl(var(--pc-shadow) / 0.06);
-  }
-
-  .entry-strip strong {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: hsl(var(--pc-subtle));
-  }
-
-  .entry-strip div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .entry-strip span {
-    display: inline-flex;
-    min-height: 30px;
-    align-items: center;
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 999px;
-    background: hsl(var(--pc-panel-2));
-    padding: 0 12px;
-    font-size: 12px;
-    font-weight: 650;
-    color: hsl(var(--pc-text));
-  }
-
   .primary-action,
   .secondary-action,
   .final-cta a {
@@ -757,42 +455,6 @@ const footerLinks = [
     border: 1px solid hsl(var(--pc-line-strong));
     background: hsl(var(--pc-panel));
     color: hsl(var(--pc-text));
-  }
-
-  .proof-points {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto auto auto;
-    gap: 5px 14px;
-    margin-top: 20px;
-  }
-
-  .proof-points article {
-    display: grid;
-    grid-row: span 3;
-    grid-template-rows: subgrid;
-    gap: 5px;
-  }
-
-  .proof-points span {
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    border: 1px solid hsl(var(--pc-profit-deep) / 0.36);
-    background:
-      radial-gradient(circle at 50% 50%, hsl(var(--pc-profit)) 0 35%, transparent 37%),
-      hsl(var(--pc-panel));
-  }
-
-  .proof-points strong {
-    font-size: 13px;
-    font-weight: 680;
-  }
-
-  .proof-points small {
-    color: hsl(var(--pc-muted));
-    font-size: 12px;
-    line-height: 1.35;
   }
 
   .decision-board,
@@ -902,226 +564,9 @@ const footerLinks = [
     font-weight: 720;
   }
 
-  .chart-legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: end;
-    gap: 10px 14px;
-  }
-
-  .chart-legend span {
-    position: relative;
-    padding-left: 14px;
-    color: hsl(var(--pc-muted));
-    font-size: 11px;
-    white-space: nowrap;
-  }
-
-  .chart-legend span::before {
-    position: absolute;
-    top: 7px;
-    left: 0;
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: currentColor;
-    content: "";
-  }
-
-  .chart-legend .workers {
-    color: hsl(var(--pc-profit-deep));
-  }
-
-  .chart-legend .cloud {
-    color: hsl(var(--pc-blue));
-  }
-
-  .chart-legend .vercel {
-    color: hsl(var(--pc-copper));
-  }
-
-  .chart-legend .threshold {
-    color: hsl(var(--pc-subtle));
-  }
-
-  .chart-legend .threshold::before {
-    width: 10px;
-    height: 2px;
-    top: 10px;
-    border-radius: 0;
-  }
-
-  .compare-chart {
-    width: 100%;
-    display: block;
-    height: auto;
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 18px;
-    background:
-      linear-gradient(180deg, hsl(var(--pc-panel)) 0%, hsl(var(--pc-panel-2)) 100%);
-    overflow: visible;
-  }
-
-  .axis-grid,
-  .axis-rule {
-    fill: none;
-    stroke: hsl(var(--pc-line));
-    stroke-width: 1;
-  }
-
-  .axis-grid {
-    stroke-dasharray: 4 6;
-  }
-
-  .threshold-line,
-  .active-guide {
-    fill: none;
-    stroke: hsl(var(--pc-line-strong));
-    stroke-width: 1.5;
-    stroke-dasharray: 6 6;
-  }
-
-  .workers-area {
-    fill: hsl(var(--pc-profit) / 0.12);
-  }
-
-  .workers-line,
-  .cloud-line,
-  .vercel-line {
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 3;
-  }
-
-  .workers-line {
-    stroke: hsl(var(--pc-profit-deep));
-  }
-
-  .cloud-line {
-    stroke: hsl(var(--pc-blue));
-  }
-
-  .vercel-line {
-    stroke: hsl(var(--pc-copper));
-  }
-
-  .workers-point,
-  .cloud-point,
-  .vercel-point {
-    stroke: hsl(var(--pc-panel));
-    stroke-width: 3;
-  }
-
-  .workers-point {
-    fill: hsl(var(--pc-profit-deep));
-  }
-
-  .cloud-point {
-    fill: hsl(var(--pc-blue));
-  }
-
-  .vercel-point {
-    fill: hsl(var(--pc-copper));
-  }
-
-  .threshold-label,
-  .axis-label,
-  .month-label,
-  .active-label {
-    fill: hsl(var(--pc-muted));
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
-  }
-
-  .threshold-label {
-    text-anchor: start;
-  }
-
-  .axis-label { text-anchor: end; }
-  .month-label { text-anchor: middle; }
-
-  .active-label {
-    fill: hsl(var(--pc-profit-deep));
-    font-weight: 700;
-    text-anchor: middle;
-  }
-
-  .summary-id {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .summary-id img,
-  .card-logos img {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid hsl(var(--pc-line));
-    background: hsl(var(--pc-panel));
-    padding: 7px;
-    object-fit: contain;
-  }
-
-  .provider-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 14px 18px 0;
-  }
-
-  .summary-card {
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 16px;
-    background: hsl(var(--pc-panel-2));
-    padding: 12px 13px;
-  }
-
-  .summary-id h3 {
-    font-size: 14px;
-    font-weight: 690;
-  }
-
-  .summary-id p {
-    margin-top: 2px;
-    color: hsl(var(--pc-subtle));
-    font-size: 11px;
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .summary-card strong {
-    display: block;
-    margin-top: 12px;
-    font-size: 22px;
-    font-weight: 750;
-    line-height: 1;
-  }
-
-  .summary-card small {
-    display: block;
-    margin-top: 6px;
-    color: hsl(var(--pc-muted));
-    font-size: 11px;
-  }
-
-  .summary-card.workers strong {
-    color: hsl(var(--pc-profit-deep));
-  }
-
-  .summary-card.cloud strong {
-    color: hsl(var(--pc-blue));
-  }
-
-  .summary-card.vercel strong {
-    color: hsl(var(--pc-copper));
-  }
-
   .recommendation-bar {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     gap: 14px;
     align-items: center;
     margin: 14px 18px 18px;
@@ -1162,7 +607,7 @@ const footerLinks = [
   .evidence-band {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: auto auto 34px auto auto auto;
-    margin-top: 12px;
+    margin-top: 24px;
     scroll-margin-top: 96px;
   }
 
@@ -1172,15 +617,12 @@ const footerLinks = [
     gap: 14px;
     border-radius: 20px;
     padding: 16px;
-    grid-row: span 6;
+    grid-row: span 5;
     grid-template-rows: subgrid;
   }
 
   .evidence-card .card-badge { grid-row: 1; }
-  .evidence-card h2 { grid-row: 2; }
-  .evidence-card .card-logos { grid-row: 3; }
-  .evidence-card .mini-chart { grid-row: 4; }
-  .evidence-card .card-metrics { grid-row: 5; }
+  .evidence-card h3 { grid-row: 2; }
   .evidence-card > a { grid-row: 6; }
 
   .card-badge {
@@ -1194,111 +636,10 @@ const footerLinks = [
     text-transform: none;
   }
 
-  .evidence-card h2 {
+  .evidence-card h3 {
     font-size: 17px;
     font-weight: 620;
     line-height: 1.24;
-  }
-
-  .card-logos {
-    gap: 10px;
-  }
-
-  .mini-chart {
-    --mini-label: 108px;
-    --mini-value: 42px;
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 16px;
-    background: hsl(var(--pc-panel-2));
-    padding: 12px;
-  }
-
-  .mini-row {
-    display: grid;
-    grid-template-columns: var(--mini-label) minmax(0, 1fr) var(--mini-value);
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  .mini-row:last-of-type {
-    margin-bottom: 0;
-  }
-
-  .mini-row span {
-    color: hsl(var(--pc-muted));
-    font-size: 11px;
-    line-height: 1.35;
-  }
-
-  .mini-track {
-    position: relative;
-    height: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: hsl(var(--pc-line) / 0.8);
-  }
-
-  .mini-track i {
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: var(--mini-width);
-    border-radius: 999px;
-    background: hsl(var(--pc-profit-deep));
-    content: "";
-  }
-
-  .mini-row.cloud .mini-track i {
-    background: hsl(var(--pc-blue));
-  }
-
-  .mini-row.vercel .mini-track i,
-  .mini-row.risk .mini-track i {
-    background: hsl(var(--pc-copper));
-  }
-
-  .mini-row.neutral .mini-track i {
-    background: hsl(var(--pc-line-strong));
-  }
-
-  .mini-row strong {
-    font-size: 11px;
-    font-weight: 700;
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .mini-axis {
-    display: flex;
-    justify-content: space-between;
-    margin-left: calc(var(--mini-label) + 10px);
-    margin-right: calc(var(--mini-value) + 10px);
-    margin-top: 14px;
-    color: hsl(var(--pc-subtle));
-    font-size: 10px;
-  }
-
-  .pricing-chart .mini-axis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .card-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin: 0;
-    border: 1px solid hsl(var(--pc-line));
-    border-radius: 16px;
-    overflow: hidden;
-    background: hsl(var(--pc-panel));
-  }
-
-  .card-metrics div {
-    padding: 12px 10px;
-    border-right: 1px solid hsl(var(--pc-line));
-  }
-
-  .card-metrics div:last-child {
-    border-right: 0;
   }
 
   dt {
@@ -1325,7 +666,7 @@ const footerLinks = [
   .section-copy h2 {
     font-size: clamp(32px, 3.6vw, 46px);
     font-weight: 540;
-    line-height: 0.98;
+    line-height: 1.12;
   }
 
   .section-copy p {
@@ -1417,7 +758,7 @@ const footerLinks = [
     margin-top: 0;
     font-size: 21px;
     font-weight: 690;
-    line-height: 1.04;
+    line-height: 1.25;
   }
 
   .surface-card p {
@@ -1547,16 +888,13 @@ const footerLinks = [
     .metrics-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .mini-chart { --mini-label: 90px; --mini-value: 36px; }
-    .mini-axis span:not(:first-child):not(:last-child) { display: none; }
   }
 
   @media (max-width: 980px) {
     .hero-shell,
     .site-header-inner,
     .product-footer-inner,
-    .evidence-band,
+    .evidence-section,
     .standards-section,
     .open-core-section,
     .final-cta {
@@ -1607,9 +945,6 @@ const footerLinks = [
       grid-template-rows: auto auto auto auto auto auto;
       padding: 24px;
     }
-
-    .mini-chart { --mini-label: 132px; --mini-value: 52px; }
-    .mini-axis span:not(:first-child):not(:last-child) { display: inline; }
     .metrics-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .final-cta { grid-template-columns: 1fr; padding: 24px; }
     .product-footer-inner { grid-template-columns: 1fr auto; }
@@ -1643,49 +978,90 @@ const footerLinks = [
 
     .metrics-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .metrics-strip span { letter-spacing: 0.04em; }
-    .provider-summary { grid-template-columns: 1fr; }
-    .summary-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-    .summary-id { grid-row: 1 / span 2; }
-    .summary-card strong { margin-top: 0; text-align: right; }
-    .summary-card small { margin-top: 4px; text-align: right; }
     .recommendation-bar { grid-template-columns: 1fr; }
     .hero-actions { flex-wrap: wrap; gap: 12px; }
-    .proof-points { gap: 5px 12px; }
-    .proof-points strong { font-size: 12px; }
-    .proof-points small { font-size: 11px; }
     .standards-section, .open-core-section { padding-top: 40px; }
     .evidence-card { padding: 18px; }
-    .card-metrics div { padding: 12px 8px; }
-    .card-metrics dd { font-size: 14px; }
     .command-strip span { overflow-wrap: anywhere; }
-    .compare-chart { min-height: 176px; }
 
-    .chart-header,
-    .chart-legend {
+    .chart-header {
       display: grid;
       justify-content: start;
     }
-
-    .chart-legend {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      width: 100%;
-      gap: 8px 12px;
-    }
-
-    .chart-legend span { font-size: 10px; white-space: normal; }
-    .threshold-label, .axis-label, .month-label, .active-label { font-size: 17px; }
 
     .product-footer {
       padding-inline: 0;
     }
 
-    .mini-chart { --mini-label: 100px; --mini-value: 44px; }
-    .mini-row { gap: 8px; }
-    .mini-axis { margin-left: calc(var(--mini-label) + 8px); margin-right: calc(var(--mini-value) + 8px); }
-    .mini-axis span:not(:first-child):not(:last-child) { display: none; }
-
     .cta-actions {
       flex-wrap: wrap;
     }
+  }
+
+  .metrics-strip article { align-content: start; }
+  .hero-copy h1, .section-copy h2, .evidence-card h3, .final-cta h2 { text-wrap: balance; }
+
+  .hero-copy p, .section-copy p, .evidence-card p, .standards-grid p, .surface-card p { text-wrap: pretty; }
+
+  .hero-copy .hero-note { margin-top: 18px; font-size: 13px; line-height: 1.5; }
+
+  .evidence-section { padding-top: 24px; scroll-margin-top: 120px; }
+
+  .evidence-card h3 { grid-row: 2; font-size: 21px; line-height: 1.3; font-weight: 620; }
+
+  .evidence-card p { grid-row: 3; color: hsl(var(--pc-muted)); font-size: 14px; line-height: 1.6; }
+
+  .evidence-card ul { grid-row: 4; margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+
+  .evidence-card li + li { margin-top: 7px; }
+
+  .evidence-card a { min-height: 44px; line-height: 1.4; }
+
+  .comparison-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
+
+  .comparison-table th, .comparison-table td { padding: 16px 8px; border-bottom: 1px solid hsl(var(--pc-line)); vertical-align: middle; }
+
+  .comparison-table th:first-child { width: 46%; padding-left: 0; text-align: left; }
+
+  .comparison-table th:not(:first-child), .comparison-table td { text-align: right; }
+
+  .comparison-table th:last-child, .comparison-table td:last-child { padding-right: 0; }
+
+  .comparison-table thead th { color: hsl(var(--pc-muted)); font-size: 12px; line-height: 1.4; font-weight: 550; }
+
+  .comparison-table tbody th { font-weight: 650; }
+
+  .comparison-table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .provider-id { display: flex; align-items: center; gap: 10px; }
+
+  .provider-id img { flex-shrink: 0; }
+
+  .provider-id small { display: block; margin-top: 5px; font-size: 11px; font-weight: 550; line-height: 1.4; }
+
+  .provider-id .pass { color: hsl(var(--pc-profit-deep)); }
+
+  .provider-id .watch { color: hsl(var(--pc-copper)); }
+
+  .chart-shell .chart-note { margin-top: 16px; color: hsl(var(--pc-muted)); font-size: 12px; line-height: 1.6; }
+
+  .standards-grid h3 { line-height: 1.3; }
+
+  .final-cta { scroll-margin-top: 120px; }
+
+  .final-cta h2 { margin-top: 16px; line-height: 1.15; }
+
+  .start-command { margin: 20px 0 0; padding: 16px; border: 1px solid hsl(var(--pc-line)); border-radius: 12px; background: hsl(var(--pc-panel-2)); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; }
+
+  .cta-actions { align-content: center; }
+
+  @media (max-width: 620px) {
+    .comparison-table { font-size: 12px; }
+    .comparison-table th, .comparison-table td { padding-inline: 4px; }
+    .comparison-table thead th { font-size: 11px; }
+    .provider-id { gap: 6px; }
+    .provider-id img { width: 20px; height: 20px; }
+    .provider-id small { font-size: 10px; }
+    .evidence-section { padding-top: 8px; }
   }
 </style>
