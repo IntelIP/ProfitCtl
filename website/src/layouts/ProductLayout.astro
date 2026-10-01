@@ -13,8 +13,8 @@ const canonicalOrigin = Astro.site || Astro.url.origin;
 const canonicalURL = new URL(Astro.url.pathname, canonicalOrigin);
 const imageURL = new URL("/images/profitctl-social.jpg", canonicalOrigin);
 const iconURL = new URL("/icons/profitctl-192.png", canonicalOrigin);
-const developer = { "@type": "Person", name: "Hudson Aikman" };
-const publisher = { "@type": "Organization", name: "Intel IP", alternateName: "IntelIP", url: "https://github.com/IntelIP" };
+const developer = { "@type": "Person", name: "Hudson Aikins" };
+const publisher = { "@type": "Organization", name: "IntelIP", url: "https://github.com/IntelIP" };
 const schema = pageType === "docs" ? {
   "@context": "https://schema.org", "@type": "TechArticle", headline: title,
   description, url: canonicalURL.href, image: imageURL.href,
@@ -41,7 +41,7 @@ const schema = pageType === "docs" ? {
     <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="author" content="Intel IP and Hudson Aikman" />
+    <meta name="author" content="IntelIP and Hudson Aikins" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonicalURL.href} />
     <meta property="og:type" content="website" />
@@ -81,7 +81,7 @@ const schema = pageType === "docs" ? {
       <div class="site-shell footer-inner">
         <div><a href="/" class="brand" aria-label="ProfitCTL home">ProfitCTL</a><p>Cost decisions, before commitment.</p></div>
         <nav aria-label="Footer navigation"><a href="/docs/">Documentation</a><a href={repoUrl} rel="noopener noreferrer" target="_blank">GitHub <span aria-hidden="true">↗</span></a></nav>
-        <p class="footer-note">Developed by <a href="https://github.com/IntelIP">Intel IP</a> and Hudson Aikman.<br />MIT licensed · © 2026 ProfitCTL contributors</p>
+        <p class="footer-note">Developed by <a href="https://github.com/IntelIP">IntelIP</a> and Hudson Aikins.<br />MIT licensed · © 2026 ProfitCTL contributors</p>
       </div>
     </footer>
   </body>

@@ -38,10 +38,10 @@ for (const route of routes) {
   const data = JSON.parse(page.match(/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/s)[1]);
   assert.equal(data["@type"], route === "/" ? "SoftwareApplication" : "TechArticle");
   assert.equal(data.url, url);
-  assert.equal(data.author.name, "Hudson Aikman");
-  assert.equal(data.publisher.name, "Intel IP");
-  assert.ok(page.includes('name="author" content="Intel IP and Hudson Aikman"'));
-  assert.ok(page.includes('Developed by <a href="https://github.com/IntelIP">Intel IP</a> and Hudson Aikman.'));
+  assert.equal(data.author.name, "Hudson Aikins");
+  assert.equal(data.publisher.name, "IntelIP");
+  assert.ok(page.includes('name="author" content="IntelIP and Hudson Aikins"'));
+  assert.ok(page.includes('Developed by <a href="https://github.com/IntelIP">IntelIP</a> and Hudson Aikins.'));
   assert.ok(page.includes('>GitHub <span aria-hidden="true">↗</span></a>'));
   assert.ok(page.includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"'), `Missing crawlable favicon: ${route}`);
   assert.ok(page.includes('rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"'));
