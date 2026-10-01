@@ -5,8 +5,8 @@
   "type": "module",
   "packageManager": "bun@1.3.3",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build && bun scripts/check-demo.mjs && node scripts/check-seo.mjs",
+    "dev": "node scripts/build-terminal-demo.mjs && astro dev",
+    "build": "node scripts/build-terminal-demo.mjs && bun scripts/check-terminal-demo.mjs && astro build && bun scripts/check-demo.mjs && node scripts/check-seo.mjs",
     "preview": "astro preview",
     "typecheck": "astro check && tsc --noEmit"
   },

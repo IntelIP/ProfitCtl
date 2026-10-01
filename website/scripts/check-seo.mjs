@@ -53,15 +53,20 @@ for (const route of routes) {
 }
 
 for (const [route, page] of pages) {
-  for (const match of page.matchAll(/<a\b[^>]*href="([^"]+)"/g)) {
+  for (const match of page.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>/g)) {
     const link = new URL(match[1], new URL(route, origin));
     if (link.origin !== new URL(origin).origin) continue;
+    if (/\bdownload(?:[\s=>])/.test(match[0])) {
+      assert.ok((await stat(new URL(link.pathname.slice(1), output))).isFile(), `Missing download: ${match[1]}`);
+      continue;
+    }
     const target = pages.get(link.pathname);
     assert.ok(target, `Unknown internal destination: ${match[1]}`);
     if (link.hash) assert.ok(target.includes(`id="${decodeURIComponent(link.hash.slice(1))}"`), `Missing linked section: ${match[1]}`);
   }
 }
-assert.ok(html.includes('id="demo"') && html.includes("Interactive example"));
+assert.ok(html.includes('id="demo"') && html.includes("Real CLI"));
+assert.ok(html.includes('id="calculator"') && html.includes("Interactive example"));
 assert.ok((await stat(new URL("images/profitctl-social.jpg", output))).size > 10000);
 for (const [file, size] of [["favicon-96.png", 96], ["icons/profitctl-192.png", 192], ["apple-touch-icon.png", 180]]) {
   const icon = await readFile(new URL(file, output));
