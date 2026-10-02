@@ -61,7 +61,7 @@ const schema = pageType === "docs" ? {
     <meta name="twitter:image" content={imageURL.href} />
     <meta name="twitter:image:alt" content="ProfitCTL: Know your AI costs. Protect your margin." />
     <meta name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#040f0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#080e0c" media="(prefers-color-scheme: dark)" />
     <script
       is:inline
       type="application/ld+json"
@@ -92,14 +92,14 @@ const schema = pageType === "docs" ? {
   :root {
     font-family: "Instrument Sans", system-ui, sans-serif;
     color-scheme: light dark;
-    --page: light-dark(#f5f5ee, #040f0d);
-    --panel: light-dark(#ffffff, #0b201a);
-    --ink: light-dark(#20251d, #e6f0ea);
-    --on-ink: light-dark(#ffffff, #040f0d);
-    --muted: light-dark(#62685b, #a0b9ac);
-    --line: light-dark(#dce0d4, #203b30);
-    --accent: light-dark(#c4ee84, #93ddb4);
-    --green: light-dark(#426526, #8bd0aa);
+    --page: light-dark(#f5f5ee, #080e0c);
+    --panel: light-dark(#ffffff, #111a16);
+    --ink: light-dark(#20251d, #dddeda);
+    --on-ink: light-dark(#ffffff, #080e0c);
+    --muted: light-dark(#62685b, #9ca59e);
+    --line: light-dark(#dce0d4, #29372f);
+    --accent: light-dark(#c4ee84, #98a699);
+    --green: light-dark(#426526, #abb6ac);
     --risk: light-dark(#9e422e, #ffba97);
   }
 
@@ -135,7 +135,7 @@ const schema = pageType === "docs" ? {
   :where(a, button, input, summary):focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
   .site-shell { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
   section[id], article[id] { scroll-margin-top: 120px; }
-  .site-header { position: sticky; top: 0; z-index: 20; background: light-dark(#f5f5eef0, #040f0df0); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
+  .site-header { position: sticky; top: 0; z-index: 20; background: light-dark(#f5f5eef0, #080e0cf0); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
   .site-header-inner { min-height: 76px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 28px; }
   .brand { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; text-decoration: none; font-weight: 650; font-size: 20px; letter-spacing: -.03em; }
   .site-nav { display: flex; align-items: center; gap: 26px; }
