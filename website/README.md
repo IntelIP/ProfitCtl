@@ -32,8 +32,8 @@ The build produces static files in `dist/`, including `robots.txt` and
 headings, structured data, and local links. The terminal runs the actual CLI as
 WebAssembly in a worker, against the fictional files in `examples/website_demo/`.
 It validates a baseline, simulates rising usage, and compares a cheaper route.
-Pause, Replay, step selection, automatic looping, and reduced-motion settings
-control playback. Playback pauses when the demo is off screen or
+The story loops automatically. Selecting a step holds its result. Reduced-motion
+settings show a single comparison without looping. Playback pauses when the demo is off screen or
 the page is hidden. No provider calls or local-file access are enabled.
 
 The build generates compressed WebAssembly, its matching Go runtime and
@@ -51,3 +51,6 @@ both pages and in their structured metadata: IntelIP and Hudson Aikins.
 
 Local source and a successful build do not establish publication
 or search indexing. Deployment and domain changes require maintainer approval.
+
+The homepage and documentation follow the browser light or dark preference through
+native CSS, including cards, controls, text, and browser theme colors.

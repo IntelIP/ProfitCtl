@@ -47,7 +47,9 @@ for (const route of routes) {
   assert.ok(page.includes('rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"'));
   assert.ok(page.includes('rel="shortcut icon" href="/favicon.ico"'));
   assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"'));
-  assert.ok(page.includes('name="theme-color" content="#20251d"'));
+  assert.ok(page.includes('name="color-scheme" content="light dark"'));
+  assert.ok(page.includes('name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)"'));
+  assert.ok(page.includes('name="theme-color" content="#151b13" media="(prefers-color-scheme: dark)"'));
   assert.ok(!page.includes('class="brand-mark"'), `Old letter badge: ${route}`);
   assert.ok(page.includes('aria-label="ProfitCTL home">ProfitCTL</a>'));
 }

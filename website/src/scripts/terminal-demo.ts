@@ -7,17 +7,16 @@ export function initializeTerminalDemo() {
   const output = root.querySelector<HTMLElement>("[data-terminal-output]")!;
   const status = root.querySelector<HTMLElement>("[data-terminal-status]")!;
   const detail = root.querySelector<HTMLElement>("[data-terminal-detail]")!;
-  const toggle = root.querySelector<HTMLButtonElement>("[data-terminal-toggle]")!;
   const download = root.querySelector<HTMLAnchorElement>("[data-terminal-download]")!;
   const steps = [...root.querySelectorAll<HTMLButtonElement>("[data-terminal-step]")];
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const playback = new EventTarget();
   let visible = false;
-  let paused = false;
+  let completed = false;
   let controller: AbortController | undefined;
   let worker: Worker | undefined;
   let failed = false;
-  const playing = () => !paused && visible && !document.hidden;
+  const playing = () => visible && !document.hidden;
 
   function changed(signal: AbortSignal, timeout?: number) {
     return new Promise<void>((resolve, reject) => {
@@ -40,8 +39,6 @@ export function initializeTerminalDemo() {
     }
   }
   function update() {
-    toggle.textContent = failed ? "Retry demo" : !controller ? "Run demo" : paused ? "Resume" : "Pause";
-    toggle.setAttribute("aria-label", toggle.textContent + " terminal demo");
     playback.dispatchEvent(new Event("change"));
   }
   function execute(index: number, signal: AbortSignal) {
@@ -60,7 +57,7 @@ export function initializeTerminalDemo() {
       worker!.postMessage(index);
     });
   }
-  async function run(first: number, signal: AbortSignal) {
+  async function run(first: number, signal: AbortSignal, singleStep: boolean) {
     let index = first;
     let cycles = 0;
     try {
@@ -87,11 +84,11 @@ export function initializeTerminalDemo() {
         const marginFailed = step.args[0] === "simulate" && result.exitCode === 1;
         root!.dataset.state = marginFailed ? "risk" : "pass";
         status.textContent = marginFailed ? "Margin target failed" : step.args[0] === "compare" ? "Comparison complete" : "Command complete";
+        if (singleStep || reducedMotion.matches) { completed = true; controller = undefined; update(); return; }
         await wait(index === 3 ? 8000 : 5500, signal);
         index++;
         if (index === terminalStory.length) {
           root!.dataset.cycles = String(++cycles);
-          if (reducedMotion.matches) { status.textContent = "Demo complete"; controller = undefined; update(); return; }
           index = 0;
         }
       }
@@ -105,23 +102,21 @@ export function initializeTerminalDemo() {
       update();
     }
   }
-  function launch(index = 0) {
+  function launch(index: number, singleStep: boolean) {
     controller?.abort();
     controller = new AbortController();
-    paused = false;
+    completed = false;
     failed = false;
     visible = true;
     root!.dataset.cycles = "0";
     update();
-    void run(index, controller.signal);
+    void run(index, controller.signal, singleStep);
   }
-  toggle.addEventListener("click", () => { if (!controller) launch(); else { paused = !paused; update(); } });
-  root.querySelector<HTMLButtonElement>("[data-terminal-replay]")!.addEventListener("click", () => launch());
-  steps.forEach((button, index) => button.addEventListener("click", () => launch(index)));
+  steps.forEach((button, index) => button.addEventListener("click", () => launch(index, true)));
   const observer = new IntersectionObserver(([entry]) => {
     visible = Boolean(entry?.isIntersecting);
     update();
-    if (visible && !controller && !failed && !reducedMotion.matches) launch();
+    if (visible && !controller && !failed && !completed) launch(reducedMotion.matches ? terminalStory.length - 1 : 0, reducedMotion.matches);
   }, { threshold: 0.15 });
   observer.observe(root);
   document.addEventListener("visibilitychange", update);

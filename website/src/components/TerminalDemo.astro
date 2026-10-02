@@ -5,14 +5,14 @@ import { terminalStory } from "../scripts/terminal-story";
   <header class="cli-intro"><div><p class="eyebrow">01 / ProfitCTL in action</p><h2>Watch a margin problem unfold.</h2></div><p>Run the product in your browser. Follow a fictional AI SaaS from healthy margins to higher usage, then compare a cheaper route.</p></header>
   <div class="cli-grid">
     <div class="cli-window">
-      <div class="cli-toolbar"><span><i aria-hidden="true" /> profitctl</span><div><button type="button" data-terminal-toggle>Run demo</button><button type="button" data-terminal-replay>Replay</button></div></div>
+      <div class="cli-toolbar"><span><i aria-hidden="true" /> profitctl</span></div>
       <pre tabindex="0" aria-label="ProfitCTL command output"><code class="cli-command" data-terminal-command>$ profitctl</code><code data-terminal-output>Watch real commands run against the sample scenarios.
-Use Pause to inspect a result. Replay starts the story again.</code></pre>
+Choose a story step to inspect its result.</code></pre>
       <div class="cli-footer"><span class="cli-state" role="status" aria-live="polite" data-terminal-status>Ready to run</span><span>Real CLI · Fictional inputs</span></div>
     </div>
     <div class="cli-story"><p class="story-label">One product. Four decisions.</p><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p><a class="scenario-download" href="/demo/baseline.yml" download data-terminal-download>Download this scenario <span aria-hidden="true">↓</span></a></div>
   </div>
-  <p class="cli-caption">The scenarios use made-up rates, not live provider prices. The real ProfitCTL CLI calculates every result on your device. The story repeats automatically; Pause stops playback.</p>
+  <p class="cli-caption">The scenarios use made-up rates, not live provider prices. The real ProfitCTL CLI calculates every result on your device. The story repeats automatically; choosing a step holds its result.</p>
   <noscript><p class="cli-caption">Enable JavaScript to run the demo, or download a scenario and run it with the installed CLI.</p></noscript>
 </section>
 <script>
@@ -30,9 +30,6 @@ Use Pause to inspect a result. Replay starts the story again.</code></pre>
   .cli-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 18px; border-bottom: 1px solid #4a553f; font-size: 12px; }
   .cli-toolbar > span { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; }
   .cli-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .cli-toolbar > div { display: flex; gap: 7px; }
-  .cli-toolbar button { min-height: 40px; padding: 7px 12px; border: 1px solid #67785a; border-radius: 8px; background: #36442c; color: #edf6e3; font-size: 11px; }
-  .cli-toolbar button:hover { background: #465839; }
   pre { height: 390px; margin: 0; padding: 22px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.8; tab-size: 4; }
   .cli-command { display: block; margin-bottom: 18px; color: var(--accent); }
   .cli-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-top: 1px solid #4a553f; font-size: 10px; line-height: 1.5; color: #c1cfb5; }
@@ -43,7 +40,7 @@ Use Pause to inspect a result. Replay starts the story again.</code></pre>
   ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
   li { border-bottom: 1px solid var(--line); }
   li button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 14px 10px; border: 0; background: transparent; color: var(--muted); text-align: left; font-size: 13px; line-height: 1.5; }
-  li button[aria-current=step] { background: #e8efdf; color: var(--green); font-weight: 600; }
+  li button[aria-current=step] { background: light-dark(#e8efdf, #2a3723); color: var(--green); font-weight: 600; }
   .step-index { font-size: 10px; font-variant-numeric: tabular-nums; }
   .step-arrow { margin-left: auto; }
   .story-detail { min-height: 95px; margin-top: 22px; font-size: 13px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
