@@ -7,7 +7,7 @@ cost calculator, and local documentation at `/docs/`.
 
 - `PUBLIC_REPO_URL` for GitHub button links
 - `PUBLIC_SITE_ORIGIN` for canonical metadata, the sitemap, and crawler guidance.
-  The proposed production origin defaults to `https://profitctl.intelip.co`.
+  The production origin defaults to `https://profitctl.com`.
   Set it to the actual public origin before deploying elsewhere.
 - Cloudflare Pages: set `GO_VERSION=1.26.8` to match `go.mod`.
 

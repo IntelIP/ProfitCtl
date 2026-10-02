@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
   <title>ProfitCTL</title>
-  <rect width="96" height="96" rx="24" fill="#20251d"/>
-  <g fill="#c4ee84">
+  <rect width="96" height="96" rx="24" fill="#0c1410"/>
+  <g fill="#abb6ac">
     <rect x="20" y="52" width="12" height="24" rx="4"/>
     <rect x="42" y="36" width="12" height="40" rx="4"/>
     <rect x="64" y="20" width="12" height="56" rx="4"/>

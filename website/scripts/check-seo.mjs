@@ -7,7 +7,7 @@ const [html, robots, sitemap] = await Promise.all(
     readFile(new URL(file, output), "utf8"),
   ),
 );
-const origin = process.env.PUBLIC_SITE_ORIGIN || "https://profitctl.intelip.co";
+const origin = process.env.PUBLIC_SITE_ORIGIN || "https://profitctl.com";
 const canonical = new URL("./", origin).href;
 assert.ok(html.includes(`rel="canonical" href="${canonical}"`));
 assert.ok(html.includes(`property="og:url" content="${canonical}"`));
@@ -20,6 +20,11 @@ const schema = JSON.parse(
 );
 assert.equal(schema["@type"], "SoftwareApplication");
 assert.equal(schema.url, canonical);
+const siteSchema = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/sg)]
+  .map((match) => JSON.parse(match[1]))
+  .find((data) => data["@type"] === "WebSite");
+assert.equal(siteSchema?.name, "ProfitCTL");
+assert.equal(siteSchema?.url, canonical);
 
 const routes = ["/", "/docs/"];
 const pages = new Map();
@@ -27,6 +32,7 @@ for (const route of routes) {
   const page = await readFile(new URL(route === "/" ? "index.html" : "docs/index.html", output), "utf8");
   const url = new URL(route, origin).href;
   pages.set(route, page);
+  assert.ok(!page.includes("profitctl.intelip.co"), `Retired domain in page: ${route}`);
   assert.ok(page.includes(`rel="canonical" href="${url}"`), `Missing canonical: ${route}`);
   assert.ok(page.includes(`property="og:url" content="${url}"`), `Missing social URL: ${route}`);
   assert.ok(page.includes(`property="og:image" content="${new URL("/images/profitctl-social.jpg", origin).href}"`));

@@ -15,6 +15,10 @@ const imageURL = new URL("/images/profitctl-social.jpg", canonicalOrigin);
 const iconURL = new URL("/icons/profitctl-192.png", canonicalOrigin);
 const developer = { "@type": "Person", name: "Hudson Aikins" };
 const publisher = { "@type": "Organization", name: "IntelIP", url: "https://github.com/IntelIP" };
+const siteSchema = {
+  "@context": "https://schema.org", "@type": "WebSite", name: "ProfitCTL",
+  url: new URL("/", canonicalOrigin).href,
+};
 const schema = pageType === "docs" ? {
   "@context": "https://schema.org", "@type": "TechArticle", headline: title,
   description, url: canonicalURL.href, image: imageURL.href,
@@ -67,6 +71,13 @@ const schema = pageType === "docs" ? {
       type="application/ld+json"
       set:html={JSON.stringify(schema).replaceAll("<", "\\u003c")}
     />
+    {pageType === "product" && (
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(siteSchema).replaceAll("<", "\\u003c")}
+      />
+    )}
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
