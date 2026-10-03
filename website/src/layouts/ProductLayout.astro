@@ -11,7 +11,7 @@ const { title, description, pageType = "product" } = Astro.props;
 const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
 const canonicalOrigin = Astro.site || Astro.url.origin;
 const canonicalURL = new URL(Astro.url.pathname, canonicalOrigin);
-const imageURL = new URL("/images/profitctl-social.jpg", canonicalOrigin);
+const imageURL = new URL("/images/profitctl-social-calculator.jpg", canonicalOrigin);
 const iconURL = new URL("/icons/profitctl-192.png", canonicalOrigin);
 const developer = { "@type": "Person", name: "Hudson Aikins" };
 const publisher = { "@type": "Organization", name: "IntelIP", url: "https://github.com/IntelIP" };
@@ -37,10 +37,10 @@ const schema = pageType === "docs" ? {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=calculator" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg?v=calculator" />
+    <link rel="shortcut icon" href="/favicon.ico?v=calculator" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=calculator" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>{title}</title>
@@ -83,7 +83,7 @@ const schema = pageType === "docs" ? {
     <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
       <div class="site-shell site-header-inner">
-        <a href="/" class="brand" aria-label="ProfitCTL home">ProfitCTL</a>
+        <a href="/" class="brand" aria-label="ProfitCTL home"><img src="/favicon.svg?v=calculator" width="32" height="32" alt="" />ProfitCTL</a>
         <nav class="site-nav" aria-label="Main navigation"><a href="/#demo">Demo</a><a href="/#how-it-works">How it works</a></nav>
         <a class="header-action" href="/#get-started">Get started <span aria-hidden="true">↗</span></a>
       </div>
@@ -91,7 +91,7 @@ const schema = pageType === "docs" ? {
     <main id="content"><slot /></main>
     <footer class="site-footer">
       <div class="site-shell footer-inner">
-        <div><a href="/" class="brand" aria-label="ProfitCTL home">ProfitCTL</a><p>Cost decisions, before commitment.</p></div>
+        <div><a href="/" class="brand" aria-label="ProfitCTL home"><img src="/favicon.svg?v=calculator" width="32" height="32" alt="" />ProfitCTL</a><p>Cost decisions, before commitment.</p></div>
         <nav aria-label="Footer navigation"><a href="/docs/">Documentation</a><a href={repoUrl} rel="noopener noreferrer" target="_blank">GitHub <span aria-hidden="true">↗</span></a></nav>
         <p class="footer-note">Developed by <a href="https://github.com/IntelIP">IntelIP</a> and Hudson Aikins.<br />MIT licensed · © 2026 ProfitCTL contributors</p>
       </div>
@@ -148,7 +148,8 @@ const schema = pageType === "docs" ? {
   section[id], article[id] { scroll-margin-top: 120px; }
   .site-header { position: sticky; top: 0; z-index: 20; background: light-dark(#f5f5eef0, #080e0cf0); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
   .site-header-inner { min-height: 76px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 28px; }
-  .brand { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; text-decoration: none; font-weight: 650; font-size: 20px; letter-spacing: -.03em; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; width: fit-content; text-decoration: none; font-weight: 650; font-size: 20px; letter-spacing: -.03em; }
+  .brand img { flex: none; }
   .site-nav { display: flex; align-items: center; gap: 26px; }
   .site-nav a, .site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; text-decoration: none; color: var(--muted); }
   .site-nav a:hover, .site-footer nav a:hover { color: var(--ink); }

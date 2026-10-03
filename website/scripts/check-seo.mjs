@@ -35,7 +35,7 @@ for (const route of routes) {
   assert.ok(!page.includes("profitctl.intelip.co"), `Retired domain in page: ${route}`);
   assert.ok(page.includes(`rel="canonical" href="${url}"`), `Missing canonical: ${route}`);
   assert.ok(page.includes(`property="og:url" content="${url}"`), `Missing social URL: ${route}`);
-  assert.ok(page.includes(`property="og:image" content="${new URL("/images/profitctl-social.jpg", origin).href}"`));
+  assert.ok(page.includes(`property="og:image" content="${new URL("/images/profitctl-social-calculator.jpg", origin).href}"`));
   assert.ok(page.includes('name="twitter:card" content="summary_large_image"'));
   assert.equal([...page.matchAll(/<h1\b/g)].length, 1, `Expected one primary heading: ${route}`);
   assert.ok(page.match(/<title>([^<]+)<\/title>/)?.[1].length > 20);
@@ -49,15 +49,15 @@ for (const route of routes) {
   assert.ok(page.includes('name="author" content="IntelIP and Hudson Aikins"'));
   assert.ok(page.includes('Developed by <a href="https://github.com/IntelIP">IntelIP</a> and Hudson Aikins.'));
   assert.ok(page.includes('>GitHub <span aria-hidden="true">↗</span></a>'));
-  assert.ok(page.includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"'), `Missing crawlable favicon: ${route}`);
-  assert.ok(page.includes('rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"'));
-  assert.ok(page.includes('rel="shortcut icon" href="/favicon.ico"'));
-  assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"'));
+  assert.ok(page.includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=calculator"'), `Missing crawlable favicon: ${route}`);
+  assert.ok(page.includes('rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg?v=calculator"'));
+  assert.ok(page.includes('rel="shortcut icon" href="/favicon.ico?v=calculator"'));
+  assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=calculator"'));
   assert.ok(page.includes('name="color-scheme" content="light dark"'));
   assert.ok(page.includes('name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)"'));
   assert.ok(page.includes('name="theme-color" content="#080e0c" media="(prefers-color-scheme: dark)"'));
   assert.ok(!page.includes('class="brand-mark"'), `Old letter badge: ${route}`);
-  assert.ok(page.includes('aria-label="ProfitCTL home">ProfitCTL</a>'));
+  assert.ok(page.includes('aria-label="ProfitCTL home"><img src="/favicon.svg?v=calculator" width="32" height="32" alt="">ProfitCTL</a>'));
 }
 
 for (const [route, page] of pages) {
@@ -75,7 +75,7 @@ for (const [route, page] of pages) {
 }
 assert.ok(html.includes('id="demo"') && html.includes("Real CLI"));
 assert.ok(html.includes('id="calculator"') && html.includes("Interactive example"));
-assert.ok((await stat(new URL("images/profitctl-social.jpg", output))).size > 10000);
+assert.ok((await stat(new URL("images/profitctl-social-calculator.jpg", output))).size > 10000);
 for (const [file, size] of [["favicon-96.png", 96], ["icons/profitctl-192.png", 192], ["apple-touch-icon.png", 180]]) {
   const icon = await readFile(new URL(file, output));
   assert.equal(icon.subarray(1, 4).toString(), "PNG", `Invalid icon: ${file}`);
@@ -85,6 +85,6 @@ for (const [file, size] of [["favicon-96.png", 96], ["icons/profitctl-192.png", 
 const legacyIcon = await readFile(new URL("favicon.ico", output));
 assert.equal(legacyIcon.readUInt16LE(2), 1);
 assert.equal(legacyIcon.readUInt16LE(4), 4);
-assert.ok((await readFile(new URL("favicon.svg", output), "utf8")).includes('viewBox="0 0 96 96"'));
+assert.ok((await readFile(new URL("favicon.svg", output), "utf8")).includes('viewBox="0 0 64 64"'));
 assert.ok(schema.image.includes(new URL("/icons/profitctl-192.png", origin).href));
 console.log("Both pages: metadata, brand icons, social image, structured data, sitemap, and internal destinations verified.");

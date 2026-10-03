@@ -45,8 +45,9 @@ read-only workspace are checked by `scripts/check-terminal-demo.mjs`.
 The separate calculator remains a simplified illustration. Neither it nor the
 terminal scenario uses live provider prices.
 
-The page uses the ProfitCTL wordmark. Browser icons share its forest and lime
-colors and are served at stable public paths. Development credit appears on
+The header and footer pair the ProfitCTL wordmark with the approved bold-plus
+calculator mark. Browser icons and the sharing thumbnail use muted sage and
+forest colors. Icon links and the sharing image are versioned to refresh caches. Development credit appears on
 both pages and in their structured metadata: IntelIP and Hudson Aikins.
 
 Local source and a successful build do not establish publication
