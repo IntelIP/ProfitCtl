@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f5ee"/>
+
+  <g font-family="Arial, sans-serif" fill="#20251d">
+    <text x="76" y="96" font-size="30" font-weight="600">ProfitCTL</text>
+    <text x="76" y="216" font-size="18" fill="#62685b">OPEN-SOURCE COST MODELING FOR AI PRODUCTS</text>
+    <text x="76" y="304" font-size="64" font-weight="600" letter-spacing="-2">Know your AI costs.</text>
+    <text x="76" y="394" font-size="64" font-weight="600" letter-spacing="-2" fill="#426526">Protect your margin.</text>
+    <text x="78" y="475" font-size="24" fill="#62685b">Model a change. Compare your options. Decide before you ship.</text>
+  </g>
+  <g transform="translate(900 205) scale(3.5)"><rect width="64" height="64" rx="15" fill="#abb6ac"/><rect x="14" y="15" width="36" height="8" rx="4" fill="#20251d"/><path d="M21 32h6v7h7v6h-7v7h-6v-7h-7v-6h7z" fill="#20251d"/><rect x="39" y="39" width="11" height="6" rx="3" fill="#20251d"/></g>
+
+  <rect x="76" y="529" width="250" height="44" rx="22" fill="#20251d"/>
+  <text x="201" y="558" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#ffffff">ProfitCTL · MIT licensed</text>
+</svg>
