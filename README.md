@@ -1,34 +1,47 @@
 <p align="center">
-  <img src="./docs/assets/profitctl-mark.svg" alt="ProfitCtl mark" width="88">
+  <img src="./website/public/favicon.svg" alt="ProfitCtl calculator mark" width="64">
 </p>
 
-# ProfitCtl
+<h1 align="center">ProfitCtl</h1>
 
 <p align="center">
-  <strong>Unit economics as code for AI-native teams.</strong><br>
-  Compare pricing, infrastructure, and AI spend before it ships.
+  <strong>Know your AI costs. Protect your margin.</strong><br>
+  Cost modeling for teams building AI products.
 </p>
 
 <p align="center">
+  A new feature changes more than the product. ProfitCtl helps you model the spend,<br>
+  compare your options, and decide what to ship.<br><br>
+  MIT licensed. Runs locally. No sign-up.
+</p>
+
+<p align="center">
+  <a href="https://profitctl.com">Website</a> ·
   <a href="./docs/INSTALL.md">Install</a> ·
-  <a href="#quick-start">Run an example</a> ·
   <a href="./docs/DOCS_INDEX.md">Documentation</a> ·
   <a href="./benchmark_scenarios/README.md">Benchmark scenarios</a> ·
   <a href="./CONTRIBUTING.md">Contribute</a>
 </p>
 
-![ProfitCtl compares the committed hybrid fixtures: the steady-state scenario leads on operating margin and cost per user while the pilot scenario has higher revenue.](./docs/assets/profitctl-decision-board.svg)
+![ProfitCtl: Know your AI costs. Protect your margin. Model a change. Compare your options. Decide before you ship.](./website/public/images/profitctl-social-calculator.jpg)
 
-## What ProfitCtl does
+## From an assumption to a decision you can defend
 
-- **Compare decisions before commitment.** Evaluate pricing, infrastructure, model, API, and contract choices side by side.
-- **Model recurring-margin risk.** Simulate growth and stress, then test explicit profitability covenants.
-- **Make cost assumptions inspectable.** Track fixed and variable costs, payment fees, calibration inputs, and source provenance.
+1. **Start with what changes.** Describe usage, pricing, model calls, and infrastructure. Keep each cost tied to its source and assumptions.
+2. **Put the options side by side.** Compare a feature, model, deployment, or pricing plan. See the effect on revenue, recurring margin, and cost per user.
+3. **Set the limits before you ship.** Test margin and cost targets, including growth and tail risk. Keep the decision evidence in your review.
+
+## Inspect the assumptions behind the answer
+
+A cost estimate is useful when you can explain it. ProfitCtl keeps sources, confidence, and profitability targets alongside the result.
+
+- **Use your own costs.** Save pricing, fixed and variable costs, usage, and targets in a YAML scenario.
+- **Check growth and risk.** Use simulations and growth scenarios to test margin and cost limits.
 - **Give agents grounded inputs.** Use `assess` and the bundled cost-aware skill when a codebase needs a starter cost model.
 
-## Quick start
+## Bring one real decision
 
-Run the committed hybrid comparison locally:
+Start with a saved comparison. Then replace the assumptions with your own costs and usage. This source-based example requires Git and Go:
 
 ```bash
 git clone https://github.com/IntelIP/ProfitCtl.git
@@ -38,7 +51,7 @@ go run . compare examples/hybrid_steady_profit.yml examples/hybrid_profit.yml
 
 You will see revenue, recurring revenue, fees, booked and operating margins, cost per user, covenant results, and the leaders for each metric. For the signed release binary and Bun package, see the [Install Guide](./docs/INSTALL.md). Pin the evaluator prerelease `v0.4.0-rc.1`; GitHub's latest-release endpoint selects stable releases.
 
-## Use it where decisions happen
+## Use it where your team makes decisions
 
 | Surface | Start here |
 | --- | --- |
@@ -46,6 +59,8 @@ You will see revenue, recurring revenue, fees, booked and operating margins, cos
 | Cost-aware agent decisions | [ProfitCtl cost-aware skill](./skills/profitctl-cost-aware/SKILL.md) |
 | CI checks | [Cost model standards](./docs/cost-model-standards.md) |
 | Scenario examples | [Benchmark scenarios](./benchmark_scenarios/README.md) |
+
+The open-source local CLI, Codex skill, and CI output are available today. Hosted workspaces, saved team history, and approvals are planned. Website examples use fictional scenarios and sample costs; real decisions need your own rates, usage, and evidence.
 
 ## Production economics planning
 
@@ -64,4 +79,4 @@ Inspect service evidence, identify missing measurements, and compare explicitly 
 
 ## Trust and participation
 
-ProfitCtl is MIT licensed. See [LICENSE](./LICENSE), [NOTICE](./NOTICE), [Trademark Guidelines](./TRADEMARKS.md), [Security](./SECURITY.md), and [Contributing](./CONTRIBUTING.md).
+Developed by IntelIP and Hudson Aikins. ProfitCtl is MIT licensed. See [LICENSE](./LICENSE), [NOTICE](./NOTICE), [Trademark Guidelines](./TRADEMARKS.md), [Security](./SECURITY.md), and [Contributing](./CONTRIBUTING.md).
