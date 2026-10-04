@@ -1,0 +1,37 @@
+# Fictional AI SaaS scenario. A cheaper request path preserves the same usage.
+project:
+  name: Fictional Research SaaS - Cheaper Route
+fixed_costs:
+  - name: Sample monthly infrastructure
+    amount: 400
+    period: monthly
+    layer: infrastructure
+variable_costs:
+  - name: Sample research requests
+    cost_per_unit: 0.02
+    units_per_user: 300
+    distribution: uniform
+    min: 299
+    max: 301
+    layer: service
+  - name: Sample other costs per user
+    cost_per_unit: 1.50
+    units_per_user: 1
+    distribution: uniform
+    min: 0.99
+    max: 1.01
+    layer: application
+pricing:
+  plans:
+    - name: Standard
+      price: 20
+covenants:
+  - type: threshold
+    field: operating_margin
+    operator: gte
+    value: 60
+    message: Operating margin must be at least 60%
+simulation:
+  base_users: 1000
+  growth_factor: 1
+  iterations: 100

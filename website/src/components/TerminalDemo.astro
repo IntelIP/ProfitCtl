@@ -1,0 +1,50 @@
+---
+import { terminalStory } from "../scripts/terminal-story";
+---
+<section class="site-shell terminal-demo" id="demo" data-terminal-demo data-reveal>
+  <header class="cli-intro"><div><p class="eyebrow">01 / ProfitCTL in action</p><h2>Watch a margin problem unfold.</h2></div><p>Run the product in your browser. Follow a fictional AI SaaS from healthy margins to higher usage, then compare a cheaper route.</p></header>
+  <div class="cli-grid">
+    <div class="cli-window">
+      <div class="cli-toolbar"><span><i aria-hidden="true" /> profitctl</span></div>
+      <pre tabindex="0" aria-label="ProfitCTL command output"><code class="cli-command" data-terminal-command>$ profitctl</code><code data-terminal-output>Watch real commands run against the sample scenarios.
+Choose a story step to inspect its result.</code></pre>
+      <div class="cli-footer"><span class="cli-state" role="status" aria-live="polite" data-terminal-status>Ready to run</span><span>Real CLI · Fictional inputs</span></div>
+    </div>
+    <div class="cli-story"><p class="story-label">One product. Four decisions.</p><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p><a class="scenario-download" href="/demo/baseline.yml" download data-terminal-download>Download this scenario <span aria-hidden="true">↓</span></a></div>
+  </div>
+  <p class="cli-caption">The scenarios use made-up rates, not live provider prices. The real ProfitCTL CLI calculates every result on your device. The story repeats automatically; choosing a step holds its result.</p>
+  <noscript><p class="cli-caption">Enable JavaScript to run the demo, or download a scenario and run it with the installed CLI.</p></noscript>
+</section>
+<script>
+  import { initializeTerminalDemo } from "../scripts/terminal-demo";
+  initializeTerminalDemo();
+</script>
+<style>
+  .terminal-demo { padding-top: 20px; scroll-margin-top: 120px; }
+  .cli-intro { display: grid; grid-template-columns: 1fr .8fr; gap: 60px; align-items: end; margin-bottom: 30px; }
+  .eyebrow { color: var(--muted); font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; }
+  h2 { max-width: 480px; margin-top: 15px; font-size: clamp(30px,3.5vw,44px); line-height: 1.16; font-weight: 550; letter-spacing: -.05em; text-wrap: balance; }
+  .cli-intro > p { max-width: 440px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+  .cli-grid { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(240px,.8fr); gap: 26px; align-items: start; }
+  .cli-window { min-width: 0; overflow: hidden; border: 1px solid light-dark(#4d5842, #344038); border-radius: 20px; background: light-dark(#252d21, #0c1410); color: light-dark(#eef4e6, #dddeda); box-shadow: 0 18px 40px #272e2010; }
+  .cli-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 18px; border-bottom: 1px solid light-dark(#4a553f, #29372f); font-size: 12px; }
+  .cli-toolbar > span { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; }
+  .cli-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  pre { height: 390px; margin: 0; padding: 22px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.8; tab-size: 4; }
+  .cli-command { display: block; margin-bottom: 18px; color: var(--accent); }
+  .cli-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-top: 1px solid light-dark(#4a553f, #29372f); font-size: 10px; line-height: 1.5; color: light-dark(#c1cfb5, #a3aea5); }
+  .cli-state { color: var(--accent); }
+  [data-state=risk] .cli-state, [data-state=error] .cli-state { color: #ffba97; }
+  .cli-story { padding: 6px 0; }
+  .story-label { margin-bottom: 16px; font-size: 11px; font-weight: 600; color: var(--muted); }
+  ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+  li { border-bottom: 1px solid var(--line); }
+  li button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 14px 10px; border: 0; background: transparent; color: var(--muted); text-align: left; font-size: 13px; line-height: 1.5; }
+  li button[aria-current=step] { background: light-dark(#e8efdf, #1b2820); color: var(--green); font-weight: 600; }
+  .step-index { font-size: 10px; font-variant-numeric: tabular-nums; }
+  .step-arrow { margin-left: auto; }
+  .story-detail { min-height: 95px; margin-top: 22px; font-size: 13px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+  .scenario-download { display: inline-flex; align-items: center; gap: 15px; min-height: 44px; font-size: 12px; color: var(--green); text-underline-offset: 4px; }
+  .cli-caption { max-width: 850px; margin-top: 18px; font-size: 11px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+  @media (max-width: 760px) { .cli-intro, .cli-grid { grid-template-columns: 1fr; gap: 22px; }.cli-intro { margin-bottom: 24px; }.cli-story { padding-top: 6px; }.story-detail { min-height: 0; }pre { height: 340px; padding: 18px; }.terminal-demo { scroll-margin-top: 110px; } }
+</style>
