@@ -400,7 +400,11 @@ func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
 		{"missing evidence", "invoice not delivered", nil, "missing_evidence"},
 		{"unrelated evidence", "invoice not delivered", []string{"actual cost: ledger pending"}, "missing_evidence"},
 		{"blank evidence", "invoice not delivered", []string{"  "}, "missing_evidence"},
+		{"negated actual reason", "invoice not delivered", []string{"actual cost: not invoice not delivered"}, "missing_evidence"},
+		{"forecast-only reason", "invoice not delivered", []string{"actual cost: ledger pending; forecast invoice not delivered"}, "missing_evidence"},
+		{"unrelated entry with reason", "invoice not delivered", []string{"actual cost: ledger pending", "forecast: invoice not delivered"}, "missing_evidence"},
 		{"valid supplied reason", "invoice not delivered", []string{"actual cost: invoice not delivered"}, ""},
+		{"valid reason among other evidence", "invoice not delivered", []string{"forecast: pending", " actual cost: invoice not delivered "}, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result := *base
@@ -413,9 +417,15 @@ func TestCostExplainUnavailableReasonEvidence(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tc.reason, report.UnavailableReason)
-			require.Contains(t, report.MissingEvidence, "actual cost: "+tc.reason)
-			require.Nil(t, report.Actual)
-			require.Nil(t, report.VariancePercent)
+			require.Equal(t, tc.evidence, report.MissingEvidence)
+			payload, err := json.Marshal(report)
+			require.NoError(t, err)
+			var fields map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(payload, &fields))
+			require.JSONEq(t, `"invoice not delivered"`, string(fields["unavailable_reason"]))
+			for _, key := range []string{"actual", "variance_absolute", "variance_percent", "residual"} {
+				require.Equal(t, "null", string(fields[key]), key)
+			}
 		})
 	}
 }
@@ -434,6 +444,38 @@ func TestCostExplainMissingActualEvidenceIdentity(t *testing.T) {
 	report, err := Explain(context.Background(), result)
 	require.NoError(t, err)
 	require.Contains(t, report.MissingEvidence, "actual cost: invoice not delivered")
+}
+
+func TestCostExplainRejectsRunningTotalOverflow(t *testing.T) {
+	f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverFixed)
+	a, ad := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverFixed)
+	base, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	require.NotEmpty(t, base.Contributions)
+	for _, tc := range []struct {
+		name     string
+		residual float64
+		amounts  []float64
+	}{
+		{"contributions cancel after overflow", 0, []float64{math.MaxFloat64, math.MaxFloat64, -math.MaxFloat64, -math.MaxFloat64, 20}},
+		{"residual plus contribution overflows", math.MaxFloat64, []float64{math.MaxFloat64}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := base
+			residual := *base.Residual
+			residual.Amount = tc.residual
+			result.Residual = &residual
+			result.Contributions = nil
+			for _, amount := range tc.amounts {
+				contribution := base.Contributions[0]
+				contribution.Amount.Amount = amount
+				result.Contributions = append(result.Contributions, contribution)
+			}
+			_, err := Explain(context.Background(), &result)
+			require.ErrorContains(t, err, "total must be finite")
+			require.NotContains(t, err.Error(), "reconcile")
+		})
+	}
 }
 
 func TestCostExplainInvalidReconciliation(t *testing.T) {
