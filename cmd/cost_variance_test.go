@@ -545,3 +545,19 @@ func TestCostExplainRejectsUnsupportedDriverEvidence(t *testing.T) {
 	_, err = Explain(context.Background(), &valid)
 	require.NoError(t, err)
 }
+
+func TestCostDiffSyntheticMediumEvidenceRemainsExplainable(t *testing.T) {
+	f, fd := varianceFixture(t, "forecast", 10, 2, 20, costv1.DriverVariable)
+	a, ad := varianceFixture(t, "actual", 20, 2, 40, costv1.DriverVariable)
+	for _, d := range []*costv1.CostDriver{&fd, &ad} {
+		d.Evidence.Quantity.Confidence = costv1.ConfidenceMedium
+		d.Evidence.UnitPrice.Confidence = costv1.ConfidenceMedium
+		require.NoError(t, d.Validate())
+	}
+	result, err := variancev1.Compare(variancev1.Input{Forecast: f, Actual: &a, Drivers: []variancev1.DriverPair{{Forecast: fd, Actual: ad}}})
+	require.NoError(t, err)
+	_, err = Explain(context.Background(), &result)
+	require.NoError(t, err, "valid diff output must remain explainable")
+	require.Equal(t, costv1.ConfidenceLow, result.Contributions[0].Confidence)
+	require.LessOrEqual(t, result.Contributions[0].ConfidenceScore, .35)
+}

@@ -48,3 +48,6 @@ Thumbs.db
 /build/
 /website/dist/
 /packages/profitctl/native/
+
+# Browser CLI assets are generated from the current Go source.
+/website/public/demo/
