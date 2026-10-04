@@ -12,7 +12,7 @@
 2. Lead with findings ordered by severity, then classify each item as `actionable`, `informational`, or `already addressed`.
 3. Fix actionable findings first.
 4. Re-run affected checks after material fixes.
-5. Update Plane with status, blockers, and validation evidence.
+5. Update AgentShift with status, blockers, and validation evidence.
 6. Use `$check-pr` after local review when the task is PR readiness.
 
 ## Review Focus
@@ -26,7 +26,7 @@
 - Required schema, semantic, workflow, operational, and security evidence must pass. `blocked` is not `passed`; any new commit invalidates old evidence.
 - Pricing correctness, simulation integrity, maintained reference cost standards, CLI output, structured LLM parsing, and zero-cost validation are explicit boundaries.
 - Never call OpenRouter, deploy, publish, or mutate billing during validation. Upload generated evidence from CI; do not commit it.
-- Track rollout and failures in Plane item `PCTL-17`.
+- Track rollout and failures in AgentShift. `PCTL-17` remains the legacy acceptance ID in the validation manifest; verify the corresponding AgentShift story before posting updates.
 
 ## Code cleanup
 

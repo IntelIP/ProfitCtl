@@ -4,7 +4,9 @@ Status: accepted by Hudson in Codex task `019fb11b-6f69-7d41-aabb-c51588d50989`
 
 Prepared: 2026-07-31
 
-Execution authority: Plane PCTL-3, PCTL-14, and PCTL-2
+Current tracker: AgentShift. The PCTL identifiers below are legacy planning references, not verified AgentShift story IDs.
+
+Historical execution authority: PCTL-3, PCTL-14, and PCTL-2
 
 Implementation authority: PCTL-2 only; merge, release, deployment, live provider access, spend, and secrets remain excluded
 
@@ -22,7 +24,7 @@ This acceptance clears product and provenance definition. It authorizes PCTL-2 i
 ## Known Facts
 
 - `main` presents ProfitCtl as a local CLI for pricing, unit economics, and recurring-margin simulation.
-- Plane PCTL-3 and the proposed portfolio roadmap define a broader control loop: forecast, actual, variance, attribution, and action, with Upstash idle polling as first slice.
+- The legacy PCTL-3 record and the proposed portfolio roadmap define a broader control loop: forecast, actual, variance, attribution, and action, with Upstash idle polling as first slice.
 - Dirty canonical branch `docs/profitctl-oss-company-plan` proposes a different public center: “unit economics as code for AI-native software teams,” agent-decision demos, and a 120-day adoption plan. PCTL-10 and PCTL-16 preserve its work, but no active task, PR, or accepted product decision owns that direction.
 - Canonical checkout is modified across product, open-core, growth, legal, standards-judge, skill, and website surfaces. It remains read-only.
 - Repository identity is already `github.com/IntelIP/ProfitCtl`; installed binary name is already `profitctl`.
@@ -74,7 +76,7 @@ Keep current public product boundary. Ship stable CLI identity and agent-facing 
 
 Benefits: smallest product change; closest to committed docs and current runtime.
 
-Tradeoff: invalidates current Definition-to-MVP Plane sequence and leaves “cost intelligence” as planning language rather than an executable control loop.
+Tradeoff: invalidates then-current Definition-to-MVP planning sequence and leaves “cost intelligence” as planning language rather than an executable control loop.
 
 ## Option C — Agent Cost OS Public Wedge First
 
@@ -175,7 +177,7 @@ If accepted:
 
 If amended: record exact changed clauses before implementation.
 
-If rejected: choose Option B or C and re-sequence Plane dependencies before implementation.
+If rejected: choose Option B or C and re-sequence dependencies in AgentShift before implementation.
 
 ## Acceptance Record
 
@@ -190,4 +192,4 @@ Hudson accepted Option A in full on 2026-07-31:
 - Checksum-verified GitHub Release installer is primary; Bun/npm is secondary; Go paths are explicit developer fallbacks.
 - `--version` and `doctor` are required.
 
-Plane PCTL-3 and PCTL-14 record the accepted outcome and evidence contracts. PCTL-2 implementation proceeds on isolated branch `codex/pctl-2-stable-cli-identity`; the dirty canonical company-plan checkout remains separate and read-only.
+The legacy PCTL-3 and PCTL-14 records capture the accepted outcome and evidence contracts. PCTL-2 implementation proceeds on isolated branch `codex/pctl-2-stable-cli-identity`; the dirty canonical company-plan checkout remains separate and read-only.

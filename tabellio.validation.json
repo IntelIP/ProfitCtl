@@ -5,7 +5,7 @@
   "requireEntireCheckpoint": false,
   "acceptance": {
     "id": "PCTL-17",
-    "source": "plane",
+    "source": "agentshift",
     "risk": "critical",
     "outcomes": [
       "Cost configuration and provenance contracts reject malformed or unsupported inputs.",
