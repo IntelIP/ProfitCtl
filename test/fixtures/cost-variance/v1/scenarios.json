@@ -1,0 +1,7 @@
+[
+  {"name":"fixed-price","kind":"fixed","forecast_quantity":10,"actual_quantity":10,"forecast_price":2,"actual_price":2,"dominant":"none","variance":0},
+  {"name":"usage-volume","kind":"variable","forecast_quantity":10,"actual_quantity":20,"forecast_price":2,"actual_price":2,"dominant":"quantity","variance":20},
+  {"name":"cadence","kind":"cadence","forecast_quantity":10,"actual_quantity":20,"forecast_price":2,"actual_price":2,"dominant":"quantity","variance":20},
+  {"name":"replica","kind":"concurrency","forecast_quantity":10,"actual_quantity":20,"forecast_price":2,"actual_price":2,"dominant":"quantity","variance":20},
+  {"name":"price-change","kind":"variable","forecast_quantity":10,"actual_quantity":10,"forecast_price":2,"actual_price":3,"dominant":"unit_price","variance":10}
+]

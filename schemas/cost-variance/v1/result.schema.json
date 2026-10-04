@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profitctl.dev/schemas/cost-variance/v1/result.schema.json",
+  "title": "ProfitCtl cost variance result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "window", "forecast_observation_id", "forecast", "actual", "absolute_variance", "percentage_variance", "contributions", "residual", "missing_evidence", "rounding_tolerance", "sources"],
+  "properties": {
+    "schema_version": {"const": "profitctl.cost-variance/v1"},
+    "status": {"enum": ["available", "unavailable"]},
+    "window": {"$ref": "#/$defs/window"},
+    "forecast_observation_id": {"type": "string", "minLength": 1},
+    "actual_observation_id": {"type": "string"},
+    "forecast": {"$ref": "#/$defs/money"},
+    "actual": {"oneOf": [{"$ref": "#/$defs/money"}, {"type": "null"}]},
+    "absolute_variance": {"oneOf": [{"$ref": "#/$defs/money"}, {"type": "null"}]},
+    "percentage_variance": {"type": ["number", "null"]},
+    "residual": {"oneOf": [{"$ref": "#/$defs/money"}, {"type": "null"}]},
+    "unavailable_reason": {"type": "string", "minLength": 1},
+    "missing_evidence": {"type": "array", "items": {"type": "string"}},
+    "rounding_tolerance": {"type": "number", "const": 0.000001},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "contributions": {"type": "array", "items": {"$ref": "#/$defs/contribution"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "available"}}}, "then": {"required": ["actual_observation_id"], "properties": {"actual": {"$ref": "#/$defs/money"}, "absolute_variance": {"$ref": "#/$defs/money"}, "residual": {"$ref": "#/$defs/money"}}, "not": {"required": ["unavailable_reason"]}}},
+    {"if": {"properties": {"status": {"const": "unavailable"}}}, "then": {"required": ["unavailable_reason"], "properties": {"actual": {"type": "null"}, "absolute_variance": {"type": "null"}, "percentage_variance": {"type": "null"}, "residual": {"type": "null"}, "contributions": {"maxItems": 0}}, "not": {"required": ["actual_observation_id"]}}}
+  ],
+  "$defs": {
+    "money": {"type": "object", "additionalProperties": false, "required": ["amount", "currency"], "properties": {"amount": {"type": "number"}, "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}}},
+    "window": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"type": "string", "format": "date-time"}, "end": {"type": "string", "format": "date-time"}}},
+    "source": {"type": "object", "required": ["type", "captured_at"], "properties": {"type": {"type": "string"}, "artifact_identity": {"type": "string"}, "url": {"type": "string"}, "captured_at": {"type": "string"}}},
+    "contribution": {"type": "object", "additionalProperties": false, "required": ["driver_id", "kind", "quantity", "unit_price", "distribution", "amount", "confidence", "confidence_score", "attribution", "missing_evidence", "sources", "receipts"], "properties": {
+      "driver_id": {"type": "string"}, "kind": {"type": "string"}, "quantity": {"type": "number"}, "unit_price": {"type": "number"}, "distribution": {"type": "number"}, "amount": {"$ref": "#/$defs/money"}, "confidence": {"enum": ["low", "medium", "high"]}, "confidence_score": {"type": "number", "minimum": 0, "maximum": 1}, "attribution": {"enum": ["modeled", "unknown"]}, "missing_evidence": {"type": "array", "items": {"type": "string"}}, "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}}, "receipts": {"type": "array", "items": {"type": "object", "required": ["driver_id", "kind", "forecast_observation_id", "actual_observation_id", "source"], "properties": {"driver_id": {"type": "string"}, "kind": {"enum": ["commit", "pull_request", "release", "deployment"]}, "forecast_observation_id": {"type": "string"}, "actual_observation_id": {"type": "string"}, "source": {"$ref": "#/$defs/source"}}}}
+    }}
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profitctl.dev/schemas/cost-variance/v1/schema.json",
+  "title": "ProfitCtl cost explain CLI report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "window", "forecast_observation_id", "confidence", "confidence_score", "forecast", "actual", "variance_absolute", "variance_percent", "driver_contributions", "residual", "missing_evidence", "sources"],
+  "properties": {
+    "schema_version": {"const": "profitctl.cost-variance/v1"},
+    "status": {"enum": ["available", "unavailable"]},
+    "window": {"$ref": "#/$defs/window"},
+    "forecast_observation_id": {"type": "string", "minLength": 1},
+    "actual_observation_id": {"type": "string", "minLength": 1},
+    "unavailable_reason": {"type": "string", "minLength": 1},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "forecast": {"$ref": "#/$defs/money"},
+    "actual": {"$ref": "#/$defs/nullableMoney"},
+    "variance_absolute": {"$ref": "#/$defs/nullableMoney"},
+    "variance_percent": {"type": ["number", "null"]},
+    "driver_contributions": {"type": "array", "items": {"$ref": "#/$defs/contribution"}},
+    "residual": {"$ref": "#/$defs/nullableMoney"},
+    "missing_evidence": {"type": "array", "items": {"type": "string"}},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "available"}}}, "then": {"required": ["actual_observation_id"], "properties": {"actual": {"$ref": "#/$defs/money"}, "variance_absolute": {"$ref": "#/$defs/money"}, "residual": {"$ref": "#/$defs/money"}}, "not": {"required": ["unavailable_reason"]}}},
+    {"if": {"properties": {"status": {"const": "unavailable"}}}, "then": {"required": ["unavailable_reason"], "properties": {"actual": {"type": "null"}, "variance_absolute": {"type": "null"}, "variance_percent": {"type": "null"}, "residual": {"type": "null"}, "driver_contributions": {"maxItems": 0}}, "not": {"required": ["actual_observation_id"]}}}
+  ],
+  "$defs": {
+    "money": {"type": "object", "additionalProperties": false, "required": ["amount", "currency"], "properties": {"amount": {"type": "number"}, "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}}},
+    "nullableMoney": {"oneOf": [{"$ref": "#/$defs/money"}, {"type": "null"}]},
+    "window": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"type": "string", "format": "date-time"}, "end": {"type": "string", "format": "date-time"}}},
+    "source": {"type": "object", "required": ["type", "captured_at"], "properties": {"type": {"type": "string"}, "captured_at": {"type": "string"}, "artifact_identity": {"type": "string"}, "url": {"type": "string"}, "refresh_owner": {"type": "string"}, "refresh_cadence": {"type": "string"}, "stale_after": {"type": "string"}}, "additionalProperties": false},
+    "receipt": {"type": "object", "additionalProperties": false, "required": ["driver_id", "kind", "forecast_observation_id", "actual_observation_id", "source"], "properties": {"driver_id": {"type": "string"}, "kind": {"enum": ["commit", "pull_request", "release", "deployment"]}, "forecast_observation_id": {"type": "string"}, "actual_observation_id": {"type": "string"}, "source": {"$ref": "#/$defs/source"}}},
+    "contribution": {"type": "object", "additionalProperties": false, "required": ["driver_id", "kind", "quantity", "unit_price", "distribution", "amount", "confidence", "confidence_score", "attribution", "missing_evidence", "sources", "receipts", "remedial_actions"], "properties": {"driver_id": {"type": "string"}, "kind": {"enum": ["fixed", "variable", "cadence", "concurrency", "uptime"]}, "quantity": {"type": "number"}, "unit_price": {"type": "number"}, "distribution": {"type": "number"}, "amount": {"$ref": "#/$defs/money"}, "confidence": {"enum": ["low", "medium", "high"]}, "confidence_score": {"type": "number", "minimum": 0, "maximum": 1}, "attribution": {"enum": ["modeled", "unknown"]}, "missing_evidence": {"type": "array", "items": {"type": "string"}}, "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}}, "receipts": {"type": "array", "items": {"$ref": "#/$defs/receipt"}}, "remedial_actions": {"type": "array", "minItems": 1, "items": {"type": "string"}}}}
+  }
+}
