@@ -334,6 +334,9 @@ func validCapture(s string) bool {
 func confidence(c *Contribution, f, a cost.CostDriver, total float64) {
 	score := 1.0
 	for _, e := range []cost.Evidence{f.Evidence.Quantity, f.Evidence.UnitPrice, a.Evidence.Quantity, a.Evidence.UnitPrice} {
+		if e.Source.Type == cost.SourceSyntheticFixture {
+			score = math.Min(score, .35)
+		}
 		switch e.Confidence {
 		case cost.ConfidenceLow:
 			score = math.Min(score, .35)
