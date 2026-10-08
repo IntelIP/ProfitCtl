@@ -23,7 +23,9 @@
   <a href="./CONTRIBUTING.md">Contribute</a>
 </p>
 
-![ProfitCtl: Know your AI costs. Protect your margin. Model a change. Compare your options. Decide before you ship.](./website/public/images/profitctl-social-calculator.jpg)
+[![Watch ProfitCtl compare revenue, operating margin, and cost per user in 30 seconds.](./website/public/images/profitctl-demo-v2.jpg)](https://profitctl.com/#watch)
+
+**[Watch the 30-second demo](https://profitctl.com/#watch)** · Actual ProfitCtl output using illustrative saved scenarios.
 
 ## From an assumption to a decision you can defend
 
