@@ -4,74 +4,80 @@
     <p>See why more revenue can still mean a lower operating margin. Follow one comparison, from the command to the decision.</p>
   </header>
   <div class="video-frame">
-  <video
-    id="overview-video"
-    class="video-player"
-    controls
-    tabindex="0"
-    playsinline
-    preload="none"
-    src="/media/profitctl-demo-v2.mp4"
-    width="1920"
-    height="1080"
-    poster="/images/profitctl-demo-v2.jpg"
-    aria-label="ProfitCtl: compare revenue, operating margin, and cost per user"
-    aria-describedby="video-caption"
-  >
-    <p>Your browser cannot play this video. Read the summary below or download the video.</p>
-  </video>
-  <button class="video-play" type="button" hidden aria-controls="overview-video"><span aria-hidden="true">▶</span> Play demo · 0:30</button>
+    <video
+      id="overview-video"
+      class="video-player"
+      controls
+      muted
+      loop
+      playsinline
+      preload="none"
+      src="/media/profitctl-demo-v2.mp4"
+      width="1920"
+      height="1080"
+      poster="/images/profitctl-demo-v2.jpg"
+      aria-label="ProfitCtl illustrative scenario comparison"
+      aria-describedby="video-description"
+    >
+      <p>ProfitCtl compares revenue, operating margin, and cost per user across saved scenarios.</p>
+    </video>
+    <button class="video-toggle" type="button" hidden aria-controls="overview-video" aria-label="Play animation" title="Play animation">
+      <svg class="pause-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 3h3v10H4zm5 0h3v10H9z" /></svg>
+      <svg class="play-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="m5 3 8 5-8 5z" /></svg>
+    </button>
   </div>
-  <p class="video-error" role="status" hidden>The video could not load. Read the summary below or download the video.</p>
-  <p class="video-caption" id="video-caption">Illustrative saved scenarios · Actual ProfitCtl output · Silent video</p>
-  <div class="video-actions">
-    <a href="#demo">Try the interactive demo <span aria-hidden="true">↓</span></a>
-    <a href="#get-started">Install ProfitCtl <span aria-hidden="true">↗</span></a>
-    <a href="/media/profitctl-demo-v2.mp4" download>Download video <span aria-hidden="true">↓</span></a>
-  </div>
-  <details class="video-summary">
-    <summary>Read the video summary</summary>
-    <p>ProfitCtl compares two illustrative saved scenarios. The steady-state example shows $2,000 in revenue, a 95% operating margin, and a cost per user of $2.00. The pilot example shows $6,500 in revenue, a 69% operating margin, and a cost per user of $12.40.</p>
-    <p>Recurring revenue is $2,000 in both. The pilot has $4,500 more revenue, a 26-percentage-point lower operating margin, and $10.40 more cost per user. ProfitCtl identifies the leaders for each measure so you can compare the full trade-off using your own costs and assumptions.</p>
-  </details>
+  <p class="video-error" role="status" hidden>The animation could not load. Use the play control to retry.</p>
+  <p class="visually-hidden" id="video-description">In these illustrative saved scenarios, the steady-state example has $2,000 in revenue, a 95% operating margin, and $2.00 cost per user. The pilot has $6,500 in revenue, a 69% operating margin, and $12.40 cost per user. Recurring revenue is $2,000 in both. These are sample figures, not customer results.</p>
 </section>
 
 <script>
   const video = document.querySelector<HTMLVideoElement>("#overview-video");
-  const button = document.querySelector<HTMLButtonElement>("#watch .video-play");
+  const button = document.querySelector<HTMLButtonElement>("#watch .video-toggle");
   const error = document.querySelector<HTMLParagraphElement>("#watch .video-error");
   if (video && button && error) {
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    let wantsPlayback = !motion.matches;
+    let visible = false;
     video.controls = false;
+    video.muted = true;
     button.hidden = false;
-    const play = async () => {
-      video.controls = true;
-      button.hidden = true;
-      error.hidden = true;
-      try {
-        if (video.error) video.load();
-        await video.play();
-        video.focus();
-      } catch {
-        button.hidden = false;
-        error.hidden = false;
+
+    const updateControl = () => {
+      const label = video.paused ? "Play animation" : "Pause animation";
+      button.setAttribute("aria-label", label);
+      button.title = label;
+      button.dataset.playing = String(!video.paused);
+    };
+    const updatePlayback = () => {
+      if (wantsPlayback && visible && !document.hidden) {
+        void video.play().catch(updateControl);
+      } else {
+        video.pause();
       }
     };
-    button.addEventListener("click", play);
-    video.addEventListener("keydown", (event) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.code === "Space") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (!event.repeat) {
-          if (video.paused) void play();
-          else video.pause();
-        }
-      } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && Number.isFinite(video.duration)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (event.key === "ArrowRight" ? 5 : -5)));
-      }
-    }, { capture: true });
+    button.addEventListener("click", () => {
+      wantsPlayback = video.paused;
+      if (wantsPlayback && video.error) video.load();
+      error.hidden = true;
+      updatePlayback();
+    });
+    video.addEventListener("play", updateControl);
+    video.addEventListener("pause", updateControl);
+    video.addEventListener("error", () => {
+      error.hidden = false;
+      updateControl();
+    });
+    motion.addEventListener("change", () => {
+      wantsPlayback = !motion.matches;
+      updatePlayback();
+    });
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      updatePlayback();
+    }, { threshold: 0.15 });
+    observer.observe(video);
+    document.addEventListener("visibilitychange", updatePlayback);
+    updateControl();
   }
 </script>
 
@@ -81,22 +87,18 @@
   .eyebrow { color: var(--muted); font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; }
   h2 { max-width: 520px; margin-top: 15px; font-size: clamp(30px,3.5vw,44px); line-height: 1.16; font-weight: 550; letter-spacing: -.05em; text-wrap: balance; }
   .video-heading > p { max-width: 440px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  .video-frame { position: relative; }
-  .video-player { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
-  .video-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; padding: 14px 22px; border: 1px solid var(--line); border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 14px; white-space: nowrap; }
-  .video-play[hidden], .video-error[hidden] { display: none; }
-  .video-play:hover { outline: 2px solid var(--green); outline-offset: 3px; }
+  .video-frame { position: relative; overflow: hidden; border-radius: 16px; background: var(--panel); }
+  .video-player { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .video-toggle { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
+  .video-toggle[hidden], .video-error[hidden], .video-toggle[data-playing="true"] .play-icon, .video-toggle:not([data-playing="true"]) .pause-icon { display: none; }
+  .video-toggle:hover { color: var(--green); }
+  .video-toggle:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
   .video-error { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--risk); }
-  .video-player:focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
-  .video-caption { margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.7; }
-  .video-actions { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 8px; }
-  .video-actions a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--green); font-size: 14px; text-underline-offset: 4px; }
-  .video-summary { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.7; }
-  .video-summary summary { width: fit-content; min-height: 44px; padding-block: 9px; cursor: pointer; font-weight: 550; }
-  .video-summary p { max-width: 850px; margin-top: 12px; color: var(--muted); }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
   @media (max-width: 760px) {
     .video-overview { padding-bottom: 40px; }
     .video-heading { grid-template-columns: 1fr; gap: 18px; }
-    .video-player { border-radius: 12px; }
+    .video-frame { border-radius: 12px; }
+    .video-toggle { right: 8px; bottom: 8px; }
   }
 </style>
