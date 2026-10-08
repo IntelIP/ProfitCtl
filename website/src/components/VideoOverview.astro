@@ -73,12 +73,16 @@
       wantsPlayback = !motion.matches;
       updatePlayback();
     });
-    const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
+    const updateVisibility = () => {
+      const bounds = video.getBoundingClientRect();
+      visible = bounds.bottom > 0 && bounds.top < innerHeight;
       updatePlayback();
-    }, { threshold: 0.15 });
-    observer.observe(video);
-    document.addEventListener("visibilitychange", updatePlayback);
+    };
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+    window.addEventListener("load", updateVisibility, { once: true });
+    document.addEventListener("visibilitychange", updateVisibility);
+    updateVisibility();
     updateControl();
   }
 </script>
