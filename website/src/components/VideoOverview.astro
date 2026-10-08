@@ -1,0 +1,102 @@
+<section class="site-shell video-overview" id="watch" aria-labelledby="video-heading">
+  <header class="video-heading">
+    <div><p class="eyebrow">A 30-second overview</p><h2 id="video-heading">Watch ProfitCtl in 30 seconds.</h2></div>
+    <p>See why more revenue can still mean a lower operating margin. Follow one comparison, from the command to the decision.</p>
+  </header>
+  <div class="video-frame">
+  <video
+    id="overview-video"
+    class="video-player"
+    controls
+    tabindex="0"
+    playsinline
+    preload="none"
+    src="/media/profitctl-demo-v2.mp4"
+    width="1920"
+    height="1080"
+    poster="/images/profitctl-demo-v2.jpg"
+    aria-label="ProfitCtl: compare revenue, operating margin, and cost per user"
+    aria-describedby="video-caption"
+  >
+    <p>Your browser cannot play this video. Read the summary below or download the video.</p>
+  </video>
+  <button class="video-play" type="button" hidden aria-controls="overview-video"><span aria-hidden="true">▶</span> Play demo · 0:30</button>
+  </div>
+  <p class="video-error" role="status" hidden>The video could not load. Read the summary below or download the video.</p>
+  <p class="video-caption" id="video-caption">Illustrative saved scenarios · Actual ProfitCtl output · Silent video</p>
+  <div class="video-actions">
+    <a href="#demo">Try the interactive demo <span aria-hidden="true">↓</span></a>
+    <a href="#get-started">Install ProfitCtl <span aria-hidden="true">↗</span></a>
+    <a href="/media/profitctl-demo-v2.mp4" download>Download video <span aria-hidden="true">↓</span></a>
+  </div>
+  <details class="video-summary">
+    <summary>Read the video summary</summary>
+    <p>ProfitCtl compares two illustrative saved scenarios. The steady-state example shows $2,000 in revenue, a 95% operating margin, and a cost per user of $2.00. The pilot example shows $6,500 in revenue, a 69% operating margin, and a cost per user of $12.40.</p>
+    <p>Recurring revenue is $2,000 in both. The pilot has $4,500 more revenue, a 26-percentage-point lower operating margin, and $10.40 more cost per user. ProfitCtl identifies the leaders for each measure so you can compare the full trade-off using your own costs and assumptions.</p>
+  </details>
+</section>
+
+<script>
+  const video = document.querySelector<HTMLVideoElement>("#overview-video");
+  const button = document.querySelector<HTMLButtonElement>("#watch .video-play");
+  const error = document.querySelector<HTMLParagraphElement>("#watch .video-error");
+  if (video && button && error) {
+    video.controls = false;
+    button.hidden = false;
+    const play = async () => {
+      video.controls = true;
+      button.hidden = true;
+      error.hidden = true;
+      try {
+        if (video.error) video.load();
+        await video.play();
+        video.focus();
+      } catch {
+        button.hidden = false;
+        error.hidden = false;
+      }
+    };
+    button.addEventListener("click", play);
+    video.addEventListener("keydown", (event) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.code === "Space") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.repeat) {
+          if (video.paused) void play();
+          else video.pause();
+        }
+      } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && Number.isFinite(video.duration)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (event.key === "ArrowRight" ? 5 : -5)));
+      }
+    }, { capture: true });
+  }
+</script>
+
+<style>
+  .video-overview { padding-block: 20px 64px; }
+  .video-heading { display: grid; grid-template-columns: 1fr .8fr; gap: 60px; align-items: end; margin-bottom: 28px; }
+  .eyebrow { color: var(--muted); font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; }
+  h2 { max-width: 520px; margin-top: 15px; font-size: clamp(30px,3.5vw,44px); line-height: 1.16; font-weight: 550; letter-spacing: -.05em; text-wrap: balance; }
+  .video-heading > p { max-width: 440px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+  .video-frame { position: relative; }
+  .video-player { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+  .video-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; padding: 14px 22px; border: 1px solid var(--line); border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 14px; white-space: nowrap; }
+  .video-play[hidden], .video-error[hidden] { display: none; }
+  .video-play:hover { outline: 2px solid var(--green); outline-offset: 3px; }
+  .video-error { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--risk); }
+  .video-player:focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
+  .video-caption { margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+  .video-actions { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 8px; }
+  .video-actions a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--green); font-size: 14px; text-underline-offset: 4px; }
+  .video-summary { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.7; }
+  .video-summary summary { width: fit-content; min-height: 44px; padding-block: 9px; cursor: pointer; font-weight: 550; }
+  .video-summary p { max-width: 850px; margin-top: 12px; color: var(--muted); }
+  @media (max-width: 760px) {
+    .video-overview { padding-bottom: 40px; }
+    .video-heading { grid-template-columns: 1fr; gap: 18px; }
+    .video-player { border-radius: 12px; }
+  }
+</style>

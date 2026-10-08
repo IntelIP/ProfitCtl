@@ -1,6 +1,7 @@
 ---
 import ProductLayout from "../layouts/ProductLayout.astro";
 import TerminalDemo from "../components/TerminalDemo.astro";
+import VideoOverview from "../components/VideoOverview.astro";
 import { calculateExample, money, percent } from "../scripts/demo";
 
 const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
@@ -21,6 +22,7 @@ const steps = [
       <p class="hero-description">A new feature changes more than the product. ProfitCtl helps you model the spend, compare your options, and decide what to ship.</p>
       <a class="primary-action" href="#demo">Try the demo <span aria-hidden="true">↓</span></a>
       <p class="hero-note">MIT licensed. Runs locally. No sign-up.</p>
+      <a class="video-link" href="#watch">Watch the 30-second overview <span aria-hidden="true">↓</span></a>
     </div>
     <div class="hero-visual" aria-hidden="true">
       <div class="visual-grid" />
@@ -33,6 +35,7 @@ const steps = [
     </div>
   </section>
 
+  <VideoOverview />
   <TerminalDemo />
 
   <section class="site-shell calculator-section" id="calculator" data-reveal>
@@ -152,4 +155,8 @@ const steps = [
     .hero { padding-block: 38px 54px; }.hero h1 { font-size: 38px; letter-spacing: -.06em; }.hero .eyebrow { font-size: 9px; }.hero-description { font-size: 15px; }.hero-visual { padding-inline: 18px; border-radius: 20px; }.signal-node { padding: 12px; gap: 8px; }.signal-node strong { font-size: 12px; }.node-tag { display: none; }.node-icon { width: 26px; height: 26px; }.visual-heading, .visual-caption { left: 18px; right: 18px; font-size: 10px; }
     h2 { font-size: 31px; }.demo-toolbar { padding: 14px 18px; font-size: 10px; }.demo-inputs, .demo-results { padding: 20px 16px; }.demo-presets button { min-height: 40px; padding-inline: 8px; }.results-pair { gap: 8px; }.result-card { padding: 12px; }.result-card h3 { font-size: 13px; }.result-card dl > div:first-child dd { font-size: 25px; }.result-card dd { font-size: 22px; }.result-card dt { font-size: 10px; }.revenue-strip strong { font-size: 24px; }.revenue-strip { font-size: 11px; gap: 10px; }.verdict { padding: 14px; gap: 10px; }.verdict h3 { font-size: 12px; }.verdict p { font-size: 11px; }.start-section { padding: 24px 18px; }.terminal-header { padding: 10px 12px; }.terminal pre { padding: 18px 12px; font-size: 11px; }.terminal-footer { padding: 12px; font-size: 9px; }
   }
+</style>
+
+<style>
+  .video-link { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; color: var(--green); font-size: 14px; text-underline-offset: 4px; }
 </style>
