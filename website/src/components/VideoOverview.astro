@@ -49,7 +49,8 @@
       button.dataset.playing = String(!video.paused);
     };
     const updatePlayback = () => {
-      if (wantsPlayback && visible && !document.hidden) {
+      video.autoplay = wantsPlayback && visible && !document.hidden;
+      if (video.autoplay) {
         void video.play().catch(updateControl);
       } else {
         video.pause();
@@ -64,6 +65,7 @@
     video.addEventListener("play", updateControl);
     video.addEventListener("pause", updateControl);
     video.addEventListener("error", () => {
+      video.pause();
       error.hidden = false;
       updateControl();
     });
