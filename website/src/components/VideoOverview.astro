@@ -8,6 +8,7 @@
     id="overview-video"
     class="video-player"
     controls
+    tabindex="0"
     playsinline
     preload="none"
     src="/media/profitctl-demo-v2.mp4"
@@ -42,7 +43,7 @@
   if (video && button && error) {
     video.controls = false;
     button.hidden = false;
-    button.addEventListener("click", async () => {
+    const play = async () => {
       video.controls = true;
       button.hidden = true;
       error.hidden = true;
@@ -53,6 +54,20 @@
       } catch {
         button.hidden = false;
         error.hidden = false;
+      }
+    };
+    button.addEventListener("click", play);
+    video.addEventListener("keydown", (event) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (!event.repeat) {
+          if (video.paused) void play();
+          else video.pause();
+        }
+      } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && Number.isFinite(video.duration)) {
+        event.preventDefault();
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (event.key === "ArrowRight" ? 5 : -5)));
       }
     });
   }
