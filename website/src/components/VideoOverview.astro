@@ -61,15 +61,17 @@
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       if (event.code === "Space") {
         event.preventDefault();
+        event.stopImmediatePropagation();
         if (!event.repeat) {
           if (video.paused) void play();
           else video.pause();
         }
       } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && Number.isFinite(video.duration)) {
         event.preventDefault();
+        event.stopImmediatePropagation();
         video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (event.key === "ArrowRight" ? 5 : -5)));
       }
-    });
+    }, { capture: true });
   }
 </script>
 
