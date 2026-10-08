@@ -7,7 +7,6 @@ export function initializeTerminalDemo() {
   const output = root.querySelector<HTMLElement>("[data-terminal-output]")!;
   const status = root.querySelector<HTMLElement>("[data-terminal-status]")!;
   const detail = root.querySelector<HTMLElement>("[data-terminal-detail]")!;
-  const download = root.querySelector<HTMLAnchorElement>("[data-terminal-download]")!;
   const steps = [...root.querySelectorAll<HTMLButtonElement>("[data-terminal-step]")];
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const playback = new EventTarget();
@@ -46,7 +45,7 @@ export function initializeTerminalDemo() {
     return new Promise<{ output: string; exitCode: number }>((resolve, reject) => {
       const cleanup = () => { clearTimeout(timer); signal.removeEventListener("abort", abort); };
       const abort = () => { cleanup(); worker?.terminate(); worker = undefined; reject(signal.reason); };
-      const timer = setTimeout(() => { cleanup(); worker?.terminate(); worker = undefined; reject(new Error("The demo took too long. Please retry or run the downloaded scenario locally.")); }, 45000);
+      const timer = setTimeout(() => { cleanup(); worker?.terminate(); worker = undefined; reject(new Error("The demo took too long. Select a step to retry.")); }, 45000);
       signal.addEventListener("abort", abort, { once: true });
       worker!.onerror = () => { cleanup(); reject(new Error("The demo could not start. Please retry or run the scenario locally.")); };
       worker!.onmessage = (event) => {
@@ -66,7 +65,6 @@ export function initializeTerminalDemo() {
         const step = terminalStory[index]!;
         steps.forEach((button, position) => button.setAttribute("aria-current", position === index ? "step" : "false"));
         detail.textContent = step.detail;
-        download.href = `/demo/${step.scenario}.yml`;
         command.textContent = "$ ";
         output.textContent = "";
         root!.dataset.state = "running";
@@ -75,7 +73,7 @@ export function initializeTerminalDemo() {
         else for (const character of text) { await wait(18, signal); command.textContent += character; }
         status.textContent = "Running ProfitCTL…";
         const result = await execute(index, signal);
-        if (result.exitCode !== step.exitCode) throw new Error("The scenario returned an unexpected result. Download it to inspect the inputs.");
+        if (result.exitCode !== step.exitCode) throw new Error("The scenario returned an unexpected result. Select a step to retry.");
         const transcript = result.output.replace(/\x1b\[[0-9;]*m/g, "");
         for (const line of transcript.trimEnd().split("\n")) {
           await wait(reducedMotion.matches ? 1 : 45, signal);

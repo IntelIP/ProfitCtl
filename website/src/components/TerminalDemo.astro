@@ -10,10 +10,10 @@ import { terminalStory } from "../scripts/terminal-story";
 Choose a story step to inspect its result.</code></pre>
       <div class="cli-footer"><span class="cli-state" role="status" aria-live="polite" data-terminal-status>Ready to run</span><span>Real CLI · Fictional inputs</span></div>
     </div>
-    <div class="cli-story"><p class="story-label">One product. Four decisions.</p><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p><a class="scenario-download" href="/demo/baseline.yml" download data-terminal-download>Download this scenario <span aria-hidden="true">↓</span></a></div>
+    <div class="cli-story"><p class="story-label">One product. Four decisions.</p><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p></div>
   </div>
   <p class="cli-caption">The scenarios use made-up rates, not live provider prices. The real ProfitCTL CLI calculates every result on your device. The story repeats automatically; choosing a step holds its result.</p>
-  <noscript><p class="cli-caption">Enable JavaScript to run the demo, or download a scenario and run it with the installed CLI.</p></noscript>
+  <noscript><p class="cli-caption">Enable JavaScript to run the demo, or install ProfitCtl to run your own scenarios.</p></noscript>
 </section>
 <script>
   import { initializeTerminalDemo } from "../scripts/terminal-demo";
@@ -44,7 +44,6 @@ Choose a story step to inspect its result.</code></pre>
   .step-index { font-size: 10px; font-variant-numeric: tabular-nums; }
   .step-arrow { margin-left: auto; }
   .story-detail { min-height: 95px; margin-top: 22px; font-size: 13px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  .scenario-download { display: inline-flex; align-items: center; gap: 15px; min-height: 44px; font-size: 12px; color: var(--green); text-underline-offset: 4px; }
   .cli-caption { max-width: 850px; margin-top: 18px; font-size: 11px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
   @media (max-width: 760px) { .cli-intro, .cli-grid { grid-template-columns: 1fr; gap: 22px; }.cli-intro { margin-bottom: 24px; }.cli-story { padding-top: 6px; }.story-detail { min-height: 0; }pre { height: 340px; padding: 18px; }.terminal-demo { scroll-margin-top: 110px; } }
 </style>
