@@ -9,6 +9,7 @@ export interface Props {
 
 const { title, description, pageType = "product" } = Astro.props;
 const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
+const openPanelClientId = import.meta.env.PUBLIC_OPENPANEL_CLIENT_ID?.trim();
 const canonicalOrigin = Astro.site || Astro.url.origin;
 const canonicalURL = new URL(Astro.url.pathname, canonicalOrigin);
 const imageURL = new URL("/images/profitctl-social-calculator.jpg", canonicalOrigin);
@@ -77,6 +78,33 @@ const schema = pageType === "docs" ? {
         type="application/ld+json"
         set:html={JSON.stringify(siteSchema).replaceAll("<", "\\u003c")}
       />
+    )}
+    {import.meta.env.PROD && openPanelClientId && (
+      <script is:inline data-openpanel-init define:vars={{ openPanelClientId }}>
+        (() => {
+          if (
+            !["profitctl.com", "www.profitctl.com"].includes(location.hostname) ||
+            navigator.doNotTrack === "1" ||
+            navigator.globalPrivacyControl === true ||
+            window.op
+          ) return;
+
+          window.op = function () {
+            (window.op.q = window.op.q || []).push(Array.from(arguments));
+          };
+          window.op("init", {
+            clientId: openPanelClientId,
+            trackScreenViews: true,
+            trackOutgoingLinks: true,
+            trackAttributes: false,
+          });
+
+          const script = document.createElement("script");
+          script.src = "https://openpanel.dev/op1.js";
+          script.async = true;
+          document.head.appendChild(script);
+        })();
+      </script>
     )}
   </head>
   <body>

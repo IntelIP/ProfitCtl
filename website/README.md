@@ -10,6 +10,27 @@ cost calculator, and local documentation at `/docs/`.
   The production origin defaults to `https://profitctl.com`.
   Set it to the actual public origin before deploying elsewhere.
 - Cloudflare Pages: set `GO_VERSION=1.26.8` to match `go.mod`.
+- `PUBLIC_OPENPANEL_CLIENT_ID`: the public ID of the ProfitCtl **write** client.
+  Set it in the Cloudflare Pages production build environment to enable analytics.
+  Leave it unset for development and previews. Never use the MCP read client or
+  put a client secret in a `PUBLIC_*` variable.
+
+## Analytics
+
+The shared layout loads the [official OpenPanel script](https://openpanel.dev/docs/sdks/script)
+asynchronously on `profitctl.com` and `www.profitctl.com`. It records page views
+and outgoing link clicks on the homepage and documentation. It does not identify
+visitors by name or email, or enable custom attribute tracking.
+
+The script stays unloaded on local and preview domains, when the public client
+ID is absent, and when Do Not Track or Global Privacy Control is enabled.
+Browser blockers can also prevent collection. The MCP credentials in Doppler
+are for reading reports and are never included in the website.
+
+Run `bun run test:analytics` for the domain, privacy, and duplicate-load checks.
+These checks also run during the build. Local checks do not prove live event
+receipt; verify a page view in ProfitCtl's OpenPanel project after an approved
+production deployment.
 
 ## Run
 
