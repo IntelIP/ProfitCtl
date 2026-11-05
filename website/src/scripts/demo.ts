@@ -1,3 +1,5 @@
+import { trackCampaignAction } from "./campaign-measurement";
+
 export interface ExampleInputs {
   users: number;
   requests: number;
@@ -45,10 +47,13 @@ export function initializeDemo() {
   };
   const buttons = [...demo.querySelectorAll<HTMLButtonElement>("[data-preset]")];
 
-  function update() {
+  let previousInputs = JSON.stringify({ users: users.valueAsNumber, requests: requests.valueAsNumber, price: price.valueAsNumber });
+  function update(userInitiated = false) {
     try {
       const inputs = { users: users.valueAsNumber, requests: requests.valueAsNumber, price: price.valueAsNumber };
       const result = calculateExample(inputs);
+      const changed = JSON.stringify(inputs) !== previousInputs;
+      if (userInitiated && changed) trackCampaignAction("demo_started");
       setText("#users-value", inputs.users.toLocaleString("en-US"));
       setText("#requests-value", inputs.requests.toLocaleString("en-US"));
       setText("#price-value", money(inputs.price));
@@ -68,22 +73,24 @@ export function initializeDemo() {
         ? `Research adds ${money(result.addedCost)} per month. The modeled margin stays above 60%.`
         : `At this usage, a price of ${money(result.minimumPrice, 2)} per user would meet the 60% target.`);
       setText("[data-demo-error]", "");
+      if (userInitiated && changed) trackCampaignAction("comparison_completed");
+      previousInputs = JSON.stringify(inputs);
     } catch {
       setText("[data-demo-error]", "Choose valid users, usage, and price values to compare the scenarios.");
     }
   }
 
-  buttons.forEach((button) => button.addEventListener("click", () => {
+  buttons.forEach((button) => button.addEventListener("click", (event) => {
     const preset = presets[button.dataset.preset!];
     users.value = String(preset.users);
     requests.value = String(preset.requests);
     price.value = String(preset.price);
     buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
-    update();
+    update(event.isTrusted);
   }));
-  [users, requests, price].forEach((input) => input.addEventListener("input", () => {
+  [users, requests, price].forEach((input) => input.addEventListener("input", (event) => {
     buttons.forEach((button) => button.setAttribute("aria-pressed", "false"));
-    update();
+    update(event.isTrusted);
   }));
 
   const copyButton = document.querySelector<HTMLButtonElement>("[data-copy-command]");

@@ -108,6 +108,10 @@ const schema = pageType === "docs" ? {
     )}
   </head>
   <body>
+    <script>
+      import { initializeCampaignMeasurement } from "../scripts/campaign-measurement";
+      initializeCampaignMeasurement();
+    </script>
     <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
       <div class="site-shell site-header-inner">
