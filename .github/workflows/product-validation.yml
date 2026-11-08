@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           repository: IntelIP/Tabellio
           ref: 3440575b59178dd0ae902e6363211f459bb7248b
