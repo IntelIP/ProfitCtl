@@ -4,7 +4,6 @@
 
 - [Product Development Roadmap](ROADMAP.md)
 - [Versioned Sprint Plan and Backlog](SPRINT_PLAN.md)
-- [Verified AgentShift Sprint Backlog](AGENTSHIFT_SPRINT_BACKLOG.md)
 - [Install Guide](INSTALL.md)
 - [Quick Start](QUICK_START.md)
 - [How It Works](HOW_IT_WORKS.md)
