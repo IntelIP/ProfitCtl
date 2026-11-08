@@ -2,6 +2,8 @@
 
 ## Product Docs
 
+- [Product Development Roadmap](ROADMAP.md)
+- [Versioned Sprint Plan and Backlog](SPRINT_PLAN.md)
 - [Install Guide](INSTALL.md)
 - [Quick Start](QUICK_START.md)
 - [How It Works](HOW_IT_WORKS.md)

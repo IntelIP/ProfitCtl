@@ -1,4 +1,5 @@
 import { terminalStory } from "./terminal-story";
+import { trackCampaignAction } from "./campaign-measurement";
 
 export function initializeTerminalDemo() {
   const root = document.querySelector<HTMLElement>("[data-terminal-demo]");
@@ -56,7 +57,7 @@ export function initializeTerminalDemo() {
       worker!.postMessage(index);
     });
   }
-  async function run(first: number, signal: AbortSignal, singleStep: boolean) {
+  async function run(first: number, signal: AbortSignal, singleStep: boolean, userInitiated: boolean) {
     let index = first;
     let cycles = 0;
     try {
@@ -82,6 +83,7 @@ export function initializeTerminalDemo() {
         const marginFailed = step.args[0] === "simulate" && result.exitCode === 1;
         root!.dataset.state = marginFailed ? "risk" : "pass";
         status.textContent = marginFailed ? "Margin target failed" : step.args[0] === "compare" ? "Comparison complete" : "Command complete";
+        if (userInitiated && step.args[0] === "compare") trackCampaignAction("example_comparison_completed");
         if (singleStep || reducedMotion.matches) { completed = true; controller = undefined; update(); return; }
         await wait(index === 3 ? 8000 : 5500, signal);
         index++;
@@ -100,7 +102,7 @@ export function initializeTerminalDemo() {
       update();
     }
   }
-  function launch(index: number, singleStep: boolean) {
+  function launch(index: number, singleStep: boolean, userInitiated = false) {
     controller?.abort();
     controller = new AbortController();
     completed = false;
@@ -108,9 +110,10 @@ export function initializeTerminalDemo() {
     visible = true;
     root!.dataset.cycles = "0";
     update();
-    void run(index, controller.signal, singleStep);
+    if (userInitiated) trackCampaignAction("demo_started");
+    void run(index, controller.signal, singleStep, userInitiated);
   }
-  steps.forEach((button, index) => button.addEventListener("click", () => launch(index, true)));
+  steps.forEach((button, index) => button.addEventListener("click", (event) => launch(index, true, event.isTrusted)));
   const observer = new IntersectionObserver(([entry]) => {
     visible = Boolean(entry?.isIntersecting);
     update();
