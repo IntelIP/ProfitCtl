@@ -59,6 +59,7 @@ You will see revenue, recurring revenue, fees, booked and operating margins, cos
 | --- | --- |
 | Local CLI | [`simulate`, `compare`, and `validate`](./docs/QUICK_START.md) |
 | Codex and Claude Code | [Calculate, save, and revisit an economic decision](./docs/economic-decisions.md) |
+| Standalone ProfitCtl agent | [Start an investigation in Codex and resume it in Claude](./docs/standalone-investigations.md) |
 | CI checks | [Cost model standards](./docs/cost-model-standards.md) |
 | Scenario examples | [Benchmark scenarios](./benchmark_scenarios/README.md) |
 

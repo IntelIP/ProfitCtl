@@ -27,6 +27,7 @@ jobs:
         with: {node-version: 22}
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - uses: astral-sh/setup-uv@v7
       - name: Validate exact candidate
         run: |
           set -o pipefail

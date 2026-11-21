@@ -1,0 +1,51 @@
+{
+  "project": "Condere research-depth tutorial",
+  "question": "Should every assessment use deeper research?",
+  "workload": "Illustrative Condere research assessments with a matched acceptance rule.",
+  "source_revision": "Public ProfitCtl accepted-outcomes fixture v1",
+  "window": "Ten illustrative attempts per alternative",
+  "alternatives": [
+    {
+      "name": "Selective research",
+      "cost": "USD 42 for ten illustrative attempts including review. Six accepted gives USD 7 per accepted outcome.",
+      "quality": "Reviewer accepts the sourced recommendation without rework."
+    },
+    {
+      "name": "Research every request",
+      "cost": "USD 56 for ten illustrative attempts. Candidate acceptance remains unknown.",
+      "quality": "Apply the same reviewer rule and include effort spent correcting the result."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "assumed",
+      "source": "Public tutorial cohort",
+      "finding": "The baseline includes six accepted assessments. All counts are illustrative."
+    },
+    {
+      "kind": "modeled",
+      "source": "Public tutorial cost inputs",
+      "finding": "Delivery and review costs are modeled for both options."
+    }
+  ],
+  "recommendation": "Keep selective research as the comparison baseline. The proposed alternative needs eight accepted outcomes per ten attempts to match its modeled unit cost.",
+  "reversal_condition": "Reassess after measuring comparable founder acceptance, net charges, and review effort.",
+  "missing": [
+    "Founder acceptance on the candidate cohort, effective net charges, and measured review time."
+  ],
+  "calculations": [
+    {
+      "args": [
+        "system",
+        "outcomes",
+        "examples/system/accepted-outcomes.json"
+      ],
+      "inputs": [
+        {
+          "path": "examples/system/accepted-outcomes.json",
+          "sha256": "507cee79a901f3d7cef58c87ab62e397b05ee65d8e19a21b67b6bf9364afbcff"
+        }
+      ]
+    }
+  ]
+}

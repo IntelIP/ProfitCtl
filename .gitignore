@@ -43,6 +43,7 @@ Thumbs.db
 *.log
 .artifacts/
 .profitctl/decisions/
+.profitctl/investigations/
 __pycache__/
 
 # Build artifacts
