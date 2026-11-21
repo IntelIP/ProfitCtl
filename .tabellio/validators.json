@@ -26,7 +26,7 @@
       ],
       "metrics": [{"name": "cli_simulation_workflows_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
       "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
-      "summary": "CLI, MCP, and offline Deep Agents investigation workflows with restart and conditional decision publication"
+      "summary": "CLI, MCP and offline Deep Agents workflows covering restart, conditional decision publication, scoped design hooks and local service recovery"
     },
     "operational": {
       "commands": [
