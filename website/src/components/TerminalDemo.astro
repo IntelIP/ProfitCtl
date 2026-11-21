@@ -22,21 +22,21 @@ Choose a story step to inspect its result.</code></pre>
   initializeTerminalDemo();
 </script>
 <style>
-  .terminal-demo { margin: 0 clamp(5px,.65vw,12px); padding-block: clamp(56px,6vw,96px); border-radius: 14px; background: #163c31; color: #f0f6ee; scroll-margin-top: 85px; }
+  .terminal-demo { margin: 0 clamp(5px,.65vw,12px); padding-block: clamp(56px,6vw,96px); border-radius: 14px; background: light-dark(#163c31, #172f24); color: light-dark(#f0f6ee, #f0f8ec); scroll-margin-top: 85px; }
   .cli-intro { max-width: 800px; margin-bottom: clamp(28px,3.5vw,54px); }
   .eyebrow, .story-label { color: #c9ef99; font-size: 14px; font-weight: 600; line-height: 1.5; }
   h2 { margin-top: 15px; font-size: clamp(36px,5.4vw,79px); line-height: 1.01; font-weight: 550; letter-spacing: -.026em; word-spacing: .04em; text-wrap: balance; }
   .cli-intro > p { max-width: 60ch; margin-top: 19px; color: #d1dfd3; font-size: 17px; line-height: 1.55; text-wrap: pretty; }
   .cli-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(250px,.8fr); gap: clamp(28px,6vw,94px); align-items: start; }
-  .cli-window { min-width: 0; overflow: hidden; border: 1px solid #688276; border-radius: 5px; background: #102c24; color: #f2f8ed; }
+  .cli-window { min-width: 0; overflow: hidden; border: 1px solid #688276; border-radius: 5px; background: var(--terminal-surface); color: #f2f8ed; }
   .cli-toolbar, .cli-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; color: #ceded0; font-size: 13px; }
-  .cli-toolbar { border-bottom: 1px solid #4b6859; }
+  .cli-toolbar { border-bottom: 1px solid var(--terminal-rule); }
   .cli-toolbar > span { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; }
   .cli-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: #c5ed8c; }
   pre { height: 340px; margin: 0; padding: 20px; overflow: auto; font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.75; tab-size: 4; }
-  .cli-command { display: block; margin-bottom: 18px; color: #cbf397; }
-  .cli-footer { border-top: 1px solid #4b6859; }
-  .cli-state { color: #cbf397; }
+  .cli-command { display: block; margin-bottom: 18px; color: var(--terminal-accent); }
+  .cli-footer { border-top: 1px solid var(--terminal-rule); }
+  .cli-state { color: var(--terminal-accent); }
   [data-state=risk] .cli-state, [data-state=error] .cli-state { color: #ffc9aa; }
   .story-label { margin-bottom: 15px; }
   ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid #648072; }

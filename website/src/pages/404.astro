@@ -1,0 +1,16 @@
+---
+import ProductLayout from "../layouts/ProductLayout.astro";
+---
+<ProductLayout title="Page missing | ProfitCtl" description="Return to the ProfitCtl homepage, explore the agent preview or open the documentation." pageType="error">
+  <section class="site-shell missing">
+    <p>404</p>
+    <h1>Page not found.</h1>
+    <a href="/">Return to ProfitCtl</a>
+  </section>
+</ProductLayout>
+<style>
+  .missing { padding-block: clamp(60px, 12vw, 150px); }
+  p { color: var(--green); font-variant-numeric: tabular-nums; }
+  h1 { margin-block: 14px 24px; font-size: clamp(40px, 7vw, 84px); line-height: 1; letter-spacing: -.05em; }
+  a { display: inline-flex; align-items: center; min-height: 44px; color: var(--green); text-underline-offset: 4px; }
+</style>

@@ -27,22 +27,26 @@ const targetContour = Array.from({ length: 25 }, (_, index) => {
 });
 const targetEnd = targetContour[targetContour.length - 1]!;
 const lattice = Array.from({ length: 31 }, (_, index) => maxRequests * index / 30);
-const inks = ["#103f35", "#205c47", "#33784f", "#55934c", "#7dab58"];
+const inks = [
+  "light-dark(#103f35, #09271f)", "light-dark(#205c47, #164d3b)",
+  "light-dark(#33784f, #227459)", "light-dark(#55934c, #419566)",
+  "light-dark(#7dab58, #75b77b)",
+];
 ---
 
 <figure class="margin-figure" aria-label="Gross margin by monthly request volume and research mix">
   <svg viewBox="0 0 1200 326" preserveAspectRatio="none" aria-hidden="true" focusable="false">
     <defs>
       <linearGradient id="margin-surface" x1="4%" y1="30%" x2="98%" y2="70%">
-        <stop offset="0" stop-color="#ffffb0" /><stop offset=".31" stop-color="#d2f78a" />
-        <stop offset=".64" stop-color="#8ad888" /><stop offset="1" stop-color="#328e76" />
+        <stop offset="0" stop-color="light-dark(#ffffb0, #dfff9b)" /><stop offset=".31" stop-color="light-dark(#d2f78a, #9de4a0)" />
+        <stop offset=".64" stop-color="light-dark(#8ad888, #58b89b)" /><stop offset="1" stop-color="light-dark(#328e76, #327c71)" />
       </linearGradient>
     </defs>
-    <polygon points={face} transform="translate(13 39)" fill="#173d2d" opacity=".12" />
+    <polygon points={face} transform="translate(13 39)" fill="light-dark(#173d2d1f, #031810a0)" />
     {inks.map((fill, index) => (
-      <polygon points={face} transform={`translate(0 ${(inks.length - index) * 4.6})`} fill={fill} stroke="#193e30" stroke-width="1"/>
+      <polygon points={face} transform={`translate(0 ${(inks.length - index) * 4.6})`} fill={fill} stroke="light-dark(#193e30, #0a281e)" stroke-width="1"/>
     ))}
-    <polygon points={face} fill="url(#margin-surface)" stroke="#194b36" stroke-width="1.6"/>
+    <polygon points={face} fill="url(#margin-surface)" stroke="light-dark(#194b36, #689d7e)" stroke-width="1.6"/>
     {Array.from({ length: 30 }, (_, i) => (i + 1) / 31).map(share => (
       <line x1={point(0, share)[0]} y1={point(0, share)[1]} x2={point(maxRequests, share)[0]} y2={point(maxRequests, share)[1]} class="lattice" />
     ))}
@@ -79,15 +83,15 @@ const inks = ["#103f35", "#205c47", "#33784f", "#55934c", "#7dab58"];
   .margin-figure { --plot-height: clamp(210px, 23vw, 330px); position: relative; width: min(1280px, 100%); margin: 0 auto; isolation: isolate; }
   svg { display: block; width: 100%; height: var(--plot-height); overflow: visible; }
   svg line, svg polyline { fill: none; vector-effect: non-scaling-stroke; }
-  .lattice { stroke: #275f45; stroke-width: .85; opacity: .65; }
-  .rib { stroke: #214d3d; stroke-width: .85; opacity: .68; }
-  .target-halo { stroke: #d9ffad; stroke-width: 3; }
-  .target { stroke: #214b38; stroke-width: 1.5; stroke-dasharray: 5 4; }
-  .leader { stroke: #32573a; stroke-width: 1; }
-  .slice-halo { stroke: #e6ffac; stroke-width: 5; }
-  .slice { stroke: #123e30; stroke-width: 2; }
-  .pin { fill: #fff9c9; stroke: #123e30; stroke-width: 2; }
-  figcaption { color: #223f29; font-size: 14px; line-height: 1.2; }
+  .lattice { stroke: light-dark(#275f45, #1e5e4a); stroke-width: .85; opacity: .65; }
+  .rib { stroke: light-dark(#214d3d, #154e41); stroke-width: .85; opacity: .68; }
+  .target-halo { stroke: light-dark(#d9ffad, #ddffc6); stroke-width: 3; }
+  .target { stroke: light-dark(#214b38, #143f31); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .leader { stroke: light-dark(#32573a, #a1caa6); stroke-width: 1; }
+  .slice-halo { stroke: light-dark(#e6ffac, #edffac); stroke-width: 5; }
+  .slice { stroke: light-dark(#123e30, #0c3227); stroke-width: 2; }
+  .pin { fill: light-dark(#fff9c9, #f1ffb0); stroke: light-dark(#123e30, #0c3227); stroke-width: 2; }
+  figcaption { color: var(--hero-caption); font-size: 14px; line-height: 1.2; }
   .reading { position: absolute; z-index: 1; padding: 2px 4px; background: var(--hero-field); font-weight: 500; white-space: nowrap; }
   .reading strong, .range strong { font-weight: 600; font-variant-numeric: tabular-nums; }
   .rear { transform: translate(-50%, -100%); }

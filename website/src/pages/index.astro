@@ -20,6 +20,17 @@ const steps = [
 <ProductLayout title="ProfitCTL | Open-Source AI Cost Modeling & Margin Planning" description="Model AI and infrastructure costs, compare product scenarios, and check profit margins before you ship. Try ProfitCTL's interactive example and local CLI.">
   <DecisionHero />
 
+  <section class="site-shell agent-feature" aria-labelledby="agent-feature-title">
+    <div>
+      <p class="agent-label">ProfitCtl Agent · Source preview</p>
+      <h2 id="agent-feature-title">A cost decision you can reopen.</h2>
+    </div>
+    <div>
+      <p>Condere’s deeper research costs more per assessment. Does it produce enough accepted results to pay for itself? Start with the baseline in Codex and answer the open question in Claude Code.</p>
+      <a href="/agent/#case">Replay the investigation <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
   <section class="site-shell calculator-section" id="calculator" data-reveal>
     <details class="calculator-disclosure"><summary>Explore the cost calculator <span aria-hidden="true">+</span></summary>
     <div class="calculator-intro"><h2>Try your own assumptions.</h2><p>Change the price, user count or requests. Both views use the same illustrative rates.</p></div>
@@ -104,6 +115,12 @@ const steps = [
 </ProductLayout>
 
 <style>
+  .agent-feature { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: clamp(24px, 6vw, 96px); padding-block: clamp(32px, 5vw, 68px); border-top: 1px solid var(--line); }
+  .agent-label { color: var(--green); font-size: 14px; font-weight: 600; }
+  .agent-feature h2 { max-width: 16ch; margin-top: 11px; font-size: clamp(33px, 3.6vw, 52px); font-weight: 550; line-height: 1.05; letter-spacing: -.045em; }
+  .agent-feature > div + div p { max-width: 49ch; color: var(--muted); font-size: 17px; line-height: 1.55; }
+  .agent-feature a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 6px; color: var(--green); font-weight: 600; text-underline-offset: 4px; }
+  @media (max-width: 700px) { .agent-feature { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
   .eyebrow { margin: 0; color: var(--green); font-size: 14px; font-weight: 600; line-height: 1.5; }
   .status-dot { display: inline-block; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
   .primary-action { display: inline-flex; align-items: center; gap: 32px; min-height: 50px; margin-top: 28px; padding: 0 22px; border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 14px; text-decoration: none; transition: transform .2s, box-shadow .2s; }
@@ -154,12 +171,12 @@ const steps = [
   .start-section { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(32px,7vw,105px); align-items: center; padding-block: clamp(70px,9vw,148px); }
   .start-copy > p:not(.eyebrow) { margin-top: 18px; color: var(--muted); font-size: 16px; line-height: 1.55; }
   .start-copy > p:last-child { font-size: 14px; }
-  .terminal { min-width: 0; overflow: hidden; border-radius: 5px; border: 1px solid #3e6351; background: #102c24; color: #eef6ed; }
+  .terminal { min-width: 0; overflow: hidden; border-radius: 5px; border: 1px solid #3e6351; background: var(--terminal-surface); color: #eef6ed; }
   .terminal-header, .terminal-footer { display: flex; align-items: center; gap: 8px; padding: 10px 17px; color: #c8d9cc; font-size: 13px; line-height: 1.5; }
-  .terminal-header { justify-content: space-between; flex-wrap: wrap; border-bottom: 1px solid #4b6859; }
+  .terminal-header { justify-content: space-between; flex-wrap: wrap; border-bottom: 1px solid var(--terminal-rule); }
   .terminal-header button { min-height: 44px; padding: 6px 12px; border: 1px solid #698574; border-radius: 5px; background: #244337; color: #f0f6ee; font-size: 14px; }
   .terminal pre { margin: 0; padding: 22px 17px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .terminal-footer { padding-block: 14px; border-top: 1px solid #4b6859; }
+  .terminal-footer { padding-block: 14px; border-top: 1px solid var(--terminal-rule); }
   .terminal-footer .status-dot { background: #c5ed8c; }
   @keyframes arrive { from { transform: translateY(14px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
   .is-visible { animation: arrive .7s ease-out both; }

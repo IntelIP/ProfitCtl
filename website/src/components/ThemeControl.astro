@@ -1,0 +1,19 @@
+<label class="theme-control" data-theme-control hidden>
+  <span>Theme</span>
+  <select aria-label="Color theme">
+    <option value="system">System</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
+</label>
+
+<style>
+  .theme-control { display: inline-flex; align-items: center; flex: none; gap: 6px; margin-inline-start: auto; color: var(--muted); font-size: 14px; line-height: 1.25; }
+  .theme-control[hidden] { display: none; }
+  .theme-control select { min-height: 44px; padding: 0 4px; border: 0; border-radius: 4px; color: var(--ink); background: var(--page); cursor: pointer; }
+  @media (min-width: 371px) and (max-width: 700px) {
+    .theme-control { position: relative; display: grid; place-items: center; width: 47px; min-height: 44px; color: var(--ink); }
+    .theme-control select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+    .theme-control:focus-within { border-radius: 4px; outline: 3px solid var(--green); }
+  }
+</style>

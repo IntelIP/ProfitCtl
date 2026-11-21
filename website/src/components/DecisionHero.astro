@@ -12,7 +12,10 @@ const cases = volumes.map(requests => ({ requests, ...calculateExample({ users, 
     <div class="hero-copy">
       <h1 id="decision-hero-title">What does growth cost?</h1>
       <p>Test how AI usage, infrastructure and pricing change your margin. Run the numbers locally with ProfitCtl before you ship.</p>
-      <a class="hero-cta" href="#demo">Try the CLI demo <span aria-hidden="true">↘</span></a>
+      <div class="hero-actions">
+        <a class="hero-cta" href="/agent/#self-host">Self-host the agent <span aria-hidden="true">→</span></a>
+        <a class="agent-link" href="#demo">Try the CLI demo <span aria-hidden="true">↘</span></a>
+      </div>
     </div>
     <MarginFigure {price} {users} {volumes} />
   </div>
@@ -49,19 +52,26 @@ const cases = volumes.map(requests => ({ requests, ...calculateExample({ users, 
 
 <style>
   .hero-field {
-    --hero-field: #c4f77a;
+    --hero-field: light-dark(#c4f77a, #103429);
+    --hero-ink: light-dark(#122f23, #effadf);
+    --hero-caption: light-dark(#223f29, #c9e8c7);
+    --hero-button: light-dark(#183c2f, #c4f77a);
+    --hero-button-text: light-dark(#f5ffeb, #102b20);
     margin: 0 clamp(5px, .65vw, 12px);
     overflow: hidden;
     border-radius: 15px;
     background: var(--hero-field);
-    color: #122f23;
+    color: var(--hero-ink);
   }
   .hero-copy { padding: clamp(52px, 6.1vw, 100px) 22px 18px; text-align: center; }
   h1 { margin-inline: auto; font-size: clamp(58px, 7.2vw, 116px); line-height: .99; font-weight: 600; letter-spacing: -.026em; word-spacing: .065em; text-wrap: balance; }
   .hero-copy > p { max-width: 51ch; margin: 27px auto 0; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.45; letter-spacing: -.023em; text-wrap: pretty; }
-  .hero-cta { display: inline-flex; align-items: center; justify-content: center; gap: 22px; min-height: 48px; margin-top: 26px; padding: 0 21px; border-radius: 999px; color: #f5ffeb; background: #183c2f; font-size: 15px; font-weight: 600; text-decoration: none; }
-  .hero-cta:hover { background: #295c45; }
-  .hero-cta:focus-visible { outline-color: #173c2e; }
+  .hero-cta { display: inline-flex; align-items: center; justify-content: center; gap: 22px; min-height: 48px; margin-top: 26px; padding: 0 21px; border-radius: 999px; color: var(--hero-button-text); background: var(--hero-button); font-size: 15px; font-weight: 600; text-decoration: none; }
+  .hero-cta:hover { background: light-dark(#295c45, #d9ffad); }
+  .hero-cta:focus-visible { outline-color: var(--hero-ink); }
+  .hero-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 22px; margin-top: 26px; }
+  .hero-actions .hero-cta { margin-top: 0; }
+  .agent-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 15px; font-weight: 600; text-underline-offset: 4px; }
   .hero-field > :global(figure) { margin-top: 5px; }
   .decision-hero :global(.active-slice.alternate), .comparison.alternate { display: none; }
   .decision-hero:has(.alternate-load:checked) :global(.active-slice), .decision-hero:has(.alternate-load:checked) .comparison { display: none; }
