@@ -14,7 +14,7 @@ ProfitCtl ships a release-based install script for macOS and Linux. The script d
 For v0.4 evaluators on macOS, use the release archive or installer below. ProfitCtl currently provides no supported Homebrew tap.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.4.0-rc.1 bash
 ```
 
 The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$HOME/.codex}/skills/profitctl-cost-aware`. If the binary directory is not on your `PATH`, the installed skill uses its bundled platform binary.
