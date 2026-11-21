@@ -3,7 +3,7 @@
   "name": "condere-queue",
   "question": "When does it pay to split the Condere assessment worker into a preparation stage and a queued finalizer?",
   "workload": "A Condere assessment attempt starts once and produces one handoff to finalization in the split design. Bursts can occur while an analyst batch is submitted.",
-  "cost_scope": "USD of active worker compute at 2 vCPU / 2 GiB and durable queue fees. Excludes shared databases, model inference, storage, network, reviewer labor and migration. Reopen if any excluded cost differs between options.",
+  "cost_scope": "USD of Google Cloud Run Jobs in us-central1 at 2 vCPU and 2 GiB per worker, plus modeled durable queue fees. Compute uses default on-demand marginal rates after the shared billing-account allowance is exhausted and assumes no discounts. Excludes shared databases, model inference, storage, network, reviewer labor and migration. Reopen if any excluded cost differs between options.",
   "volume_driver": "attempts",
   "volume_unit": "attempt",
   "expected_monthly": {"value": 200, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/typical-volume", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Planning scenario of 200 attempts/month. Count admissions, including failed attempts, before adopting."}},
@@ -58,15 +58,15 @@
     "services": [
       {
         "id": "single",
-        "provider": "Modeled container runtime",
+        "provider": "Google Cloud Run Jobs (us-central1)",
         "role": "One worker holds the assessment until finalization.",
-        "evidence": ["condere-queue/active-worker-profile"],
+        "evidence": ["condere-queue/active-worker-profile", "https://cloud.google.com/run/pricing"],
         "costs": [
           {
             "id": "active-compute",
             "driver": "single-seconds",
             "unit": "second",
-            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "derived", "source": {"type": "provider_catalog", "artifact_identity": "Google Cloud Run Jobs/us-central1/default USD 7754-699E-0EBF", "url": "https://cloud.google.com/run/pricing", "captured_at": "2026-11-21", "refresh_owner": "ProfitCtl design owner", "refresh_cadence": "Monthly and before a capacity decision", "stale_after": "2026-12-21"}, "confidence": "medium", "confidence_rationale": "Default us-central1 Jobs list pricing combines 2 vCPU × $0.000018/vCPU-second plus 2 GiB × $0.000002/GiB-second. Marginal use after the shared allowance, with no discounts. Effective cost requires a scoped invoice."}}
           }
         ]
       }
@@ -118,15 +118,15 @@
     "services": [
       {
         "id": "prepare",
-        "provider": "Modeled container runtime",
+        "provider": "Google Cloud Run Jobs (us-central1)",
         "role": "Extract a bounded assessment payload, persist it, and enqueue its reference.",
-        "evidence": ["condere-queue/active-worker-profile"],
+        "evidence": ["condere-queue/active-worker-profile", "https://cloud.google.com/run/pricing"],
         "costs": [
           {
             "id": "active-compute",
             "driver": "prepare-seconds",
             "unit": "second",
-            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "derived", "source": {"type": "provider_catalog", "artifact_identity": "Google Cloud Run Jobs/us-central1/default USD 7754-699E-0EBF", "url": "https://cloud.google.com/run/pricing", "captured_at": "2026-11-21", "refresh_owner": "ProfitCtl design owner", "refresh_cadence": "Monthly and before a capacity decision", "stale_after": "2026-12-21"}, "confidence": "medium", "confidence_rationale": "Default us-central1 Jobs list pricing combines 2 vCPU × $0.000018/vCPU-second plus 2 GiB × $0.000002/GiB-second. Marginal use after the shared allowance, with no discounts. Effective cost requires a scoped invoice."}}
           }
         ],
         "depends_on": ["queue"]
@@ -153,15 +153,15 @@
       },
       {
         "id": "finalize",
-        "provider": "Modeled container runtime",
+        "provider": "Google Cloud Run Jobs (us-central1)",
         "role": "Load the assessment reference, complete finalization, persist and acknowledge the result.",
-        "evidence": ["condere-queue/active-worker-profile"],
+        "evidence": ["condere-queue/active-worker-profile", "https://cloud.google.com/run/pricing"],
         "costs": [
           {
             "id": "active-compute",
             "driver": "finalize-seconds",
             "unit": "second",
-            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "derived", "source": {"type": "provider_catalog", "artifact_identity": "Google Cloud Run Jobs/us-central1/default USD 7754-699E-0EBF", "url": "https://cloud.google.com/run/pricing", "captured_at": "2026-11-21", "refresh_owner": "ProfitCtl design owner", "refresh_cadence": "Monthly and before a capacity decision", "stale_after": "2026-12-21"}, "confidence": "medium", "confidence_rationale": "Default us-central1 Jobs list pricing combines 2 vCPU × $0.000018/vCPU-second plus 2 GiB × $0.000002/GiB-second. Marginal use after the shared allowance, with no discounts. Effective cost requires a scoped invoice."}}
           }
         ],
         "depends_on": ["queue"]

@@ -344,17 +344,29 @@ func designSummary(r DesignReport) string {
 	}
 	parts = append(parts, fmt.Sprintf("The %s-hour peak brings %s arrivals and adds %s versus %s, excluding monthly floors.", quantity(r.Peak.Duration), quantity(r.Peak.Volume), money(r.Peak.Baseline, 3), money(r.Peak.Proposed, 3)))
 	cross := func(c Crossover) string {
+		result := c.Interpretation
 		if c.Status == "crosses" {
-			return fmt.Sprintf("The cost curves meet at %.2f per month", *c.Volume)
+			result = fmt.Sprintf("Break-even is %.2f per month", *c.Volume)
 		}
-		return c.Interpretation
+		if c.FirstCheaper != nil {
+			result += fmt.Sprintf(". The first whole monthly volume favoring the proposed design is %.0f", *c.FirstCheaper)
+		}
+		return result + "."
 	}
-	parts = append(parts, cross(r.BreakEven)+".", r.Sensitivity.Description+".", cross(r.Sensitivity.BreakEven)+" under that assumption.")
+	parts = append(parts, cross(r.BreakEven), r.Sensitivity.Description+".", cross(r.Sensitivity.BreakEven))
 	if high := r.Sensitivity.High; high != nil && r.High.Delta != nil && high.Delta != nil && ((*high.Delta < 0 && *r.High.Delta > 0) || (*high.Delta > 0 && *r.High.Delta < 0)) {
 		parts = append(parts, fmt.Sprintf("The high-volume choice reverses at %s versus %s.", money(high.Baseline, 2), money(high.Proposed, 2)))
 	}
-	if r.Peak.Capacity == "over_capacity" || r.Sensitivity.Peak.Capacity == "over_capacity" {
-		parts = append(parts, "The peak exceeds declared worker capacity in at least one scenario.")
+	for _, scenario := range []struct {
+		label string
+		peak  PeakReport
+	}{{"base case", r.Peak}, {"sensitivity case", r.Sensitivity.Peak}} {
+		for _, pool := range scenario.peak.Occupancy {
+			if pool.Status == "over_capacity" {
+				parts = append(parts, fmt.Sprintf("In the %s, the %s pool %s needs %g average slots with %g available.", scenario.label, pool.Option, pool.BusySeconds, *pool.Required, *pool.Slots))
+				break
+			}
+		}
 	}
 	return strings.Join(parts, " ")
 }

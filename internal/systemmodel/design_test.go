@@ -51,6 +51,13 @@ func TestDesignCondereDecision(t *testing.T) {
 	require.Equal(t, "over_capacity", r.Sensitivity.BreakEven.PeakCapacity)
 	require.Equal(t, 11.0, *r.Sensitivity.Peak.Occupancy[2].Required)
 	require.Contains(t, r.Summary, "$89.00")
+	require.Contains(t, r.Summary, "1120")
+	require.Contains(t, r.Summary, "3948")
+	require.Contains(t, r.Summary, "11 average slots with 10 available")
+	compute := r.Assumptions["baseline.price.single/active-compute"].Evidence
+	require.Equal(t, "provider_catalog", string(compute.Source.Type))
+	require.Equal(t, "https://cloud.google.com/run/pricing", compute.Source.URL)
+	require.Equal(t, "synthetic", string(r.Assumptions["proposed.price.queue/subscription"].Evidence.Measurement))
 	require.Contains(t, r.Summary, "monthly floors")
 	require.Contains(t, r.Conditions.Confidentiality, "opaque assessment reference")
 	require.Equal(t, d.Peak.Arrivals, r.Assumptions["peak.arrivals_per_hour"])
