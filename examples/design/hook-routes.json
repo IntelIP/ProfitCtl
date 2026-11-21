@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "routes": [
+    {
+      "profile": "condere-queue",
+      "project": "Condere",
+      "roots": ["/absolute/path/to/your/Condere/checkout"],
+      "infer_project": true,
+      "workloads": ["report assembly", "assemble reports", "assembling reports"],
+      "topics": ["queue", "queues", "message broker"]
+    }
+  ]
+}
