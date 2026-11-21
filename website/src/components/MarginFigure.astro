@@ -1,0 +1,52 @@
+---
+import { exampleMarginTarget, percent } from "../scripts/demo";
+
+interface Props {
+  basicMargin: number;
+  researchMargin: number;
+}
+
+const { basicMargin, researchMargin } = Astro.props;
+const rows = [
+  { label: "Basic answers", margin: basicMargin },
+  { label: "With research", margin: researchMargin },
+];
+---
+
+<figure class="margin-figure" style={`--target: ${exampleMarginTarget}%`}>
+  <figcaption>Gross margin <span>Revenue left after costs</span></figcaption>
+  <ul>
+    {rows.map(({ label, margin }) => (
+      <li>
+        <div class="row-label"><span>{label}</span><strong>{percent(margin)}</strong></div>
+        <div class="track" aria-hidden="true">
+          <div class="fill" style={{ width: `${margin}%` }}></div>
+          <div class="target-mark"></div>
+        </div>
+      </li>
+    ))}
+  </ul>
+  <div class="axis"><span>0%</span><span class="target-label">{exampleMarginTarget}% target</span><span>100%</span></div>
+</figure>
+
+<style>
+  .margin-figure { --rail: light-dark(#dce1da, #262d37); margin: 0; }
+  figcaption { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 3px 12px; font-size: 17px; font-weight: 600; }
+  figcaption span { color: var(--muted); font-size: 13px; font-weight: 400; }
+  ul { display: grid; gap: 17px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .row-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: 15px; }
+  .row-label strong { font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .track { position: relative; height: 12px; border-radius: 2px; background: var(--rail); }
+  .fill { height: 100%; border-radius: inherit; background: light-dark(#53695a, #a2afbf); }
+  li + li .fill { background: var(--accent-ink); }
+  .target-mark { position: absolute; inset-block: -4px; left: var(--target); width: 4px; transform: translateX(-50%); background: var(--case-panel); }
+  .target-mark::after { content: ""; position: absolute; inset-block: 0; left: 1px; border-left: 2px dashed var(--ink); }
+  .axis { position: relative; display: flex; justify-content: space-between; margin-top: 9px; color: var(--muted); font-size: 13px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+  .target-label { position: absolute; left: var(--target); transform: translateX(-50%); color: var(--ink); font-weight: 550; white-space: nowrap; }
+  @media (forced-colors: active) {
+    .track { outline: 1px solid CanvasText; }
+    .fill, li + li .fill { background: CanvasText; forced-color-adjust: none; }
+    .target-mark { background: Canvas; forced-color-adjust: none; }
+    .target-mark::after { border-color: CanvasText; }
+  }
+</style>

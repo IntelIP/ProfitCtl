@@ -1,0 +1,127 @@
+---
+import MarginFigure from "./MarginFigure.astro";
+import { calculateExample, exampleMarginTarget, money } from "../scripts/demo";
+
+const users = 1000;
+const price = 20;
+const volumes = [60, 120];
+const cases = volumes.map(requests => ({ requests, ...calculateExample({ users, price, requests }) }));
+---
+<section class="decision-hero" aria-labelledby="decision-hero-title">
+  <div class="hero-field">
+    <div class="hero-copy">
+      <h1 id="decision-hero-title">What does growth cost?</h1>
+      <p>Test how AI usage, infrastructure and pricing change your margin. Run the numbers locally with ProfitCtl before you ship.</p>
+      <div class="hero-actions">
+        <a class="hero-cta" href="/agent/#self-host">Self-host the agent <span aria-hidden="true">→</span></a>
+        <a class="agent-link" href="#demo"><span>Try the CLI demo</span><span aria-hidden="true">↘</span></a>
+      </div>
+    </div>
+
+    <section id="research-comparison" class="case-study" aria-labelledby="research-title">
+      <header class="case-head">
+        <div>
+          <p class="case-label">Illustrative scenario</p>
+          <h2 id="research-title">Can a {money(price)} plan afford research?</h2>
+          <p class="case-basis">{users.toLocaleString("en-US")} subscribers pay {money(price)} a month. Double their usage to see whether research still clears the {exampleMarginTarget}% target.</p>
+        </div>
+        <fieldset class="load-control">
+          <legend>Monthly requests per user</legend>
+          <div class="load-options">
+            {cases.map(({ requests }, index) => (
+              <label>
+                <input type="radio" name="research-load" value={requests} class:list={[{ "alternate-load": index > 0 }]} checked={index === 0} aria-controls={`load-${requests}`} />
+                <span>{requests}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </header>
+      {cases.map(({ requests, baseline, candidate, addedCost, passes }, index) => (
+        <div class:list={["comparison", { alternate: index > 0 }]} id={`load-${requests}`}>
+          <MarginFigure basicMargin={baseline.margin} researchMargin={candidate.margin} />
+          <div class="case-result">
+            <p class="monthly-cost"><strong>+{money(addedCost)}</strong> per month for research</p>
+            <p class:list={["outcome", { shortfall: !passes }]}>Research margin is <strong>{Math.abs(candidate.margin - exampleMarginTarget).toFixed(1)} percentage points {passes ? "above" : "below"}</strong> the {exampleMarginTarget}% target.</p>
+          </div>
+        </div>
+      ))}
+    </section>
+  </div>
+</section>
+
+<style>
+  .hero-field {
+    --hero-ink: light-dark(#122f23, var(--dark-text));
+    margin: 0 clamp(5px, .65vw, 12px);
+    padding-bottom: clamp(20px, 3.2vw, 48px);
+    border-radius: 15px;
+    background: light-dark(#c4f77a, var(--dark-surface));
+    color: var(--hero-ink);
+  }
+  .hero-copy { padding: clamp(38px, 5vw, 82px) 22px clamp(32px, 3.3vw, 52px); text-align: center; }
+  h1 { margin-inline: auto; font-size: clamp(54px, 7.2vw, 116px); line-height: .99; font-weight: 600; letter-spacing: -.026em; word-spacing: .065em; text-wrap: balance; }
+  .hero-copy > p { max-width: 51ch; margin: 22px auto 0; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.45; letter-spacing: -.023em; text-wrap: pretty; }
+  .hero-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 22px; margin-top: 24px; }
+  .hero-cta, .agent-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
+  .hero-cta { justify-content: center; gap: 20px; min-height: 48px; padding: 0 21px; border-radius: 999px; color: light-dark(#f5ffeb, var(--dark-canvas)); background: light-dark(#183c2f, var(--accent-ink)); }
+  .hero-cta:hover { background: light-dark(#295c45, #c6dffb); }
+  .hero-cta:focus-visible, .agent-link:focus-visible { outline-color: var(--hero-ink); }
+  .agent-link { gap: 8px; }
+  .agent-link span:first-child { text-decoration: underline; text-underline-offset: .25em; }
+  .case-study {
+    --case-panel: light-dark(#fbfdf6, var(--dark-raised));
+    display: grid;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+    align-items: center;
+    gap: clamp(28px, 5vw, 76px);
+    width: min(1040px, calc(100% - clamp(30px, 8vw, 136px)));
+    margin: 0 auto;
+    padding: clamp(24px, 3vw, 44px);
+    border: 1px solid light-dark(#a7ba99, var(--dark-line));
+    border-radius: 10px;
+    background: var(--case-panel);
+    color: var(--ink);
+  }
+  .case-label { margin-bottom: 10px; color: var(--muted); font-size: 14px; font-weight: 550; }
+  h2 { max-width: 18ch; font-size: clamp(29px, 3vw, 44px); line-height: 1.06; font-weight: 550; letter-spacing: -.032em; text-wrap: balance; }
+  .case-basis { max-width: 43ch; margin-top: 12px; color: var(--muted); font-size: 15px; line-height: 1.5; text-wrap: pretty; }
+  .load-control { min-width: 0; margin: 20px 0 0; padding: 0; border: 0; }
+  .load-control legend { margin-bottom: 7px; padding: 0; font-size: 14px; font-weight: 550; }
+  .load-options { display: flex; width: fit-content; border: 1px solid var(--line-strong); border-radius: 5px; }
+  .load-options label { position: relative; display: flex; cursor: pointer; }
+  .load-options input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .load-options label span { display: grid; place-items: center; min-width: 65px; min-height: 42px; border-radius: 3px; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .load-options input:checked + span { background: var(--ink); color: var(--on-ink); font-weight: 600; }
+  .load-options input:focus-visible + span { outline: 3px solid var(--accent-ink); outline-offset: 3px; }
+  .load-options input:hover:not(:checked) + span { background: var(--page); }
+  .comparison.alternate, .case-study:has(.alternate-load:checked) .comparison { display: none; }
+  .case-study:has(.alternate-load:checked) .comparison.alternate { display: block; }
+  .case-result { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .monthly-cost { color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .monthly-cost strong { margin-right: .15em; color: var(--ink); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .outcome { margin-top: 5px; font-size: 15px; line-height: 1.55; }
+  .outcome strong { font-weight: 600; }
+  .shortfall strong { color: var(--risk); }
+  @media (max-width: 720px) {
+    .case-study { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .case-head { display: flex; align-items: end; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+    .load-control { margin-top: 0; }
+    h2 { max-width: none; }
+    .case-basis { max-width: 54ch; }
+  }
+  @media (max-width: 555px) {
+    .hero-field { border-radius: 11px; }
+    .hero-copy { padding: 37px 19px 28px; text-align: left; }
+    h1 { margin: 0; max-width: 11ch; font-size: clamp(49px, 13.5vw, 72px); }
+    .hero-copy > p { margin: 17px 0 0; }
+    .hero-actions { justify-content: flex-start; gap: 4px 10px; margin-top: 18px; }
+    .hero-cta { padding-inline: 13px; gap: 10px; }
+    .case-study { width: calc(100% - 24px); padding: 22px 17px 28px; }
+  }
+  @media (forced-colors: active) {
+    .hero-field, .hero-cta, .case-study, .load-options { border: 1px solid CanvasText; }
+    .load-options input:checked + span { outline: 2px solid Highlight; outline-offset: -3px; }
+    .load-options input:focus-visible + span { outline-color: Highlight; outline-offset: 3px; }
+  }
+</style>

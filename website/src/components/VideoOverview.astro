@@ -1,7 +1,7 @@
 <section class="site-shell video-overview" id="watch" aria-labelledby="video-heading">
   <header class="video-heading">
-    <div><p class="eyebrow">A 30-second overview</p><h2 id="video-heading">Watch ProfitCtl in 30 seconds.</h2></div>
-    <p>See why more revenue can still mean a lower operating margin. Follow one comparison, from the command to the decision.</p>
+    <div><p class="eyebrow">Video overview</p><h2 id="video-heading">A pilot can hide the cost of growth.</h2></div>
+    <p>Watch a 30-second comparison. Revenue rises in a pilot while operating margin falls. The recurring numbers tell a different story.</p>
   </header>
   <div class="video-frame">
     <video
@@ -88,23 +88,19 @@
 </script>
 
 <style>
-  .video-overview { padding-block: 20px 64px; }
-  .video-heading { display: grid; grid-template-columns: 1fr .8fr; gap: 60px; align-items: end; margin-bottom: 28px; }
-  .eyebrow { color: var(--muted); font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; }
-  h2 { max-width: 520px; margin-top: 15px; font-size: clamp(30px,3.5vw,44px); line-height: 1.16; font-weight: 550; letter-spacing: -.05em; text-wrap: balance; }
-  .video-heading > p { max-width: 440px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  .video-frame { position: relative; overflow: hidden; border-radius: 16px; background: var(--panel); }
+  .video-overview { display: grid; grid-template-columns: minmax(245px,.7fr) minmax(0,1.35fr); align-items: center; gap: clamp(32px,7vw,104px); padding-block: clamp(72px,8.5vw,140px); }
+  .eyebrow { color: var(--accent-ink); font-size: 14px; font-weight: 600; line-height: 1.5; }
+  h2 { margin-top: 15px; font-size: clamp(38px,4.4vw,68px); line-height: 1.03; font-weight: 550; letter-spacing: -.026em; word-spacing: .04em; text-wrap: balance; }
+  .video-heading > p { max-width: 39ch; margin-top: 20px; font-size: 17px; line-height: 1.57; color: var(--muted); text-wrap: pretty; }
+  .video-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 5px; background: var(--tint); }
   .video-player { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-  .video-toggle { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
+  .video-toggle { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: var(--panel); cursor: pointer; }
   .video-toggle[hidden], .video-error[hidden], .video-toggle[data-playing="true"] .play-icon, .video-toggle:not([data-playing="true"]) .pause-icon { display: none; }
-  .video-toggle:hover { color: var(--green); }
-  .video-toggle:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
-  .video-error { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--risk); }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-  @media (max-width: 760px) {
-    .video-overview { padding-bottom: 40px; }
-    .video-heading { grid-template-columns: 1fr; gap: 18px; }
-    .video-frame { border-radius: 12px; }
+  .video-toggle:hover { color: var(--accent-ink); }
+  .video-toggle:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 3px; }
+  .video-error { grid-column: 1 / -1; color: var(--risk); font-size: 14px; line-height: 1.6; }
+  @media (max-width:760px) {
+    .video-overview { grid-template-columns: minmax(0,1fr); }
     .video-toggle { right: 8px; bottom: 8px; }
   }
 </style>
