@@ -1,5 +1,7 @@
 import { trackCampaignAction } from "./campaign-measurement";
 
+export const exampleMarginTarget = 60;
+
 export interface ExampleInputs {
   users: number;
   requests: number;
@@ -20,8 +22,8 @@ export function calculateExample({ users, requests, price }: ExampleInputs) {
   return {
     revenue, baseline, candidate,
     addedCost: candidate.cost - baseline.cost,
-    minimumPrice: Math.ceil(candidate.unitCost / 0.4 * 100) / 100,
-    passes: candidate.margin >= 60,
+    minimumPrice: Math.ceil(candidate.unitCost / (1 - exampleMarginTarget / 100) * 100) / 100,
+    passes: candidate.margin >= exampleMarginTarget,
   };
 }
 
@@ -70,8 +72,8 @@ export function initializeDemo() {
       verdict.dataset.state = result.passes ? "pass" : "risk";
       setText("[data-verdict-title]", result.passes ? "The feature clears your margin target." : "The feature misses your margin target.");
       setText("[data-verdict-detail]", result.passes
-        ? `Research adds ${money(result.addedCost)} per month. The modeled margin stays above 60%.`
-        : `At this usage, a price of ${money(result.minimumPrice, 2)} per user would meet the 60% target.`);
+        ? `Research adds ${money(result.addedCost)} per month. The modeled margin meets the ${exampleMarginTarget}% target.`
+        : `At this usage, a price of ${money(result.minimumPrice, 2)} per user would meet the ${exampleMarginTarget}% target.`);
       setText("[data-demo-error]", "");
       if (userInitiated && changed) trackCampaignAction("comparison_completed");
       previousInputs = JSON.stringify(inputs);

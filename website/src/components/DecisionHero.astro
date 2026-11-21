@@ -1,0 +1,158 @@
+---
+import { calculateExample, exampleMarginTarget, money, percent } from "../scripts/demo";
+
+const users = 1000;
+const price = 20;
+const cases = [60, 120].map((requests) => ({
+  requests,
+  ...calculateExample({ users, requests, price }),
+}));
+---
+
+<section class="site-shell decision-hero" aria-labelledby="decision-hero-title">
+  <header class="intro">
+    <h1 id="decision-hero-title">What will your next AI feature <em>cost?</em></h1>
+    <div class="intro-detail">
+      <p>Compare AI costs, usage and pricing in ProfitCtl before you commit to a feature. Open source and runs locally.</p>
+      <div class="intro-actions">
+        <a class="intro-primary" href="#demo">Try the CLI demo <span aria-hidden="true">↓</span></a>
+        <a class="intro-secondary" href="#watch">Watch the overview</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="decision-sheet" aria-labelledby="research-title">
+    <header class="sheet-head">
+      <div>
+        <p class="sheet-caption">Illustrative comparison</p>
+        <h2 id="research-title">Add research to a {money(price)} plan</h2>
+      </div>
+      <fieldset class="load-control">
+        <legend>Monthly requests per user</legend>
+        <div class="load-options">
+          {cases.map(({ requests }, index) => (
+            <label>
+              <input type="radio" name="research-load" value={requests} class:list={[{ "alternate-load": index > 0 }]}
+                checked={index === 0} aria-controls={`load-${requests}`} />
+              <span>{requests}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    </header>
+
+    {cases.map(({ requests, baseline, candidate, addedCost, passes }, index) => (
+      <div class:list={["comparison", { alternate: index > 0 }]} id={`load-${requests}`}>
+        <div class="cost">
+          <p class="measure">Additional monthly cost</p>
+          <p class="cost-number">+{money(addedCost)}</p>
+          <p class="cost-basis">{users.toLocaleString("en-US")} users at {money(price)} per user per month</p>
+        </div>
+        <div class="margins">
+          <h3>Gross margin</h3>
+          <dl class="margin-list">
+            {[
+              { label: "Basic answers", value: baseline.margin },
+              { label: "With research", value: candidate.margin },
+            ].map(({ label, value }, row) => (
+              <div class:list={["margin-row", { research: row === 1 }]}>
+                <dt>{label}</dt>
+                <dd>
+                  <span class="rail" aria-hidden="true" style={`--target: ${exampleMarginTarget}%; --margin: ${value}%`}>
+                    <i></i>
+                  </span>
+                  <span>{percent(value)}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p class:list={["outcome", { shortfall: !passes }]}>
+            <span aria-hidden="true">{passes ? "↑" : "↓"}</span>
+            {Math.abs(candidate.margin - exampleMarginTarget).toFixed(1)} points
+            {passes ? "above" : "below"} the {exampleMarginTarget}% target with research.
+          </p>
+        </div>
+      </div>
+    ))}
+  </section>
+</section>
+
+<style>
+  .decision-hero { padding-block: clamp(48px, 6vw, 82px) clamp(48px, 5.5vw, 78px); }
+  .intro { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, .8fr); gap: 36px; align-items: end; margin-bottom: 44px; }
+  h1 { max-width: 18ch; font-size: clamp(48px, 5.25vw, 76px); font-weight: 550; line-height: 1.01; letter-spacing: -.062em; text-wrap: balance; }
+  h1 em { color: var(--green); font-style: normal; }
+  .intro-detail { max-width: 405px; justify-self: end; }
+  .intro-detail p { color: var(--muted); font-size: clamp(15px, 1.3vw, 17px); line-height: 1.55; }
+  .intro-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 22px; margin-top: 15px; }
+  .intro-actions a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 560; }
+  .intro-primary { gap: 18px; padding: 0 16px; border-radius: 5px; background: var(--ink); color: var(--on-ink); text-decoration: none; }
+  .intro-primary:hover { background: var(--green); }
+  .intro-secondary { text-underline-offset: 4px; text-decoration-color: var(--muted); }
+
+  .decision-sheet {
+    --sheet: light-dark(#202b24, #17231c);
+    --sheet-ink: #f1f3e9;
+    --sheet-muted: #c0cabe;
+    --sheet-rule: #506254;
+    --sheet-accent: #c9eda0;
+    padding: 28px clamp(22px, 3.5vw, 48px) 34px;
+    border-radius: 6px;
+    background: var(--sheet);
+    color: var(--sheet-ink);
+  }
+  .sheet-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid var(--sheet-rule); }
+  .sheet-caption { margin-bottom: 8px; color: var(--sheet-muted); font-size: 13px; }
+  h2 { font-size: clamp(25px, 2.25vw, 34px); line-height: 1.16; font-weight: 540; letter-spacing: -.035em; }
+  .load-control { flex-shrink: 0; min-width: 0; margin: 0; padding: 0; border: 0; }
+  .load-control legend { margin-bottom: 6px; padding: 0; color: var(--sheet-muted); font-size: 13px; }
+  .load-options { display: flex; width: max-content; border: 1px solid #829384; border-radius: 4px; }
+  .load-options label { position: relative; display: flex; cursor: pointer; }
+  .load-options input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .load-options span { display: grid; min-width: 64px; min-height: 44px; place-items: center; border-radius: 2px; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .load-options input:checked + span { background: var(--sheet-ink); color: #202b24; font-weight: 650; }
+  .load-options input:focus-visible + span { outline: 3px solid var(--sheet-accent); outline-offset: 3px; }
+  .load-options input:hover:not(:checked) + span { background: #344639; }
+
+  .comparison { display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: clamp(24px, 7vw, 96px); padding-top: 26px; }
+  .comparison.alternate, .decision-sheet:has(.alternate-load:checked) .comparison { display: none; }
+  .decision-sheet:has(.alternate-load:checked) .comparison.alternate { display: grid; }
+  .measure, h3 { margin: 0; color: var(--sheet-ink); font-size: 15px; font-weight: 550; }
+  .cost-number { margin: 3px 0 8px; color: var(--sheet-accent); font-size: clamp(52px, 5.9vw, 86px); font-weight: 500; line-height: 1; letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
+  .cost-basis, .outcome { color: var(--sheet-muted); font-size: 14px; line-height: 1.45; }
+  .margin-list { margin: 16px 0; }
+  .margin-row, .margin-row dd { display: grid; align-items: center; gap: 12px; }
+  .margin-row { grid-template-columns: 98px minmax(0, 1fr); margin: 11px 0; font-size: 14px; }
+  .margin-row dd { grid-template-columns: 1fr 50px; text-align: right; font-variant-numeric: tabular-nums; }
+  .rail { position: relative; display: block; height: 8px; background: #45554a; }
+  .rail i { display: block; height: 100%; width: var(--margin); background: #a6b7a4; }
+  .rail::after { content: ""; position: absolute; inset-block: -3px; left: var(--target); border-left: 1px dashed var(--sheet-ink); }
+  .research .rail i { background: var(--sheet-accent); }
+  .outcome span { margin-right: 3px; color: var(--sheet-accent); font-weight: 650; }
+  .shortfall span { color: #ffba97; }
+  @media (max-width: 780px) {
+    .intro { grid-template-columns: 1fr; gap: 16px; margin-bottom: 26px; }
+    .intro-detail { max-width: 54ch; justify-self: start; }
+    .decision-hero { padding-block: 36px 44px; }
+    .decision-sheet { padding: 22px 20px 24px; }
+    .sheet-head { align-items: start; flex-wrap: wrap; padding-bottom: 18px; gap: 16px; }
+    .comparison { grid-template-columns: 1fr 1.1fr; gap: 24px; padding-top: 20px; }
+  }
+  @media (max-width: 620px) {
+    h1 { font-size: clamp(42px, 10.5vw, 58px); }
+    .intro-actions { margin-top: 12px; }
+    .comparison { grid-template-columns: 1fr; }
+    .sheet-head { display: grid; }
+    .load-control { display: grid; }
+    .load-control legend { margin-bottom: 6px; }
+    .load-options span { min-width: 45px; min-height: 44px; }
+    .comparison { gap: 20px; }
+    .margin-list { margin: 8px 0; }
+  }
+  @media (forced-colors: active) {
+    .decision-sheet, .rail, .load-options { border: 1px solid CanvasText; }
+    .load-options input:checked + span { outline: 2px solid Highlight; outline-offset: -3px; }
+    .load-options input:focus-visible + span { outline-color: Highlight; outline-offset: 2px; }
+    .rail, .rail i { forced-color-adjust: none; }
+  }
+</style>

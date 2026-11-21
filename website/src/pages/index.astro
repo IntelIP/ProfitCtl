@@ -1,8 +1,9 @@
 ---
 import ProductLayout from "../layouts/ProductLayout.astro";
+import DecisionHero from "../components/DecisionHero.astro";
 import TerminalDemo from "../components/TerminalDemo.astro";
 import VideoOverview from "../components/VideoOverview.astro";
-import { calculateExample, money, percent } from "../scripts/demo";
+import { calculateExample, exampleMarginTarget, money, percent } from "../scripts/demo";
 
 const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
 const example = calculateExample({ users: 1000, requests: 60, price: 20 });
@@ -15,25 +16,7 @@ const steps = [
 ---
 
 <ProductLayout title="ProfitCTL | Open-Source AI Cost Modeling & Margin Planning" description="Model AI and infrastructure costs, compare product scenarios, and check profit margins before you ship. Try ProfitCTL's interactive example and local CLI.">
-  <section class="site-shell hero">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="status-dot" /> Cost modeling for teams building AI products</p>
-      <h1>Know your AI costs.<br /><span>Protect your margin.</span></h1>
-      <p class="hero-description">A new feature changes more than the product. ProfitCtl helps you model the spend, compare your options, and decide what to ship.</p>
-      <a class="primary-action" href="#demo">Try the demo <span aria-hidden="true">↓</span></a>
-      <p class="hero-note">MIT licensed. Runs locally. No sign-up.</p>
-      <a class="video-link" href="#watch">Watch the 30-second overview <span aria-hidden="true">↓</span></a>
-    </div>
-    <div class="hero-visual" aria-hidden="true">
-      <div class="visual-grid" />
-      <div class="visual-heading"><span class="visual-dot" /> A decision, before commitment</div>
-      <svg class="signal-path" viewBox="0 0 450 390" preserveAspectRatio="none"><path d="M226 40 V350" /><path class="path-flow" d="M226 40 V350" /></svg>
-      <div class="signal-node node-one"><span class="node-icon">01</span><div><small>The change</small><strong>Add a research feature</strong></div><span class="node-tag">Scenario</span></div>
-      <div class="signal-node node-two"><span class="node-icon">02</span><div><small>The trade-off</small><strong>More usage. More cost.</strong></div><span class="node-tag">Compare</span></div>
-      <div class="signal-node node-three"><span class="node-icon">03</span><div><small>The decision</small><strong>Will the margin hold?</strong></div><span class="node-tag">Check</span></div>
-      <div class="visual-caption">Follow the cost from assumption to decision.</div>
-    </div>
-  </section>
+  <DecisionHero />
 
   <VideoOverview />
   <TerminalDemo />
@@ -42,7 +25,7 @@ const steps = [
     <details class="calculator-disclosure"><summary>Explore the cost calculator <span aria-hidden="true">+</span></summary>
     <div class="calculator-intro"><h2>Try your own assumptions.</h2><p>Adjust this separate illustration to explore usage and pricing.</p></div>
     <div class="demo-shell" data-demo>
-      <div class="demo-toolbar"><div><span class="status-dot" /> Interactive example</div><span>Sample costs · 60% margin target</span></div>
+      <div class="demo-toolbar"><div><span class="status-dot" /> Interactive example</div><span>Sample costs · {exampleMarginTarget}% margin target</span></div>
       <div class="demo-grid">
         <div class="demo-inputs">
           <h3>Your assumptions</h3>
@@ -62,7 +45,7 @@ const steps = [
             <article class="result-card candidate"><p class="option-label">With the feature</p><h3>Research-enabled</h3><dl><div><dt>Cost / month</dt><dd data-candidate-cost>{money(example.candidate.cost)}</dd></div><div><dt>Gross margin</dt><dd data-candidate-margin>{percent(example.candidate.margin)}</dd></div><div><dt>Cost / user</dt><dd data-candidate-unit>{money(example.candidate.unitCost, 2)}</dd></div></dl></article>
           </div>
           <div class="cost-bars" aria-hidden="true"><p>Share of revenue spent</p><div><span>Basic</span><div class="bar-track"><i data-baseline-bar style={`width:${example.baseline.cost / example.revenue * 100}%`} /></div></div><div><span>Research</span><div class="bar-track"><i data-candidate-bar style={`width:${example.candidate.cost / example.revenue * 100}%`} /></div></div></div>
-          <div class="verdict" data-verdict data-state="pass" role="status" aria-live="polite" aria-atomic="true"><span class="verdict-icon" aria-hidden="true">↗</span><div><h3 data-verdict-title>The feature clears your margin target.</h3><p data-verdict-detail>Research adds {money(example.addedCost)} per month. The modeled margin stays above 60%.</p></div></div>
+          <div class="verdict" data-verdict data-state="pass" role="status" aria-live="polite" aria-atomic="true"><span class="verdict-icon" aria-hidden="true">↗</span><div><h3 data-verdict-title>The feature clears your margin target.</h3><p data-verdict-detail>Research adds {money(example.addedCost)} per month. The modeled margin meets the {exampleMarginTarget}% target.</p></div></div>
         </div>
       </div>
       <noscript><p class="no-script">These are the default example values. Enable JavaScript to adjust them, or run a scenario in the CLI.</p></noscript>
@@ -100,26 +83,8 @@ const steps = [
 <style>
   .eyebrow { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; line-height: 1.6; }
   .status-dot { display: inline-block; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
-  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding-block: 76px 82px; }
-  .hero h1 { margin-top: 20px; font-size: clamp(42px, 4.9vw, 66px); line-height: 1.08; font-weight: 550; letter-spacing: -.065em; }
-  .hero h1 span { color: var(--green); }
-  .hero-description { max-width: 480px; margin-top: 24px; font-size: 17px; line-height: 1.65; color: var(--muted); text-wrap: pretty; }
   .primary-action { display: inline-flex; align-items: center; gap: 32px; min-height: 50px; margin-top: 28px; padding: 0 22px; border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 14px; text-decoration: none; transition: transform .2s, box-shadow .2s; }
   .primary-action:hover { transform: translateY(-3px); box-shadow: 0 10px 20px #20251d15; }
-  .hero-note { margin-top: 16px; font-size: 12px; color: var(--muted); }
-  .hero-copy { animation: arrive .7s ease-out both; }
-  .hero-visual { position: relative; min-height: 390px; overflow: hidden; display: grid; align-content: center; gap: 24px; padding: 58px 28px 50px; border-radius: 28px; background: light-dark(#242b21, #0d1511); color: light-dark(#f7f9f3, #dddeda); box-shadow: 0 28px 54px #272e2014; animation: arrive .9s .12s ease-out both; }
-  .visual-grid { position: absolute; inset: 0; background-image: linear-gradient(#ffffff05 1px,transparent 1px),linear-gradient(90deg,#ffffff05 1px,transparent 1px); background-size: 24px 24px; }
-  .visual-heading, .visual-caption { position: absolute; left: 28px; right: 28px; font-size: 11px; color: light-dark(#bac5b0, #a4ada5); }
-  .visual-heading { top: 24px; display: flex; align-items: center; gap: 8px; }
-  .visual-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px light-dark(#c4ee8480, transparent); }
-  .visual-caption { bottom: 22px; text-align: center; }
-  .signal-path { position: absolute; inset: 0; width: 100%; height: 100%; stroke: light-dark(#43533a, #334338); stroke-width: 1; fill: none; }
-  .signal-path .path-flow { stroke: var(--accent); stroke-dasharray: 10 28; animation: flow 8s linear infinite; opacity: .6; }
-  .signal-node { position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 14px; border: 1px solid light-dark(#5e6a5055, #33433880); border-radius: 14px; background: light-dark(#2d3629, #151f19); }
-  .node-one { margin-right: 28px; }.node-two { margin-left: 28px; }.node-three { border-color: light-dark(#c4ee8460, #98a69940); background: light-dark(#34482a, #1a281e); margin-right: 12px; }
-  .node-icon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 1px solid light-dark(#6c7b5d, #465a4b); border-radius: 9px; color: var(--accent); font-size: 11px; }
-  .signal-node small { display: block; margin-bottom: 6px; font-size: 10px; color: light-dark(#bfccb4, #a8b1a8); }.signal-node strong { font-size: 13px; font-weight: 550; }.node-tag { margin-left: auto; font-size: 9px; color: light-dark(#bdcbb1, #9ba79c); }
   .section-heading { display: grid; grid-template-columns: 1.1fr 1fr; align-items: end; gap: 48px; margin-bottom: 30px; }
   h2 { margin-top: 12px; font-size: clamp(30px, 3.25vw, 43px); line-height: 1.13; letter-spacing: -.05em; font-weight: 540; text-wrap: balance; }
   .section-heading > p { max-width: 430px; font-size: 15px; line-height: 1.65; color: var(--muted); text-wrap: pretty; }
@@ -142,21 +107,14 @@ const steps = [
   .evidence-section { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; padding-top: 100px; align-items: start; }.evidence-copy > p:not(.eyebrow) { max-width: 430px; margin-top: 20px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }.evidence-tags { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 22px; }.evidence-tags span { font-size: 10px; color: var(--green); }.questions { border-top: 1px solid light-dark(#bbc5af, #34483b); }.questions details { border-bottom: 1px solid light-dark(#cfd6c5, #29372f); padding-block: 14px; }.questions summary { min-height: 46px; font-size: 15px; font-weight: 550; line-height: 1.5; }.questions p { padding: 10px 32px 8px 0; font-size: 13px; color: var(--muted); line-height: 1.7; }
   .start-section { display: grid; grid-template-columns: .75fr 1.25fr; gap: 48px; align-items: center; margin-top: 100px; padding: 38px; border-radius: 26px; background: light-dark(#e7eddc, #151f19); border: 1px solid light-dark(#d4ddc8, #29372f); }.start-copy > p:not(.eyebrow) { margin-top: 18px; font-size: 14px; color: var(--muted); line-height: 1.7; }.start-copy .prerequisite { font-size: 11px !important; }.terminal { overflow: hidden; min-width: 0; border: 1px solid light-dark(#4d5842, #344038); border-radius: 16px; background: light-dark(#252d21, #0c1410); color: light-dark(#eef4e6, #dddeda); }.terminal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid light-dark(#4a553f, #29372f); font-size: 10px; color: light-dark(#c1cfb5, #a3aea5); }.terminal-header button { border: 1px solid light-dark(#67785a, #4b5c4f); border-radius: 7px; background: light-dark(#36442c, #223027); color: light-dark(#edf6e3, #dddeda); min-height: 38px; padding: 8px 12px; font-size: 10px; line-height: 1.4; }.terminal pre { margin: 0; padding: 24px 20px; font-size: 12px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }.terminal-footer { display: flex; align-items: center; gap: 8px; padding: 16px; border-top: 1px solid light-dark(#4a553f, #29372f); font-size: 10px; color: light-dark(#c1cfb5, #a3aea5); }.terminal-footer .status-dot { background: var(--accent); }
   @keyframes arrive { from { transform: translateY(14px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
-  @keyframes flow { to { stroke-dashoffset: -76; } }
   .is-visible { animation: arrive .7s ease-out both; }
   @media (max-width: 980px) {
-    .hero { gap: 28px; padding-block: 52px 64px; }.hero h1 { font-size: 48px; }.hero-description { font-size: 15px; }.hero-visual { padding-inline: 18px; }.node-tag { display: none; }.hero-visual .signal-node { margin-inline: 0; }
     .section-heading { gap: 28px; }.demo-inputs, .demo-results { padding: 22px; }.demo-grid { grid-template-columns: .85fr 1.15fr; }.demo-presets { flex-wrap: wrap; border-radius: 12px; }.result-card { padding: 14px; }.result-card dl > div:first-child dd { font-size: 26px; }.evidence-section { gap: 36px; }.start-section { gap: 28px; padding: 28px; grid-template-columns: .8fr 1.2fr; }
   }
   @media (max-width: 760px) {
-    .hero { grid-template-columns: 1fr; gap: 38px; }.hero-copy { max-width: 570px; }.hero h1 { font-size: clamp(38px,7.5vw,54px); }.hero-visual { max-width: 570px; width: 100%; min-height: 330px; padding: 56px 24px 50px; gap: 16px; }.hero-visual .node-one { margin-right: 38px; }.hero-visual .node-two { margin-left: 38px; }.hero-visual .node-three { margin-right: 16px; }.node-tag { display: block; }.signal-node { min-height: 62px; }.section-heading, .evidence-section { grid-template-columns: 1fr; gap: 20px; }.section-heading > p { max-width: 540px; }.demo-grid { grid-template-columns: 1fr; }.demo-inputs { border-right: 0; border-bottom: 1px solid var(--line); }.demo-presets { flex-wrap: nowrap; border-radius: 999px; }.input-row { margin-top: 24px; }.steps-grid { grid-template-columns: 1fr; grid-template-rows: none; gap: 8px; }.step-card { grid-row: auto; grid-template-rows: auto; gap: 14px; }.step-card p { max-width: 550px; }.how-section, .evidence-section { padding-top: 64px; }.start-section { grid-template-columns: 1fr; margin-top: 64px; gap: 28px; }.start-copy h2 br { display: none; }
+    .section-heading, .evidence-section { grid-template-columns: 1fr; gap: 20px; }.section-heading > p { max-width: 540px; }.demo-grid { grid-template-columns: 1fr; }.demo-inputs { border-right: 0; border-bottom: 1px solid var(--line); }.demo-presets { flex-wrap: nowrap; border-radius: 999px; }.input-row { margin-top: 24px; }.steps-grid { grid-template-columns: 1fr; grid-template-rows: none; gap: 8px; }.step-card { grid-row: auto; grid-template-rows: auto; gap: 14px; }.step-card p { max-width: 550px; }.how-section, .evidence-section { padding-top: 64px; }.start-section { grid-template-columns: 1fr; margin-top: 64px; gap: 28px; }.start-copy h2 br { display: none; }
   }
   @media (max-width: 420px) {
-    .hero { padding-block: 38px 54px; }.hero h1 { font-size: 38px; letter-spacing: -.06em; }.hero .eyebrow { font-size: 9px; }.hero-description { font-size: 15px; }.hero-visual { padding-inline: 18px; border-radius: 20px; }.signal-node { padding: 12px; gap: 8px; }.signal-node strong { font-size: 12px; }.node-tag { display: none; }.node-icon { width: 26px; height: 26px; }.visual-heading, .visual-caption { left: 18px; right: 18px; font-size: 10px; }
     h2 { font-size: 31px; }.demo-toolbar { padding: 14px 18px; font-size: 10px; }.demo-inputs, .demo-results { padding: 20px 16px; }.demo-presets button { min-height: 40px; padding-inline: 8px; }.results-pair { gap: 8px; }.result-card { padding: 12px; }.result-card h3 { font-size: 13px; }.result-card dl > div:first-child dd { font-size: 25px; }.result-card dd { font-size: 22px; }.result-card dt { font-size: 10px; }.revenue-strip strong { font-size: 24px; }.revenue-strip { font-size: 11px; gap: 10px; }.verdict { padding: 14px; gap: 10px; }.verdict h3 { font-size: 12px; }.verdict p { font-size: 11px; }.start-section { padding: 24px 18px; }.terminal-header { padding: 10px 12px; }.terminal pre { padding: 18px 12px; font-size: 11px; }.terminal-footer { padding: 12px; font-size: 9px; }
   }
-</style>
-
-<style>
-  .video-link { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; color: var(--green); font-size: 14px; text-underline-offset: 4px; }
 </style>
