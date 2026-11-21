@@ -42,7 +42,7 @@ const inks = [
         <stop offset=".64" stop-color="light-dark(#8ad888, #58b89b)" /><stop offset="1" stop-color="light-dark(#328e76, #327c71)" />
       </linearGradient>
     </defs>
-    <polygon points={face} transform="translate(13 39)" fill="light-dark(#173d2d1f, #031810a0)" />
+    <polygon points={face} transform="translate(13 39)" fill="light-dark(#173d2d1f, #00000080)" />
     {inks.map((fill, index) => (
       <polygon points={face} transform={`translate(0 ${(inks.length - index) * 4.6})`} fill={fill} stroke="light-dark(#193e30, #0a281e)" stroke-width="1"/>
     ))}

@@ -52,11 +52,11 @@ const cases = volumes.map(requests => ({ requests, ...calculateExample({ users, 
 
 <style>
   .hero-field {
-    --hero-field: light-dark(#c4f77a, #103429);
-    --hero-ink: light-dark(#122f23, #effadf);
-    --hero-caption: light-dark(#223f29, #c9e8c7);
+    --hero-field: light-dark(#c4f77a, var(--dark-surface));
+    --hero-ink: light-dark(#122f23, var(--dark-text));
+    --hero-caption: light-dark(#223f29, var(--dark-muted));
     --hero-button: light-dark(#183c2f, #c4f77a);
-    --hero-button-text: light-dark(#f5ffeb, #102b20);
+    --hero-button-text: light-dark(#f5ffeb, var(--dark-canvas));
     margin: 0 clamp(5px, .65vw, 12px);
     overflow: hidden;
     border-radius: 15px;

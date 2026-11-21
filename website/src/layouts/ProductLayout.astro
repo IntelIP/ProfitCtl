@@ -68,7 +68,7 @@ const schema = pageType !== "product" ? {
     <meta name="twitter:image" content={imageURL.href} />
     <meta name="twitter:image:alt" content="ProfitCTL: Know your AI costs. Protect your margin." />
     <meta name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)" data-theme-color="light" />
-    <meta name="theme-color" content="#080e0c" media="(prefers-color-scheme: dark)" data-theme-color="dark" />
+    <meta name="theme-color" content="#080a09" media="(prefers-color-scheme: dark)" data-theme-color="dark" />
     <script is:inline set:html={initializeColorTheme}></script>
     {pageType !== "error" && <script
       is:inline
@@ -142,19 +142,26 @@ const schema = pageType !== "product" ? {
   :root {
     font-family: "Instrument Sans", system-ui, sans-serif;
     color-scheme: light dark;
-    --page: light-dark(#f5f5ee, #080e0c);
-    --panel: light-dark(#ffffff, #13251d);
-    --ink: light-dark(#20251d, #e8f2e7);
-    --on-ink: light-dark(#ffffff, #080e0c);
-    --muted: light-dark(#62685b, #b4c8bb);
-    --line: light-dark(#dce0d4, #334c40);
-    --line-strong: light-dark(#9aa99c, #627e6e);
-    --tint: light-dark(#eef4ec, #152b21);
+    --dark-canvas: #080a09;
+    --dark-surface: #111412;
+    --dark-raised: #191c1a;
+    --dark-text: #eff2ef;
+    --dark-muted: #b9bfba;
+    --dark-line: #333835;
+    --dark-line-strong: #656d67;
+    --page: light-dark(#f5f5ee, var(--dark-canvas));
+    --panel: light-dark(#ffffff, var(--dark-surface));
+    --ink: light-dark(#20251d, var(--dark-text));
+    --on-ink: light-dark(#ffffff, var(--dark-canvas));
+    --muted: light-dark(#62685b, var(--dark-muted));
+    --line: light-dark(#dce0d4, var(--dark-line));
+    --line-strong: light-dark(#9aa99c, var(--dark-line-strong));
+    --tint: light-dark(#eef4ec, var(--dark-raised));
     --accent: light-dark(#c4ee84, #b6ef8b);
     --green: light-dark(#426526, #afe18e);
     --risk: light-dark(#9e422e, #ffba97);
-    --terminal-surface: light-dark(#102c24, #0b2019);
-    --terminal-rule: light-dark(#4b6859, #3a5b48);
+    --terminal-surface: light-dark(#102c24, var(--dark-canvas));
+    --terminal-rule: light-dark(#4b6859, var(--dark-line));
     --terminal-accent: light-dark(#cbf397, #c3fa91);
   }
   :root[data-theme="light"] { color-scheme: light; }
@@ -192,7 +199,7 @@ const schema = pageType !== "product" ? {
   :where(a, button, input, summary):focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
   .site-shell { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
   section[id], article[id] { scroll-margin-top: 120px; }
-  .site-header { position: sticky; top: 0; z-index: 20; background: light-dark(#f5f5eef0, #080e0cf0); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
+  .site-header { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--page) 94%, transparent); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
   .site-header-inner { min-height: 76px; display: flex; align-items: center; gap: clamp(8px,1.6vw,24px); }
   .site-header-inner .product-nav { margin-inline-start: auto; }
   .site-header-inner .product-nav + [data-theme-control] { margin-inline-start: 0; }
@@ -208,15 +215,15 @@ const schema = pageType !== "product" ? {
   .skip-link { position: fixed; left: 16px; top: 8px; z-index: 50; padding: 12px 18px; background: var(--ink); color: var(--on-ink); border-radius: 8px; transform: translateY(-180%); }
   .skip-link:focus { transform: translateY(0); }
   .product-page {
-    --page: light-dark(#fdfefb, #0a1511);
-    --panel: light-dark(#fff, #13251d);
-    --ink: light-dark(#15291f, #edf6e9);
-    --on-ink: light-dark(#fff, #101f18);
+    --page: light-dark(#fdfefb, var(--dark-canvas));
+    --panel: light-dark(#fff, var(--dark-surface));
+    --ink: light-dark(#15291f, var(--dark-text));
+    --on-ink: light-dark(#fff, var(--dark-canvas));
     --green: light-dark(#275e40, #b7ed93);
-    --muted: light-dark(#505e53, #b6c9bc);
-    --line: light-dark(#d7e0d5, #32483c);
-    --line-strong: light-dark(#9aa99c, #698272);
-    --tint: light-dark(#eef4ec, #14291f);
+    --muted: light-dark(#505e53, var(--dark-muted));
+    --line: light-dark(#d7e0d5, var(--dark-line));
+    --line-strong: light-dark(#9aa99c, var(--dark-line-strong));
+    --tint: light-dark(#eef4ec, var(--dark-raised));
     --risk: light-dark(#923c1d, #ffba92);
   }
   .product-page .site-shell { width: min(1240px, calc(100% - clamp(40px, 10vw, 144px))); }
