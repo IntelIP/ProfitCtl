@@ -44,6 +44,7 @@ class RateLimitedSubscriptionCheck(unittest.TestCase):
         credential = {"claudeAiOauth": {"accessToken": "example", "subscriptionType": "max", "scopes": ["user:profile"]}}
         self.enterContext(patch("profitctl_agent.entitlement.subprocess.run",
                                 return_value=Mock(returncode=0, stdout=json.dumps(credential))))
+        self.enterContext(patch("profitctl_agent.entitlement.ssl.create_default_context"))
         self.connections = self.enterContext(patch("profitctl_agent.entitlement.http.client.HTTPSConnection"))
         self.sleep = self.enterContext(patch("profitctl_agent.entitlement.time.sleep"))
 
