@@ -8,7 +8,12 @@ import ssl
 import subprocess
 import sys
 import tempfile
+import time
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
+
+_MAX_RETRY_WAIT_SECONDS = 10
 
 
 class EntitlementError(ValueError):
@@ -44,6 +49,21 @@ def _native_account(binary, env):
     return owner.pw_name, plan
 
 
+def _retry_after_seconds(value):
+    value = (value or "").strip()
+    if not value or len(value) > 128:
+        return None
+    if value.isascii() and value.isdecimal():
+        return int(value)
+    try:
+        when = parsedate_to_datetime(value)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+        return max(0, math.ceil(when.timestamp() - time.time()))
+    except (ValueError, TypeError, OverflowError, OSError):
+        return None
+
+
 def _usage(account, plan):
     # Only the native account metadata endpoint receives this credential. A direct
     # HTTPS connection has no environment-proxy or redirect handling.
@@ -60,21 +80,31 @@ def _usage(account, plan):
             or any(ord(ch) < 33 or ord(ch) > 126 for ch in token)):
         raise EntitlementError("Claude's native credential could not verify this subscription account.")
     context = ssl.create_default_context(cafile="/etc/ssl/cert.pem")
-    connection = http.client.HTTPSConnection("api.anthropic.com", timeout=12, context=context)
-    try:
-        connection.request("GET", "/api/oauth/usage", headers={
-            "Authorization": "Bearer " + token, "anthropic-beta": "oauth-2025-04-20",
-            "Accept": "application/json", "User-Agent": "profitctl-agent/0.1 (account metadata)",
-        })
-        response = connection.getresponse()
-        if response.status != 200:
-            raise EntitlementError(f"Claude account usage is unavailable (HTTP {response.status}).")
-        data = response.read(128 * 1024 + 1)
-        if len(data) > 128 * 1024:
-            raise EntitlementError("Claude returned an unexpected account usage response.")
-        return json.loads(data)
-    finally:
-        connection.close()
+    headers = {
+        "Authorization": "Bearer " + token, "anthropic-beta": "oauth-2025-04-20",
+        "Accept": "application/json", "User-Agent": "profitctl-agent/0.1 (account metadata)",
+    }
+    for attempt in range(2):
+        connection = http.client.HTTPSConnection("api.anthropic.com", timeout=12, context=context)
+        try:
+            connection.request("GET", "/api/oauth/usage", headers=headers)
+            response = connection.getresponse()
+            if response.status == 200:
+                data = response.read(128 * 1024 + 1)
+                if len(data) > 128 * 1024:
+                    raise EntitlementError("Claude returned an unexpected account usage response.")
+                return json.loads(data)
+            if response.status != 429:
+                raise EntitlementError(f"Claude account usage is unavailable (HTTP {response.status}).")
+            delay = _retry_after_seconds(response.getheader("Retry-After"))
+        finally:
+            connection.close()
+        if delay is None or delay > _MAX_RETRY_WAIT_SECONDS or attempt == 1:
+            wait = "at least one minute" if delay is None else f"at least {max(1, delay)}s"
+            raise EntitlementError(
+                f"Claude rate-limited its subscription check (HTTP 429). Wait {wait}, then retry the same run."
+            )
+        time.sleep(delay)
 
 
 def _summary(plan, usage):

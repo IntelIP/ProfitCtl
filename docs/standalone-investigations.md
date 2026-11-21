@@ -35,6 +35,8 @@ Choose the inference mode explicitly for the agent process.
 
 The commands below use `scripted` so the first run can be completed offline. For a model-driven run on the local Claude subscription, select `claude-subscription` after disabling extra usage in your Claude account. Preflight checks the subscription before inference. Live inference receives the case context and calculator results. Codex and Claude Code can both start and resume these investigations. Configure them with the same model mode and workspace.
 
+If Claude rate-limits the account check, ProfitCtl can retry that read once after a provider-requested delay of up to 10 seconds. For a longer delay or another HTTP 429, follow the wait time in the error and retry the same run ID. A missing or unusable retry time prompts a manual retry after at least one minute. Every model call requires a fresh successful check.
+
 ## Connect both clients
 
 ```sh
@@ -78,4 +80,6 @@ For a supplied response, pass `resume RUN_ID --expected-revision N --action supp
 
 For the trial, eight assumed acceptances at $56 total model $7 per accepted outcome. A real decision needs measured acceptance and attributable costs for its own cohort.
 
-If the connection drops, use `status` to inspect the same run. Reuse the original ID on retry. For model-backed steps longer than Codex's default 60 seconds, set the server's `tool_timeout_sec` to the allowed run duration in the `[mcp_servers.profitctl-agent]` section of your Codex configuration. When the saved case has changed independently, inspect the newer case before starting a new investigation with another ID. [Codex MCP configuration](https://developers.openai.com/codex/mcp/)
+If the connection drops, ask either client for the same run's status. An interrupted run shows the owner response already saved, the pending step, and whether publication has begun. Ask the client to use the returned `retry_tool_call`. It contains the saved arguments, so the owner can continue by run ID alone.
+
+For model-backed steps longer than Codex's default 60 seconds, set the server's `tool_timeout_sec` to the allowed run duration in the `[mcp_servers.profitctl-agent]` section of your Codex configuration. When the saved case has changed independently, inspect the newer case before starting a new investigation with another ID. [Codex MCP configuration](https://developers.openai.com/codex/mcp/)

@@ -99,11 +99,24 @@ def _view(snapshot):
         baseline = state["baseline"]
         result.update(base_revision=baseline["record"]["revision"], baseline_report=baseline["report"],
                       calculation=baseline["calculation"])
+    if "owner" in state:
+        result["recorded_owner_response"] = state["owner"]
+    if status == "interrupted":
+        result["pending_steps"] = list(snapshot.next)
+        result["decision_revision"] = None
+        # A process can die after the Go write but before acknowledging it in the checkpoint.
+        result["decision_publication"] = "unconfirmed" if "record_decision" in snapshot.next else "not_started"
+        if "owner" in state:
+            result["retry_tool_call"] = {"name": "profitctl_resume_investigation",
+                                         "arguments": {"run_id": state["run_id"], **state["owner"]}}
+        else:
+            result["retry_tool_call"] = {"name": "profitctl_start_investigation",
+                                         "arguments": {k: state[k] for k in ("run_id", "case_id", "question")}}
     if status == "awaiting_evidence":
         result["pending_evidence"] = snapshot.interrupts[0].value
     if status == "completed":
-        result.update(report=state["prepared"]["report"], calculation=state["prepared"]["calculation"],
-                      result=state["prepared"]["case"]["recommendation"])
+        result.update(decision_publication="published", report=state["prepared"]["report"],
+                      calculation=state["prepared"]["calculation"], result=state["prepared"]["case"]["recommendation"])
     return result
 
 

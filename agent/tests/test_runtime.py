@@ -49,7 +49,10 @@ InvestigationService(sys.argv[1], profitctl_binary=sys.argv[2]).resume(**json.lo
                                   json.dumps(self.answer)], capture_output=True, text=True, timeout=45)
         self.assertEqual(process.returncode, 72, process.stderr)
         restarted = InvestigationService(self.root, profitctl_binary=self.binary)
-        self.assertEqual(restarted.status(run_id="condere")["status"], "interrupted")
+        checkpoint = restarted.status(run_id="condere")
+        self.assertEqual(checkpoint["status"], "interrupted")
+        self.assertEqual(checkpoint["decision_publication"], "unconfirmed")
+        self.assertIsNone(checkpoint["decision_revision"])
         before_retry = load_baseline(self.root, self.binary, "research")["record"]
         self.assertEqual(before_retry["revision"], 2)
         done = restarted.resume(**self.answer)
@@ -58,6 +61,29 @@ InvestigationService(sys.argv[1], profitctl_binary=sys.argv[2]).resume(**json.lo
         self.assertEqual(restarted.resume(**self.answer)["checkpoint_id"], done["checkpoint_id"])
         self.assertEqual(load_baseline(self.root, self.binary, "research")["record"], before_retry)
         self.assertEqual(load_baseline(self.root, self.binary, "research", 1)["record"], self.first)
+
+    def test_reassessment_failure_exposes_saved_input_and_an_exact_recovery_call(self):
+        self.service.start(**self.start_args)
+        with patch.object(self.service, "_analyze", side_effect=RuntimeError("provider rate limit")):
+            with self.assertRaisesRegex(RuntimeError, "rate limit"):
+                self.service.resume(**self.answer)
+        restarted = InvestigationService(self.root, profitctl_binary=self.binary)
+        saved = restarted.status(run_id=self.answer["run_id"])
+        self.assertEqual(saved["status"], "interrupted")
+        self.assertEqual(saved["pending_steps"], ["reassess"])
+        owner = saved["recorded_owner_response"]
+        self.assertEqual((owner["action"], owner["expected_revision"]), ("supply", 1))
+        self.assertEqual(owner["evidence"]["source"], self.answer["evidence"]["source"])
+        self.assertEqual(owner["evidence"]["updates"][0]["accepted"], 9)
+        self.assertEqual(saved["decision_publication"], "not_started")
+        self.assertIsNone(saved["decision_revision"])
+        self.assertEqual(load_baseline(self.root, self.binary, "research")["record"], self.first)
+        retry = saved["retry_tool_call"]
+        self.assertEqual(retry, {"name": "profitctl_resume_investigation",
+                                 "arguments": {"run_id": self.answer["run_id"], **owner}})
+        done = restarted.resume(**retry["arguments"])
+        self.assertEqual(done["recorded_owner_response"], owner)
+        self.assertEqual((done["decision_publication"], done["decision_revision"]), ("published", 2))
 
     def test_decline_stale_answer_and_busy_writer(self):
         self.service.start(**self.start_args)

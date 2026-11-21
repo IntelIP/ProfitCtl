@@ -63,14 +63,14 @@ def make_server(service: "InvestigationService") -> FastMCP:
 
     @server.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False))
     async def profitctl_investigation_status(run_id: Identifier) -> dict[str, Any]:
-        """Read the exact run's durable state, original calculation, base_revision and pending evidence request."""
+        """Read the checkpoint, recorded owner response and decision revision. For an interrupted run, retry the returned retry_tool_call."""
         return await asyncio.to_thread(_invoke, service.status, run_id=run_id)
 
     @server.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True, openWorldHint=True))
     async def profitctl_resume_investigation(
         run_id: Identifier, expected_revision: Revision, action: Action, evidence: OwnerEvidence | None = None,
     ) -> dict[str, Any]:
-        """Resume this run using its base_revision. Supply sourced evidence or decline the pending request."""
+        """Supply sourced evidence or decline at the base_revision. After an error, read status to see whether the response was saved and how to retry."""
         update = evidence.model_dump(exclude_none=True, exclude_unset=True) if evidence is not None else None
         return await asyncio.to_thread(
             _invoke, service.resume, run_id=run_id, expected_revision=expected_revision,
