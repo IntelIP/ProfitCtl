@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from case_fixture import EconomicCaseFixture
 from profitctl_agent.economics import EconomicsError, RevisionConflict, load_baseline, save_revision
-from profitctl_agent.investigator import READ_TOOLS
+from profitctl_agent.investigator import READ_TOOLS, ScriptedModel
 from profitctl_agent.runtime import InvestigationError, InvestigationService
 
 
@@ -64,7 +64,7 @@ InvestigationService(sys.argv[1], profitctl_binary=sys.argv[2]).resume(**json.lo
 
     def test_reassessment_failure_exposes_saved_input_and_an_exact_recovery_call(self):
         self.service.start(**self.start_args)
-        with patch.object(self.service, "_analyze", side_effect=RuntimeError("provider rate limit")):
+        with patch.object(ScriptedModel, "_generate", side_effect=RuntimeError("provider rate limit")):
             with self.assertRaisesRegex(RuntimeError, "rate limit"):
                 self.service.resume(**self.answer)
         restarted = InvestigationService(self.root, profitctl_binary=self.binary)
@@ -81,8 +81,21 @@ InvestigationService(sys.argv[1], profitctl_binary=sys.argv[2]).resume(**json.lo
         retry = saved["retry_tool_call"]
         self.assertEqual(retry, {"name": "profitctl_resume_investigation",
                                  "arguments": {"run_id": self.answer["run_id"], **owner}})
-        done = restarted.resume(**retry["arguments"])
+        # Lose the parent acknowledgement after the nested agent has finished.
+        analyze = restarted._analyze
+
+        def lose_result(*args, **kwargs):
+            analyze(*args, **kwargs)
+            raise RuntimeError("lost completed review")
+
+        with patch.object(restarted, "_analyze", side_effect=lose_result):
+            with self.assertRaisesRegex(RuntimeError, "lost completed review"):
+                restarted.resume(**retry["arguments"])
+        recovered = InvestigationService(self.root, profitctl_binary=self.binary)
+        with patch.object(ScriptedModel, "_generate", side_effect=AssertionError("repeated inference")):
+            done = recovered.resume(**retry["arguments"])
         self.assertEqual(done["recorded_owner_response"], owner)
+        self.assertEqual(set(done["analysis_tools"]), READ_TOOLS)
         self.assertEqual((done["decision_publication"], done["decision_revision"]), ("published", 2))
 
     def test_decline_stale_answer_and_busy_writer(self):

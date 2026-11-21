@@ -103,8 +103,12 @@ def analyze(model, question, case, calculation, report, history, phase):
     prompt = HumanMessage(id=uuid4().hex, content=f"Investigation step: {phase}. Owner's question: {question}")
     result = agent.invoke({"messages": [*prior, prompt]}, config={"recursion_limit": 10})
     messages = result["messages"]
-    new_messages = messages[next(i for i, m in enumerate(messages) if m.id == prompt.id) + 1:]
-    used = [m.name for m in new_messages if isinstance(m, ToolMessage)]
+    # A replay keeps the checkpoint's original prompt ID. The phase and question
+    # identify its saved turn even when this invocation generated a fresh ID.
+    turn = next((i for i in reversed(range(len(messages))) if isinstance(messages[i], HumanMessage)), None)
+    if turn is None or messages[turn].content != prompt.content:
+        raise ValueError("The saved conversation is missing the current investigation step.")
+    used = [m.name for m in messages[turn + 1:] if isinstance(m, ToolMessage)]
     if set(used) != READ_TOOLS or not isinstance(messages[-1], AIMessage) or not messages[-1].text:
         raise ValueError("The model did not complete a sourced review with both economics tools. Retry the investigation.")
     return {"analysis": messages[-1].text, "analysis_tools": used, "conversation": messages_to_dict(messages)}
