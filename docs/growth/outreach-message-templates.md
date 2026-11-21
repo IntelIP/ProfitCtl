@@ -50,11 +50,7 @@ Use when the target is qualified and you want a concrete action.
 Best next step is to install and run one compare.
 
 Install:
-curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
-
-Or:
-brew tap IntelIP/profitctl
-brew install profitctl
+curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | PROFITCTL_VERSION=v0.4.0-rc.1 bash
 
 Then run:
 [insert benchmark command]
