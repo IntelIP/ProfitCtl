@@ -1,0 +1,76 @@
+{
+  "project": "IntelIP",
+  "question": "Which launch shape in the April planning pack gives us room to support an early cohort?",
+  "workload": "The four documented startup cohorts in the ProfitCtl benchmark pack. Seats, demand, and support differ by scenario.",
+  "source_revision": "ProfitCtl cb54ffea5781aed74a64c9d659494241f062328d; scenario input hashes below.",
+  "window": "One modeled billing month. The comparison uses planning assumptions from April 2026.",
+  "alternatives": [
+    {
+      "name": "Free-heavy conservative launch",
+      "cost": "30 active users. USD 700 revenue and USD 402.10 modeled monthly costs leave a 42.56% margin.",
+      "quality": "The plan supports self-serve evaluation. The modeled support reserve makes the early cohort miss its own margin threshold."
+    },
+    {
+      "name": "Paid pilot",
+      "cost": "15 active seats. USD 2,685 revenue and USD 407.05 modeled monthly costs leave an 84.84% margin.",
+      "quality": "The modeled concierge motion gives the team room to observe onboarding and corrections. Customer demand for this price is unknown."
+    },
+    {
+      "name": "Tight free tier",
+      "cost": "30 active users and 77.20% modeled margin.",
+      "quality": "A smaller free tier offers an alternative for evaluators. Their conversion rate is unmeasured."
+    },
+    {
+      "name": "Workspace minimum",
+      "cost": "20 active seats and 76.98% modeled margin.",
+      "quality": "A workspace floor protects smaller accounts but adds pricing complexity."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "modeled",
+      "source": "benchmark_scenarios/intelip_ops_pricing_pack.md",
+      "finding": "The four packaged scenarios passed through ProfitCtl compare. A failed covenant on the conservative scenario is a valid economic result (exit 1)."
+    },
+    {
+      "kind": "assumed",
+      "source": "benchmark_scenarios/intelip_model_calibration_notes.md",
+      "finding": "Routing, active-user mix, and onboarding labor need calibration. Each option represents a different cohort."
+    }
+  ],
+  "recommendation": "Use the paid pilot for an initial pricing conversation and gather customer usage and support costs.",
+  "reversal_condition": "Recompute if the real cohort cannot sustain the modeled price, support effort consumes the margin headroom, or a lower-touch free tier demonstrates stronger conversion.",
+  "missing": [
+    "Representative paid invoices, accepted customer outcomes, net fees, actual seat mix, and human support time."
+  ],
+  "calculations": [
+    {
+      "args": [
+        "compare",
+        "benchmark_scenarios/intelip_ops_conservative.yml",
+        "benchmark_scenarios/intelip_rollout_paid_pilot.yml",
+        "benchmark_scenarios/intelip_rollout_tight_free.yml",
+        "benchmark_scenarios/intelip_rollout_workspace_minimum_proxy.yml",
+        "--json"
+      ],
+      "inputs": [
+        {
+          "path": "benchmark_scenarios/intelip_ops_conservative.yml",
+          "sha256": "0133f0bdf2f57d265ed49295825349152cf526b458f71cd8686fbe7e4046d752"
+        },
+        {
+          "path": "benchmark_scenarios/intelip_rollout_paid_pilot.yml",
+          "sha256": "6c9510a521da30341602c4d8ed2d8e068eab1475fd8ce4d35c368e24f90c89cc"
+        },
+        {
+          "path": "benchmark_scenarios/intelip_rollout_tight_free.yml",
+          "sha256": "acaef08923b4f9dde74bfde47ee02161d726801e11bced4a0959955048a76752"
+        },
+        {
+          "path": "benchmark_scenarios/intelip_rollout_workspace_minimum_proxy.yml",
+          "sha256": "3ae3a42159ac0a9d965032874bf6e747a7e3f3a617b2492b5531041f85ba0859"
+        }
+      ]
+    }
+  ]
+}

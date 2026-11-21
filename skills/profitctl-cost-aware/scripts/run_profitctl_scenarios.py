@@ -46,7 +46,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     evidence = parser.add_mutually_exclusive_group()
     evidence.add_argument(
         "--assess-path",
-        help="Run a required source-backed assessment for this codebase path.",
+        help="Request a live, source-backed assessment for this codebase path.",
     )
     evidence.add_argument(
         "--assessment",

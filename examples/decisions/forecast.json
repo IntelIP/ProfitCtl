@@ -1,0 +1,31 @@
+{
+  "project": "Airport directory tutorial (synthetic)",
+  "question": "Would keeping airport metadata between client sessions reduce repeated lookup requests?",
+  "workload": "One fictional two-leg trip visiting the same two airports. Clear process memory between legs. Each leg requests a name and a timezone for both airports.",
+  "source_revision": "Tutorial fixture v1",
+  "window": "One synthetic two-leg trip",
+  "alternatives": [
+    {
+      "name": "Persistent airport metadata cache",
+      "cost": "Forecast two transport requests across the trip at an illustrative USD 0.015 per request.",
+      "quality": "All four name and timezone pairs should agree with the reference data. Refresh the metadata after seven days."
+    },
+    {
+      "name": "Memory-only cache",
+      "cost": "Forecast four transport requests at the same illustrative price.",
+      "quality": "The same four pairs should agree. Each restarted process has to look up the airports again."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "assumed",
+      "source": "Tutorial workload v1",
+      "finding": "Two airports recur immediately. There are no metadata changes, retries, or credits in this example."
+    }
+  ],
+  "recommendation": "Keep reference metadata on disk across both legs.",
+  "reversal_condition": "Revisit the cache policy when stale results require frequent corrections or the request pattern changes.",
+  "missing": [
+    "Field freshness and effective billed cost in an actual deployment."
+  ]
+}

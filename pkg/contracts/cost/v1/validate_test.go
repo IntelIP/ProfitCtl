@@ -300,19 +300,19 @@ func TestUpstashForecastToObservationFixture(t *testing.T) {
 func TestSchemasContainValidJSON(t *testing.T) {
 	root := repoRoot(t)
 	schemaDir := filepath.Join(root, "schemas", "cost-contract", "v1")
-	entries, err := os.ReadDir(schemaDir)
+	entries, err := filepath.Glob(filepath.Join(schemaDir, "*.schema.json"))
 	require.NoError(t, err)
 	require.Len(t, entries, 3)
 
 	ids := map[string]bool{}
 	for _, entry := range entries {
-		data, err := os.ReadFile(filepath.Join(schemaDir, entry.Name()))
+		data, err := os.ReadFile(entry)
 		require.NoError(t, err)
 		var schema map[string]any
-		require.NoError(t, json.Unmarshal(data, &schema), entry.Name())
+		require.NoError(t, json.Unmarshal(data, &schema), entry)
 		id, ok := schema["$id"].(string)
-		require.True(t, ok, entry.Name())
-		require.False(t, ids[id], entry.Name())
+		require.True(t, ok, entry)
+		require.False(t, ids[id], entry)
 		ids[id] = true
 	}
 }

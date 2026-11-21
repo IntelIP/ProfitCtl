@@ -1,9 +1,9 @@
-# Condere production economics walkthrough
+# Condere economics walkthrough (October 2026 architecture)
 
 Start with the business question: “What will running Condere cost, and which
 other costs change if we alter its assessment workflow?”
 
-Condere uses Agno inside an AgentOS API and assessment Job. The Job depends on
+The October 7 planning template describes Agno inside an AgentOS API and assessment Job. That Job depended on
 OpenRouter, Exa, Modal, Neon and GCS; web/CLI/MCP are access surfaces. Codex can
 inspect source and explain assumptions. ProfitCtl calculates declared economic
 consequences. Do not turn a detected package into a claim of a deployed service.
@@ -16,7 +16,7 @@ profitctl system inspect /path/to/Condere
 
 Output contains sorted paths, hashes and lexical provider signals, never file
 contents. It excludes generated trees, documentation and symlinks. Read current
-deployment and runtime evidence to distinguish active services, internal agents,
+deployment and runtime evidence for the revision under review before reusing this template. Distinguish active services, internal agents,
 development settings and retired workers. Source inspection is bounded to 2,048
 files, 1 MiB per file and 32 MiB total; failure is explicit, not partial success.
 

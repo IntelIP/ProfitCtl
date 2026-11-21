@@ -42,6 +42,8 @@ Thumbs.db
 # Test output
 *.log
 .artifacts/
+.profitctl/decisions/
+__pycache__/
 
 # Build artifacts
 /dist/

@@ -19,12 +19,12 @@ var (
 	mcpWorkspaceRoot   string
 	mcpStandardsBinary string
 	mcpListenAddress   string
+	mcpEnableDecisions bool
 )
 
 var mcpCmd = &cobra.Command{
 	Use:          "mcp",
 	Short:        "Run the bounded local ProfitCtl MCP server",
-	Hidden:       true,
 	Args:         cobra.NoArgs,
 	SilenceUsage: true,
 	RunE:         runMCP,
@@ -39,6 +39,7 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
+	mcpCmd.Flags().BoolVar(&mcpEnableDecisions, "decisions", false, "Enable private decision reads and revision writes over stdio")
 	mcpCmd.PersistentFlags().StringVar(&mcpWorkspaceRoot, "workspace-root", "", "Fixed local workspace root")
 	mcpCmd.PersistentFlags().StringVar(&mcpStandardsBinary, "standards-binary", "", "Path to local profitctl-standards executable")
 	mcpServeCmd.Flags().StringVar(&mcpListenAddress, "listen", "127.0.0.1:8173", "Loopback address for the local Streamable HTTP endpoint")
@@ -46,7 +47,7 @@ func init() {
 }
 
 func runMCP(_ *cobra.Command, _ []string) error {
-	server, err := newMCPServer()
+	server, err := newMCPServer(mcpEnableDecisions)
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func runMCPHTTP(_ *cobra.Command, _ []string) error {
 	if err := validateLoopbackAddress(mcpListenAddress); err != nil {
 		return err
 	}
-	server, err := newMCPServer()
+	server, err := newMCPServer(false)
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func runMCPHTTP(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("serve local ProfitCtl MCP: %w", err)
 }
 
-func newMCPServer() (*mcpserver.Server, error) {
+func newMCPServer(enableDecisions bool) (*mcpserver.Server, error) {
 	workspaceRoot := mcpWorkspaceRoot
 	if workspaceRoot == "" {
 		workspaceRoot = os.Getenv("PROFITCTL_WORKSPACE_ROOT")
@@ -107,6 +108,7 @@ func newMCPServer() (*mcpserver.Server, error) {
 
 	return mcpserver.New(mcpserver.Config{
 		WorkspaceRoot:   workspaceRoot,
+		EnableDecisions: enableDecisions,
 		StandardsBinary: mcpStandardsBinary,
 	})
 }

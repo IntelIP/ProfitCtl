@@ -58,11 +58,11 @@ You will see revenue, recurring revenue, fees, booked and operating margins, cos
 | Surface | Start here |
 | --- | --- |
 | Local CLI | [`simulate`, `compare`, and `validate`](./docs/QUICK_START.md) |
-| Cost-aware agent decisions | [ProfitCtl cost-aware skill](./skills/profitctl-cost-aware/SKILL.md) |
+| Codex and Claude Code | [Calculate, save, and revisit an economic decision](./docs/economic-decisions.md) |
 | CI checks | [Cost model standards](./docs/cost-model-standards.md) |
 | Scenario examples | [Benchmark scenarios](./benchmark_scenarios/README.md) |
 
-The open-source local CLI, Codex skill, and CI output are available today. Hosted workspaces, saved team history, and approvals are planned. Website examples use fictional scenarios and sample costs; real decisions need your own rates, usage, and evidence.
+The source build includes local decision history and an opt-in stdio MCP interface. The published v0.4.0-rc.1 predates these additions. Website examples use fictional scenarios and sample costs.
 
 ## Production economics planning
 

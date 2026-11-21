@@ -31,7 +31,13 @@ func buildSimulationResult(cfgFile string) (output.SimulationResult, error) {
 	if len(scaleResult.Scenarios) > 0 {
 		baseUsers = scaleResult.Scenarios[0].Users
 	}
-	stressResult := simulation.RunStressTest(cfg.FixedCosts, cfg.VariableCosts, cfg.Pricing, baseUsers, summaryMonths, cfg.Simulation.Iterations)
+	// Reuse the same random stream for repeat runs and comparisons. A scenario
+	// can select a different seed to explore sensitivity to sampling noise.
+	sampling := simulation.MonteCarloConfig{Iterations: cfg.Simulation.Iterations, Seed: 1}
+	if cfg.Simulation.Seed != nil {
+		sampling.Seed = *cfg.Simulation.Seed
+	}
+	stressResult := simulation.RunStressTestWithConfig(cfg.FixedCosts, cfg.VariableCosts, cfg.Pricing, baseUsers, summaryMonths, sampling)
 
 	baseScenario := scaleResult.Scenarios[0]
 	var revenueResult pricing.RevenueResult

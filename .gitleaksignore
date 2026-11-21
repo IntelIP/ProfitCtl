@@ -1,0 +1,5 @@
+# These two revisions contain the same public sessionStorage label on line 4.
+# One is the original campaign PR and one its squash on main. Each fingerprint
+# applies only to that historical line; later edits still receive normal scanning.
+33ea28aa3622a082a7f04ee5454b42f68ebba9eb:website/src/scripts/campaign-measurement.ts:generic-api-key:4
+cb54ffea5781aed74a64c9d659494241f062328d:website/src/scripts/campaign-measurement.ts:generic-api-key:4

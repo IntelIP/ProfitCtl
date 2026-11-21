@@ -11,11 +11,40 @@ ProfitCtl ships a release-based install script for macOS and Linux. The script d
 
 ## Recommended Install
 
+For v0.4 evaluators on macOS, use the release archive or installer below. ProfitCtl currently provides no supported Homebrew tap.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 ```
 
 The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$HOME/.codex}/skills/profitctl-cost-aware`. If the binary directory is not on your `PATH`, the installed skill uses its bundled platform binary.
+
+## Codex and Claude Code
+
+Shared decisions require a build containing `profitctl decision` and `profitctl mcp --decisions`. Build from this checkout while the feature is under development. Use the same binary version and absolute workspace path in both clients. The workspace can be a dedicated private directory.
+
+```bash
+install_dir="$PWD/build/client-bin"
+mkdir -p "$install_dir"
+go build -o "$install_dir/profitctl" .
+go build -o "$install_dir/profitctl-standards" ./scripts/judge_cost_standards.go
+```
+
+From a verified release archive containing the feature, the installer supports `--skill-client codex` (default), `claude`, `both`, and `none`. It installs the version-matched skill and helpers in the selected applications. `CLAUDE_CONFIG_DIR` and `CODEX_HOME` select alternative configuration directories. For a source checkout, copy `skills/profitctl-cost-aware` into each selected client's `skills` directory and put the two binaries above on your PATH.
+
+Set `decision_workspace` to the absolute directory that holds the scenarios and private decisions you want both clients to use, then register the stdio server in each client. In Claude Code, run registration from the project where you intend to use the server. Its local scope is private to this user and project. In Codex, use a distinct instance name when registering another workspace.
+
+```bash
+decision_workspace="/absolute/path/to/decision-workspace"
+codex mcp add profitctl -- "$install_dir/profitctl" mcp --decisions --workspace-root "$decision_workspace"
+claude mcp add --scope local profitctl -- "$install_dir/profitctl" mcp --decisions --workspace-root "$decision_workspace"
+```
+
+Open a new session in either client and ask, for example, “Should we run deeper research on each Condere assessment? Use ProfitCtl and save the recommendation with the evidence that could reverse it.” Reopen its ID in the other client. Use `profitctl decision read ID --workspace "$decision_workspace"` to inspect the same revision from the terminal. The default server without `--decisions` supplies only the four read-only scenario tools.
+
+### Packaged Codex plugin
+
+Native release archives built from this branch also contain a Codex plugin with the archive version, stdio declaration, binaries, and the same workflow skill. Building those archives from source requires Python 3 in addition to Go and the archiving tools. For a local marketplace, place the extracted archive directory at the marketplace's declared plugin source path, refresh the installed plugin with `codex plugin add profitctl-cost-aware@MARKETPLACE`, and pass `PROFITCTL_WORKSPACE_ROOT` when starting Codex. This plugin enables local decision writes in that workspace. Select either the plugin or the direct Codex server registration for a workspace. The original private four-tool pilot can be removed from Codex with `codex plugin remove profitctl-cost-aware@hudson-local` when switching installations.
 
 ## Pin a Version
 

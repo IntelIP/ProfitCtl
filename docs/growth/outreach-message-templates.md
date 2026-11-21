@@ -52,10 +52,6 @@ Best next step is to install and run one compare.
 Install:
 curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/install.sh | bash
 
-Or:
-brew tap IntelIP/profitctl
-brew install profitctl
-
 Then run:
 [insert benchmark command]
 

@@ -11,13 +11,21 @@ import (
 type DistributionGenerator func() float64
 
 func NewDistributionGenerator(vc types.VariableCost) (DistributionGenerator, error) {
+	return distributionGenerator(vc, nil)
+}
+
+func distributionGenerator(vc types.VariableCost, rng *rand.Rand) (DistributionGenerator, error) {
+	normal, uniform := rand.NormFloat64, rand.Float64
+	if rng != nil {
+		normal, uniform = rng.NormFloat64, rng.Float64
+	}
 	switch vc.Distribution {
 	case types.DistNormal:
 		if vc.Mean == nil || vc.StdDev == nil {
 			return nil, errors.New("normal distribution requires mean and stddev")
 		}
 		return func() float64 {
-			return *vc.Mean + *vc.StdDev*rand.NormFloat64()
+			return *vc.Mean + *vc.StdDev*normal()
 		}, nil
 
 	case types.DistUniform:
@@ -25,7 +33,7 @@ func NewDistributionGenerator(vc types.VariableCost) (DistributionGenerator, err
 			return nil, errors.New("uniform distribution requires min and max")
 		}
 		return func() float64 {
-			return *vc.Min + (*vc.Max-*vc.Min)*rand.Float64()
+			return *vc.Min + (*vc.Max-*vc.Min)*uniform()
 		}, nil
 
 	case types.DistExponential:
@@ -33,7 +41,7 @@ func NewDistributionGenerator(vc types.VariableCost) (DistributionGenerator, err
 			return nil, errors.New("exponential distribution requires rate")
 		}
 		return func() float64 {
-			return -math.Log(1-rand.Float64()) / *vc.Rate
+			return -math.Log(1-uniform()) / *vc.Rate
 		}, nil
 
 	default:
@@ -136,6 +144,12 @@ func CalculateVariableCostWithVariability(variableCosts []types.VariableCost, us
 }
 
 func CalculateVariableCostWithVariabilityAndScope(variableCosts []types.VariableCost, users int, paidUsers int) VariableCostResult {
+	return SampleVariableCosts(variableCosts, users, paidUsers, nil)
+}
+
+// SampleVariableCosts uses the simulation's RNG for each draw. A nil source
+// preserves independent draws for callers performing ad-hoc sampling.
+func SampleVariableCosts(variableCosts []types.VariableCost, users int, paidUsers int, rng *rand.Rand) VariableCostResult {
 	result := VariableCostResult{
 		ByLayer: types.CostLayerBreakdown{
 			Infrastructure: 0,
@@ -157,7 +171,7 @@ func CalculateVariableCostWithVariabilityAndScope(variableCosts []types.Variable
 			continue
 		}
 
-		generator, err := NewDistributionGenerator(vc)
+		generator, err := distributionGenerator(vc, rng)
 		if err != nil {
 			baseCost := vc.CostPerUnit * vc.UnitsPerUser * float64(scopedUsers)
 			result.Total += baseCost

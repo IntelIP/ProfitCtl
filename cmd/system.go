@@ -83,7 +83,24 @@ func systemCommand() *cobra.Command {
 		}
 		return nil
 	}}
-	root.AddCommand(inspect, evaluate, compare, receipts)
+	outcomes := &cobra.Command{Use: "outcomes <cohorts.json>", Short: "Compare scoped cost per accepted outcome and break-even acceptance", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		var input systemmodel.OutcomeComparison
+		if err := readSystemJSON(args[0], &input); err != nil {
+			return wrapExit(2, err)
+		}
+		report, err := systemmodel.CompareOutcomes(input)
+		if err != nil {
+			return wrapExit(2, err)
+		}
+		if err := writeSystemJSON(cmd, report); err != nil {
+			return err
+		}
+		if report.Status == "incomplete" {
+			return wrapExitSilent(1, fmt.Errorf("outcome comparison incomplete"))
+		}
+		return nil
+	}}
+	root.AddCommand(inspect, evaluate, compare, receipts, outcomes)
 	return root
 }
 func readSystemJSON(path string, target any) error {

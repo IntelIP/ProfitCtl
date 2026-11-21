@@ -12,7 +12,9 @@
       "Pricing, margin, covenant, and simulation results match executable oracles.",
       "CLI simulate, compare, calibrate, and output workflows remain correct.",
       "Maintained reference cost templates satisfy declared cost-model standards.",
-      "Source-backed assessment and recommendation fixtures satisfy receipt, inference, arithmetic, and decision standards."
+      "Source-backed assessment and recommendation fixtures satisfy receipt, inference, arithmetic, and decision standards.",
+      "Opt-in local decision revisions survive restart and reject conflicting edits; historical forecasts remain readable through CLI and MCP.",
+      "Outcome comparisons retain unmeasured acceptance and costs and calculate break-even for the stated scope."
     ],
     "invariants": [
       "Validation is deterministic and makes no live provider call.",
