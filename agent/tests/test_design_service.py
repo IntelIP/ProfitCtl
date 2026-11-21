@@ -25,7 +25,10 @@ from profitctl_agent.design_service import (
 class PersistentService(EconomicCaseFixture):
     def setUp(self):
         super().setUp()
-        self.path = self.root / "agent.sock"
+        # A validator can set TMPDIR to a checkout path longer than sockaddr_un.sun_path.
+        socket_dir = TemporaryDirectory(dir="/tmp")
+        self.addCleanup(socket_dir.cleanup)
+        self.path = Path(socket_dir.name) / "agent.sock"
         self.profiles = self.root / "profiles"
         self.profiles.mkdir(mode=0o700)
         self.env = {**os.environ, "PYTHONPATH": str(REPO / "agent/src"), "PROFITCTL_AGENT_MODEL": "scripted"}
@@ -139,7 +142,7 @@ class PersistentService(EconomicCaseFixture):
 
 class ListenerSafety(unittest.TestCase):
     def test_preserves_active_socket_and_files_and_reclaims_stale_socket(self):
-        with TemporaryDirectory() as tmp:
+        with TemporaryDirectory(dir="/tmp") as tmp:
             root = Path(tmp)
             path = root / "p.sock"
             path.write_text("operator file")
