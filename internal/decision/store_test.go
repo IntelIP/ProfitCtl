@@ -158,6 +158,10 @@ func TestCaseChecksumAndCalibrationDependency(t *testing.T) {
 	c.Calculations[0].Args = []string{"simulate", "--json", scenario.Path}
 	_, err = Save(root, "case", 0, c)
 	require.ErrorIs(t, err, ErrInvalid) // simulate would read the unpinned default profit.yml
+	require.ErrorContains(t, err, "simulate --file SCENARIO")
+	c.Calculations[0].Args = []string{"simulate", "--scenario", scenario.Path}
+	_, err = Save(root, "case", 0, c)
+	require.ErrorContains(t, err, "simulate --file SCENARIO")
 	c.Calculations[0].Args = []string{"validate", "-f", scenario.Path}
 	r, err := Save(root, "case", 0, c)
 	require.NoError(t, err)

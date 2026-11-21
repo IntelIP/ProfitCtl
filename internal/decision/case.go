@@ -50,7 +50,7 @@ type Alternative struct {
 }
 
 type Evidence struct {
-	Kind    string `json:"kind" jsonschema:"One of observed, modeled, assumed, or unknown."`
+	Kind    string `json:"kind" jsonschema:"Use observed for a measurement from a named run or receipt in this workload. Use assumed for supplied fixture values, modeled for calculated scenarios, and unknown for missing evidence."`
 	Source  string `json:"source" jsonschema:"Safe source identity or acquisition route for missing evidence."`
 	Finding string `json:"finding" jsonschema:"What this source establishes."`
 }
@@ -58,7 +58,7 @@ type Evidence struct {
 // Calculation is a replay instruction. Save checks the digest of each listed
 // input. It does not execute Args or certify the interpretation of a result.
 type Calculation struct {
-	Args   []string        `json:"args" jsonschema:"Argument vector for a read-only local ProfitCtl calculation."`
+	Args   []string        `json:"args" jsonschema:"Read-only CLI argument tokens. Use simulate --file SCENARIO or validate --file SCENARIO for one pricing file and compare LEFT RIGHT for two. Use system evaluate, receipts, or outcomes with one input, system compare with two, and diff or explain --input FILE for variance."`
 	Inputs []ArtifactInput `json:"inputs" jsonschema:"All input and calibration files needed by this calculation."`
 }
 
@@ -206,6 +206,7 @@ func calculationPaths(args []string) ([]string, error) {
 		if len(values) == 2 && (values[0] == "--file" || values[0] == "-f") {
 			return values[1:], nil
 		}
+		return nil, invalid("use " + command + " --file SCENARIO with the pinned workspace-relative path")
 	case "compare":
 		if len(values) >= 2 {
 			return values, nil

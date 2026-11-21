@@ -28,7 +28,7 @@ type OutcomeOption struct {
 type OutcomeCharge struct {
 	ID     string   `json:"id"`
 	USD    *float64 `json:"usd"`
-	Basis  string   `json:"basis" jsonschema:"One of reported, invoice, modeled, or unknown."`
+	Basis  string   `json:"basis" jsonschema:"Preserve the source basis. Use modeled for scenario and illustrative fixture costs, reported for charges on a real usage record, invoice for billed amounts, and unknown with a null amount for missing charges."`
 	Source string   `json:"source" jsonschema:"Source of the amount, or the evidence needed when unknown."`
 }
 

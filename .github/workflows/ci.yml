@@ -239,10 +239,16 @@ jobs:
             || echo "trivy exited non-zero; preserving report if present"
           [ -f reports/trivy.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
 
-          docker run --rm --entrypoint osv-scanner -v "$PWD:/src" -w /src ghcr.io/google/osv-scanner:v2.3.3 \
-            scan --recursive --format json --output reports/osv.json . \
-            || echo "osv-scanner exited non-zero; preserving report if present"
-          [ -f reports/osv.json ] || echo '{"results":[]}' > reports/osv.json
+          # OSV exits 1 for findings. A scan error or missing inventory fails this step.
+          osv_status=0
+          docker run --rm -v "$PWD:/src:ro" -v "$RUNNER_TEMP/reports:/reports" -w /src ghcr.io/google/osv-scanner:v2.3.3 \
+            scan --recursive --all-packages --format json --output /reports/osv.json . || osv_status=$?
+          if (( osv_status > 1 )); then exit "$osv_status"; fi
+          jq -e '
+            [.results[]?.packages[]? | select(.package.name != null)] as $packages
+            | select($packages | length > 0)
+            | {scanned_packages: ($packages | length), packages_with_findings: ([$packages[] | select(.vulnerabilities | length > 0)] | length)}
+          ' "$RUNNER_TEMP/reports/osv.json"
 
       - name: Upload scan findings
         env:
@@ -267,7 +273,7 @@ jobs:
           upload semgrep sarif reports/semgrep.sarif
           upload trivy sarif reports/trivy.sarif
           upload gitleaks sarif "$RUNNER_TEMP/reports/gitleaks.sarif"
-          upload osv json reports/osv.json
+          upload osv json "$RUNNER_TEMP/reports/osv.json"
 
       - name: Evaluate policy gate
         if: github.event_name == 'pull_request'
