@@ -17,6 +17,7 @@ from pydantic import Field, ValidationError
 from .economics import OwnerEvidence
 
 if TYPE_CHECKING:
+    from .design_service import SocketClient
     from .runtime import InvestigationService
 
 
@@ -40,7 +41,7 @@ def _invoke(operation: Callable[..., dict], **kwargs: Any) -> dict:
         ) from None
 
 
-def make_server(service: "InvestigationService") -> FastMCP:
+def make_server(service: "InvestigationService | SocketClient", *, review_design: Callable[..., dict] | None = None) -> FastMCP:
     server = FastMCP(
         "profitctl-agent",
         instructions=(
@@ -77,6 +78,14 @@ def make_server(service: "InvestigationService") -> FastMCP:
             action=action, evidence=update,
         )
 
+    if review_design is not None:
+        @server.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=False))
+        async def profitctl_review_design(
+            profile: Identifier | None = None, proposal: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
+            """Review design economics using Go. Supply exactly one registered profile slug or self-contained profitctl.design/v1 proposal object. Return sourced gaps in incomplete reports."""
+            return await asyncio.to_thread(review_design, profile=profile, proposal=proposal)
+
     return server
 
 
@@ -106,7 +115,12 @@ def _parser() -> argparse.ArgumentParser:
     inputs = resume.add_mutually_exclusive_group()
     inputs.add_argument("--evidence", help="JSON object containing kind, source and updates")
     inputs.add_argument("--evidence-file", type=Path, help="Read the same JSON object from a local file")
-    commands.add_parser("mcp", help="Serve start, status and resume over local stdio")
+    mcp = commands.add_parser("mcp", help="Serve investigation tools over local stdio")
+    mcp.add_argument("--socket", type=Path,
+                     help="Route to the persistent local agent and expose its design review tool")
+    serve = commands.add_parser("serve", help="Run the persistent agent on a private Unix socket")
+    serve.add_argument("--socket", type=Path, required=True, help="Socket in an existing owner-only directory")
+    serve.add_argument("--profiles", type=Path, required=True, help="Owner-only directory of registered JSON profiles")
     return parser
 
 
@@ -135,9 +149,21 @@ def _evidence(args: argparse.Namespace) -> dict | None:
 
 def main() -> int:
     args = _parser().parse_args()
-    from .runtime import InvestigationService
 
     try:
+        if args.command == "serve":
+            from .design_service import serve
+
+            serve(args.workspace, args.profitctl_binary, args.socket, args.profiles)
+            return 0
+        if args.command == "mcp" and args.socket is not None:
+            from .design_service import SocketClient
+
+            client = SocketClient(args.socket)
+            make_server(client, review_design=client.review).run(transport="stdio")
+            return 0
+        from .runtime import InvestigationService
+
         service = InvestigationService(args.workspace, profitctl_binary=args.profitctl_binary)
         if args.command == "mcp":
             make_server(service).run(transport="stdio")
