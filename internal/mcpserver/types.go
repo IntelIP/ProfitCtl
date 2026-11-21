@@ -35,6 +35,7 @@ const (
 // Config fixes the local execution boundary when the MCP server starts.
 // WorkspaceRoot is intentionally not accepted from model-provided tool input.
 type Config struct {
+	EnableDecisions bool
 	WorkspaceRoot   string
 	Binary          string
 	StandardsBinary string
@@ -80,6 +81,7 @@ type processRunner interface {
 
 // Server owns the fixed workspace and local process boundary for tool calls.
 type Server struct {
+	enableDecisions bool
 	workspaceRoot   string
 	binary          string
 	standardsBinary string
@@ -141,6 +143,7 @@ func newWithRunner(cfg Config, runner processRunner) (*Server, error) {
 	}
 
 	return &Server{
+		enableDecisions: cfg.EnableDecisions,
 		workspaceRoot:   workspaceRoot,
 		binary:          binary,
 		standardsBinary: standardsBinary,

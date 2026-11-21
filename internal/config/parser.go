@@ -132,6 +132,7 @@ type Covenant struct {
 }
 
 type SimulationConfig struct {
+	Seed          *int64  `yaml:"seed,omitempty"`
 	BaseUsers     int     `yaml:"base_users" validate:"required,min=1"`
 	BillableUsers *int    `yaml:"billable_users" validate:"omitempty,min=0"`
 	GrowthFactor  float64 `yaml:"growth_factor" validate:"required,min=1.0"`

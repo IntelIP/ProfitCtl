@@ -20,10 +20,10 @@
       "summary": "Pricing, margin, cost, covenant, and Monte Carlo oracles"
     },
     "workflow": {
-      "commands": [["go", "test", "./cmd/...", "./internal/output/...", "./test/integration/..."]],
+      "commands": [["go", "test", "./cmd/...", "./internal/output/...", "./internal/mcpserver/...", "./test/integration/..."]],
       "metrics": [{"name": "cli_simulation_workflows_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
       "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
-      "summary": "CLI simulation, comparison, calibration, and output workflows"
+      "summary": "CLI and MCP simulation, comparison, saved-decision and calibration workflows"
     },
     "operational": {
       "commands": [
@@ -43,10 +43,10 @@
       "summary": "Executable scenario, assessment, and recommendation standards with no provider calls"
     },
     "security": {
-      "commands": [["go", "test", "./internal/scanner/...", "./internal/scanner/llm/...", "./internal/systemmodel/..."]],
+      "commands": [["go", "test", "./internal/scanner/...", "./internal/scanner/llm/...", "./internal/systemmodel/...", "./internal/decision/...", "./internal/mcpserver/..."]],
       "metrics": [{"name": "structured_detection_boundaries_pass", "unit": "boolean", "passValue": 1, "failValue": 0}],
       "cost": {"telemetry": "not_applicable", "usd": null, "modelCalls": null, "toolCalls": null},
-      "summary": "Bounded source collection and structured LLM-output rejection"
+      "summary": "Bounded source collection, structured output, workspace confinement and decision revision integrity"
     }
   }
 }

@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"math"
+	"math/rand"
 	"sort"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 type MonteCarloResult struct {
 	Iterations int
+	Seed       int64
 	Samples    []float64
 	P95        float64
 	P99        float64
@@ -37,6 +39,7 @@ func NewMonteCarloConfig(iterations int) MonteCarloConfig {
 }
 
 func RunMonteCarlo(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, users int, months int, config MonteCarloConfig) MonteCarloResult {
+	rng := rand.New(rand.NewSource(config.Seed)) // Reproducible simulation draws.
 	samples := make([]float64, 0, config.Iterations)
 
 	fixedMonthly := cost.CalculateFixedCosts(fixedCosts, 1)
@@ -47,7 +50,7 @@ func RunMonteCarlo(fixedCosts []types.FixedCost, variableCosts []types.VariableC
 	}
 
 	for i := 0; i < config.Iterations; i++ {
-		variableResult := cost.CalculateVariableCostWithVariabilityAndScope(variableCosts, users, paidUsers)
+		variableResult := cost.SampleVariableCosts(variableCosts, users, paidUsers, rng)
 		totalCost := fixedTotal + variableResult.Total
 		samples = append(samples, totalCost)
 	}
@@ -56,6 +59,7 @@ func RunMonteCarlo(fixedCosts []types.FixedCost, variableCosts []types.VariableC
 
 	result := MonteCarloResult{
 		Iterations: config.Iterations,
+		Seed:       config.Seed,
 		Samples:    samples,
 		P95:        calculatePercentile(samples, 0.95),
 		P99:        calculatePercentile(samples, 0.99),
@@ -134,7 +138,10 @@ type StressTestResult struct {
 }
 
 func RunStressTest(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, users int, months int, iterations int) StressTestResult {
-	mcConfig := NewMonteCarloConfig(iterations)
+	return RunStressTestWithConfig(fixedCosts, variableCosts, pricingCfg, users, months, NewMonteCarloConfig(iterations))
+}
+
+func RunStressTestWithConfig(fixedCosts []types.FixedCost, variableCosts []types.VariableCost, pricingCfg *config.PricingConfig, users int, months int, mcConfig MonteCarloConfig) StressTestResult {
 	monteCarlo := RunMonteCarlo(fixedCosts, variableCosts, pricingCfg, users, months, mcConfig)
 
 	meanCostPerUser := monteCarlo.Mean / float64(users)

@@ -12,6 +12,13 @@
 8. Render CLI/JSON/Markdown output.
 9. Return deterministic exit code.
 
+The CLI, MCP and comparison command use Monte Carlo seed `1` by default so
+the same scenario and ProfitCtl build reproduce the same financial results.
+Set the optional integer `simulation.seed` in the scenario to run an
+independent sampling trial. Simulation JSON records the selected seed in
+`stress_test.seed`. Percentiles remain estimates from the configured number
+of iterations.
+
 `profitctl calibrate` runs a normalization pipeline:
 
 1. Read a YAML, JSON, or CSV calibration artifact.

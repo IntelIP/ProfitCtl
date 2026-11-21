@@ -6,6 +6,7 @@
 - [Versioned Sprint Plan and Backlog](SPRINT_PLAN.md)
 - [Install Guide](INSTALL.md)
 - [Quick Start](QUICK_START.md)
+- [Economic decisions in Codex and Claude Code](economic-decisions.md)
 - [How It Works](HOW_IT_WORKS.md)
 - [Architecture](ARCHITECTURE.md)
 - [Open-Source Company Plan](OPEN_SOURCE_COMPANY_PLAN.md)

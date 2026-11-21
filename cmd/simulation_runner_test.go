@@ -1,13 +1,44 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/IntelIP/ProfitCtl/internal/output"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestSimulationReplaysStressDraws(t *testing.T) {
+	// This fixture includes normal, uniform and exponential distributions.
+	data, err := os.ReadFile("../test/fixtures/valid_config.yml")
+	require.NoError(t, err)
+	data = bytes.Replace(data, []byte("iterations: 10000"), []byte("iterations: 100"), 1)
+	file := filepath.Join(t.TempDir(), "profit.yml")
+	run := func(input []byte, seed int64) []byte {
+		t.Helper()
+		require.NoError(t, os.WriteFile(file, input, 0600))
+		result, err := buildSimulationResult(file)
+		require.NoError(t, err)
+		require.Equal(t, seed, result.StressResult.MonteCarlo.Seed)
+		require.Positive(t, result.StressResult.MonteCarlo.StdDev)
+		encoded, err := output.FormatJSONResult(result)
+		require.NoError(t, err)
+		return encoded
+	}
+	initial := run(data, 1)
+	require.JSONEq(t, string(initial), string(run(data, 1)))
+	alternative := bytes.Replace(data, []byte("simulation:"), []byte("simulation:\n  seed: 27"), 1)
+	changed := run(alternative, 27)
+	// Check actual sampled metrics too; a changed seed field alone proves nothing.
+	var initialMetrics, changedMetrics output.JSONResult
+	require.NoError(t, json.Unmarshal(initial, &initialMetrics))
+	require.NoError(t, json.Unmarshal(changed, &changedMetrics))
+	require.NotEqual(t, initialMetrics.StressTest.WorstCaseTotalCost, changedMetrics.StressTest.WorstCaseTotalCost)
+}
 
 func TestBuildSimulationResult_UsesBillableUsersForHybridRevenue(t *testing.T) {
 	tmpDir := t.TempDir()

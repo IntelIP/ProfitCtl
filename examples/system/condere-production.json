@@ -1,6 +1,6 @@
 {
   "schema_version": "profitctl.system/v1",
-  "name": "Condere production planning \u2014 inputs uncollected",
+  "name": "Historical Condere AgentOS planning template (October 7, 2026); inputs uncollected",
   "period": "monthly",
   "currency": "USD",
   "revenue_usd": {

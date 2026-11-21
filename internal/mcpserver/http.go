@@ -6,13 +6,13 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// HTTPHandler exposes the same bounded tools over the current stateless
+// HTTPHandler exposes the read-only scenario operations over the stateless
 // Streamable HTTP transport. Callers must bind it only to a trusted local
 // listener or add their own authentication and authorization boundary.
 func (s *Server) HTTPHandler() http.Handler {
 	return mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server {
-			return s.MCPServer()
+			return s.mcpServer(false)
 		},
 		&mcp.StreamableHTTPOptions{
 			Stateless:                    true,

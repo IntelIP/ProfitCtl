@@ -1,6 +1,24 @@
-# ProfitCtl Plugin Pilot: Four-Tool Local MCP Contract
+# Local MCP for ProfitCtl
 
-**Status:** implemented private local pilot. It supports current-protocol stdio and an optional loopback Streamable HTTP endpoint. **Scope:** local, disposable pilot only. This is not authorization to publish, host, or submit a public plugin.
+## Current decision workflow
+
+The CLI starts a local stdio server in one operator-selected workspace. For private decision storage, launch it with `profitctl mcp --decisions --workspace-root /absolute/workspace`. See the [client setup instructions](INSTALL.md#codex-and-claude-code). The release candidate v0.4.0-rc.1 predates the decision tools. Build this branch or use an archive that includes them.
+
+| Tool | Result and authority |
+| --- | --- |
+| `profitctl_compare_outcomes` | Calculates cost per accepted outcome and break-even acceptance on the supplied workload. Read-only. |
+| `profitctl_create_decision` | Accepts an ID and complete case. Saves revision 1 under the configured workspace. Repeating the same request returns the saved revision. |
+| `profitctl_list_decisions` | Searches case IDs, projects and questions. Use the returned cursor to continue. Each item contains its ID, revision, project and question. Read-only. |
+| `profitctl_read_decision` | Accepts an ID and optional positive revision. Returns the requested revision or the latest when omitted. Read-only. |
+| `profitctl_revise_decision` | Accepts an ID, positive `expected_revision`, and complete revised case. Appends a revision. A conflicting change returns `revision_conflict`, so the client can reread and reconcile the edits. |
+
+Read and write tools share the CLI's decision store and validation. Use a 1–64 character lowercase ASCII letter, digit, or hyphen ID starting with a letter or digit. The case limit is 64 KiB of encoded JSON. Both save tools accept the full `case` object with project, question, workload, source revision, window, alternatives, and evidence. A recommendation includes its reversal condition. An unresolved case includes its missing evidence. An outcome references an earlier forecast revision, the chosen option, an observed source, and a conclusion. The ID addresses a case under `.profitctl/decisions`; the operator sets the workspace at launch. Keep private inputs in the workspace, use sanitized evidence references, and preserve unknown costs explicitly. A stored calculation is a record for review. Reading a decision never runs its command. Use a separate case ID or workspace for unrelated projects. A case can be read from another process or client with access to the same filesystem.
+
+Omitting `--decisions` starts the original four read-only scenario tools. The loopback HTTP endpoint also serves that read-only set. Existing integrations retain their permissions. The decision workflow uses stdio for its scoped writes. No API key is required by these MCP tools.
+
+## Original four-tool pilot
+
+The specification below describes the original private pilot. Its disposable-workspace promotion criteria and machine-local plugin path refer to that pilot. The branch packages the current Codex plugin and shared skill from repository sources.
 
 ## Decision
 

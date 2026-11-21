@@ -7,10 +7,12 @@ VERSION="${PROFITCTL_VERSION:-}"
 BIN_NAME="${PROFITCTL_BIN_NAME:-profitctl}"
 RELEASE_REPO="${PROFITCTL_RELEASE_REPO:-IntelIP/ProfitCtl}"
 CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
+CLAUDE_HOME_DIR="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+SKILL_CLIENT=codex
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [--version TAG] [--prefix DIR] [--download-base-url URL]
+Usage: install.sh [--version TAG] [--prefix DIR] [--download-base-url URL] [--skill-client codex|claude|both|none]
 
 Environment variables:
   PROFITCTL_VERSION           Release tag to install, for example v0.1.0
@@ -19,6 +21,7 @@ Environment variables:
   PROFITCTL_INSTALL_DIR       Install prefix, default $HOME/.local/bin
   PROFITCTL_BIN_NAME          Binary name to install, default profitctl
   CODEX_HOME                  Codex home, default $HOME/.codex
+  CLAUDE_CONFIG_DIR           Claude Code config directory, default $HOME/.claude
 EOF
 }
 
@@ -91,6 +94,14 @@ while [[ $# -gt 0 ]]; do
     --download-base-url)
       [[ $# -ge 2 ]] || die "--download-base-url requires an argument"
       DOWNLOAD_BASE_URL="$2"
+      shift 2
+      ;;
+    --skill-client)
+      [[ $# -ge 2 ]] || die "--skill-client requires codex, claude, both or none"
+      case "$2" in
+        codex|claude|both|none) SKILL_CLIENT="$2" ;;
+        *) die "unknown skill client: $2" ;;
+      esac
       shift 2
       ;;
     -h|--help)
@@ -206,20 +217,29 @@ fi
 
 log "Installed ${BIN_NAME} to ${TARGET_PATH}"
 
+install_skill() {
+  local companion
+  local skill_target="$1/skills/profitctl-cost-aware"
+  mkdir -p "$skill_target"
+  cp -R "${SKILL_SOURCE}/." "$skill_target/"
+  chmod 755 "$skill_target/scripts/run_profitctl_scenarios.py"
+  for companion in "$BIN_NAME" profitctl-standards; do
+    if [[ -f "$skill_target/bin/$companion" ]]; then
+      chmod 755 "$skill_target/bin/$companion"
+    fi
+  done
+  log "Installed profitctl-cost-aware skill to $skill_target"
+}
+
 if [[ -n "$SKILL_SOURCE" ]]; then
-  SKILL_TARGET="${CODEX_HOME_DIR}/skills/profitctl-cost-aware"
-  mkdir -p "$SKILL_TARGET"
-  cp -R "${SKILL_SOURCE}/." "$SKILL_TARGET/"
-  chmod 755 "${SKILL_TARGET}/scripts/run_profitctl_scenarios.py"
-  if [[ -f "${SKILL_TARGET}/bin/${BIN_NAME}" ]]; then
-    chmod 755 "${SKILL_TARGET}/bin/${BIN_NAME}"
-  fi
-  if [[ -f "${SKILL_TARGET}/bin/profitctl-standards" ]]; then
-    chmod 755 "${SKILL_TARGET}/bin/profitctl-standards"
-  fi
-  log "Installed profitctl-cost-aware skill to ${SKILL_TARGET}"
+  case "$SKILL_CLIENT" in
+    codex|both) install_skill "$CODEX_HOME_DIR" ;;
+  esac
+  case "$SKILL_CLIENT" in
+    claude|both) install_skill "$CLAUDE_HOME_DIR" ;;
+  esac
 else
-  log "Release ${VERSION} predates the bundled Codex skill; installed CLI only."
+  log "Release ${VERSION} predates the bundled skill; installed CLI only."
 fi
 
 case ":${PATH}:" in

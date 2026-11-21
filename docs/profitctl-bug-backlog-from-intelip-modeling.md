@@ -1,5 +1,19 @@
 # ProfitCtl Bug Backlog From IntelIP Modeling
 
+## Reproduction on the v0.4 foundation (November 20, 2026)
+
+The table records current behavior at `cb54ffe`. The dated investigation below captures the earlier state.
+
+| Historical item | Reproduction through the CLI | Outcome |
+| --- | --- | --- |
+| Monthly summary | `simulate -f test/fixtures/monthly_margin_regression.yml --json` | Fixed. Revenue $500, margin 80%, cost per user $2. |
+| Unlimited plan | Remove the final plan's `limits` in the same fixture, then simulate. Next, append a second plan and validate. | Fixed. The unlimited final plan produces the same figures. A nonfinal unlimited plan gives exit 2. |
+| Plan mix and workspace minimum | Simulate `mix_config.yml` and `workspace_hybrid_config.yml` under `test/fixtures/`. | Supported. The mix produces three $29 seats and $87 revenue. The workspace case produces $1,790 revenue. |
+| Payment fee mix | Simulate `test/fixtures/payment_fees_calibrated_config.yml`. | Supported. Fee output distinguishes 225 monthly and 75 annual paying users. |
+| Real-world calibration | Evaluate `examples/system/condere-production.json` and import the sanitized receipt fixture with `system receipts`. | The historical planning template identifies 19 gaps. The synthetic receipt example reports $0.02 known with total cost unknown. Live cohort and billing calibration remains open. |
+
+## Original investigation
+
 This note captures the concrete ProfitCtl bugs and modeling gaps exposed while using ProfitCtl to price IntelIP.
 
 The goal is to separate:

@@ -1,0 +1,25 @@
+{
+  "schema_version": "profitctl.outcomes/v1",
+  "workload": "Illustrative research assessments",
+  "window": "Matched cohort of ten requests per option",
+  "acceptance": "Reviewer accepts a sourced recommendation without rework",
+  "cost_scope": "Illustrative delivery and review costs for all attempts, including failures",
+  "options": [
+    {
+      "name": "Selective research", "attempts": 10, "accepted": 6,
+      "count_source": "Synthetic baseline cohort",
+      "costs": [
+        {"id": "delivery", "usd": 30, "basis": "modeled", "source": "Fixture delivery assumption"},
+        {"id": "review", "usd": 12, "basis": "modeled", "source": "Fixture reviewer effort assumption"}
+      ]
+    },
+    {
+      "name": "Research every request", "attempts": 10, "accepted": null,
+      "count_source": "Synthetic candidate workload; reviewer acceptance remains unmeasured",
+      "costs": [
+        {"id": "delivery", "usd": 44, "basis": "modeled", "source": "Fixture candidate delivery assumption"},
+        {"id": "review", "usd": 12, "basis": "modeled", "source": "Fixture reviewer effort assumption"}
+      ]
+    }
+  ]
+}

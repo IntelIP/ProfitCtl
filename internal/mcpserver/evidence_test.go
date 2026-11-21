@@ -60,3 +60,14 @@ func TestStandardsExecutableName(t *testing.T) {
 		}
 	}
 }
+
+func TestScenarioCannotUsePrivateDecisionAsCalibration(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, filepath.Join(root, "a.yml"), "calibration_file: .profitctl/decisions/example/1.json\n")
+	writeTestFile(t, filepath.Join(root, ".profitctl", "decisions", "example", "1.json"), "{}")
+	runner := &fakeRunner{}
+	got := newTestServer(t, root, runner).simulateScenario(context.Background(), "a.yml", time.Now())
+	if got.Error == nil || got.Error.Code != "calibration_file_unavailable" || len(runner.Calls()) != 0 {
+		t.Fatalf("private calibration passed to scenario engine: %#v", got)
+	}
+}

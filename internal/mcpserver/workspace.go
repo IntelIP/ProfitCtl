@@ -254,6 +254,14 @@ func (s *Server) resolveExistingWorkspaceFile(candidate string, allowedExtension
 			field:   field,
 		}
 	}
+	// Private decisions are available only through the explicitly enabled
+	// decision API. This includes nested calibration references.
+	if strings.HasPrefix(strings.ToLower(filepath.ToSlash(relative)), ".profitctl/decisions/") {
+		return "", "", &scenarioError{
+			outcome: OutcomeInvalidInput, code: "path_unavailable",
+			message: "The requested file is not available to this tool.", field: field,
+		}
+	}
 	if !allowedExtensions[strings.ToLower(filepath.Ext(resolved))] {
 		return "", "", &scenarioError{
 			outcome: OutcomeInvalidInput,

@@ -116,7 +116,8 @@ type JSONResult struct {
 		} `json:"by_layer,omitempty"`
 	} `json:"margin,omitempty"`
 	StressTest struct {
-		P95 struct {
+		Seed int64 `json:"seed"`
+		P95  struct {
 			Margin          float64 `json:"margin,omitempty"`
 			OperatingMargin float64 `json:"operating_margin,omitempty"`
 			CostPerUser     float64 `json:"cost_per_user"`
@@ -278,6 +279,7 @@ func FormatJSONResult(result SimulationResult) ([]byte, error) {
 	}
 
 	// Stress test
+	jsonResult.StressTest.Seed = result.StressResult.MonteCarlo.Seed
 	if result.StressResult.P95CostPerUser > 0 {
 		jsonResult.StressTest.P95.CostPerUser = result.StressResult.P95CostPerUser
 		if result.Revenue.Total > 0 {

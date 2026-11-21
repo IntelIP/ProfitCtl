@@ -1,0 +1,16 @@
+{
+  "name": "profitctl-cost-aware",
+  "version": "0.3.0",
+  "description": "Compare local economics and save revisioned decisions in a selected workspace.",
+  "author": {"name": "IntelIP"},
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "ProfitCtl Cost-Aware",
+    "shortDescription": "Compare and revisit economic decisions.",
+    "developerName": "IntelIP",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": ["Compare two options for this workload and save the evidence behind the choice."]
+  }
+}

@@ -25,11 +25,11 @@ SPEC.loader.exec_module(HELPER)
 
 
 class PortableSkillTests(unittest.TestCase):
-    def test_skill_has_required_trigger_and_non_trigger_boundaries(self) -> None:
+    def test_skill_preserves_local_evidence_and_paid_lookup_authority(self) -> None:
         body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("run `profitctl assess`. This step is required", body)
-        self.assertIn("Do not run ProfitCtl for unrelated coding", body)
-        self.assertIn("Never replace them with Exa research", body)
+        self.assertIn("Preserve current user-supplied prices, contracts, usage, and scale", body)
+        self.assertIn("A provider lookup or paid experiment requires its own authorized scope", body)
+        self.assertIn("smallest observation that would settle the choice", body)
 
     def test_skill_contains_no_developer_machine_path(self) -> None:
         for path in SKILL_DIR.rglob("*"):

@@ -148,6 +148,35 @@ jobs:
           printf '%s\n' "${doctor_output}" | grep -F "no fallback or local state change was performed" >/dev/null
           EOF
 
+      - name: Share native release archives with platform smoke tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-smoke-archives
+          path: |
+            dist/v0.0.0-ci/profitctl_*.tar.gz
+            dist/v0.0.0-ci/profitctl_*.zip
+            dist/v0.0.0-ci/SHA256SUMS
+          retention-days: 1
+          compression-level: 0
+
+  verify-native:
+    needs: verify-install-smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-2025]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-smoke-archives
+          path: native-archives
+      - name: Run the packaged binaries on the advertised platform
+        run: python3 scripts/release/smoke-native.py native-archives v0.0.0-ci
+
   verify-website:
     runs-on: ubuntu-latest
     defaults:
@@ -182,6 +211,18 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check reachable history for secrets
+        run: |
+          mkdir -p "$RUNNER_TEMP/reports"
+          docker run --rm --entrypoint gitleaks \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+            -v "$PWD:/src:ro" -v "$RUNNER_TEMP/reports:/reports" -w /src ghcr.io/gitleaks/gitleaks:v8.30.0 \
+            git --redact=100 --log-opts=--all --report-format sarif --report-path /reports/gitleaks.sarif .
+          jq -e '.version == "2.1.0" and (.runs | length > 0)' "$RUNNER_TEMP/reports/gitleaks.sarif" >/dev/null
 
       - name: Run scanners
         run: |
@@ -198,15 +239,16 @@ jobs:
             || echo "trivy exited non-zero; preserving report if present"
           [ -f reports/trivy.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/trivy.sarif
 
-          docker run --rm --entrypoint gitleaks -v "$PWD:/src" -w /src ghcr.io/gitleaks/gitleaks:v8.30.0 \
-            git --report-format sarif --report-path reports/gitleaks.sarif . \
-            || echo "gitleaks exited non-zero; preserving report if present"
-          [ -f reports/gitleaks.sarif ] || echo '{"version":"2.1.0","runs":[]}' > reports/gitleaks.sarif
-
-          docker run --rm --entrypoint osv-scanner -v "$PWD:/src" -w /src ghcr.io/google/osv-scanner:v2.3.3 \
-            scan --recursive --format json --output reports/osv.json . \
-            || echo "osv-scanner exited non-zero; preserving report if present"
-          [ -f reports/osv.json ] || echo '{"results":[]}' > reports/osv.json
+          # OSV exits 1 for findings. A scan error or missing inventory fails this step.
+          osv_status=0
+          docker run --rm -v "$PWD:/src:ro" -v "$RUNNER_TEMP/reports:/reports" -w /src ghcr.io/google/osv-scanner:v2.3.3 \
+            scan --recursive --all-packages --format json --output /reports/osv.json . || osv_status=$?
+          if (( osv_status > 1 )); then exit "$osv_status"; fi
+          jq -e '
+            [.results[]?.packages[]? | select(.package.name != null)] as $packages
+            | select($packages | length > 0)
+            | {scanned_packages: ($packages | length), packages_with_findings: ([$packages[] | select(.vulnerabilities | length > 0)] | length)}
+          ' "$RUNNER_TEMP/reports/osv.json"
 
       - name: Upload scan findings
         env:
@@ -230,8 +272,8 @@ jobs:
 
           upload semgrep sarif reports/semgrep.sarif
           upload trivy sarif reports/trivy.sarif
-          upload gitleaks sarif reports/gitleaks.sarif
-          upload osv json reports/osv.json
+          upload gitleaks sarif "$RUNNER_TEMP/reports/gitleaks.sarif"
+          upload osv json "$RUNNER_TEMP/reports/osv.json"
 
       - name: Evaluate policy gate
         if: github.event_name == 'pull_request'

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "profitctl": {
+      "command": "./profitctl",
+      "args": ["mcp", "--decisions"],
+      "cwd": ".",
+      "env_vars": ["PROFITCTL_WORKSPACE_ROOT"],
+      "tool_timeout_sec": 35
+    }
+  }
+}
