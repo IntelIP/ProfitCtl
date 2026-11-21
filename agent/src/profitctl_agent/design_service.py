@@ -192,7 +192,7 @@ def _review(binary, workspace, proposal):
     return report
 
 
-def _dispatch(payload, service, profiles):
+def _dispatch(payload, workspace, binary, profiles):
     action = payload.get("action")
     if action == "health" and set(payload) == {"action"}:
         return {"status": "ok", "pid": os.getpid()}
@@ -203,7 +203,7 @@ def _dispatch(payload, service, profiles):
             proposal = payload["proposal"]
         else:
             raise ServiceError("Supply exactly one registered profile or inline proposal.")
-        return _review(service.binary, service.workspace, proposal)
+        return _review(binary, workspace, proposal)
     if not isinstance(action, str) or action not in _INVESTIGATION_FIELDS:
         raise ServiceError("Choose a supported local service action.")
     args = payload.get("arguments")
@@ -213,10 +213,11 @@ def _dispatch(payload, service, profiles):
             or not required <= args.keys() <= allowed):
         raise ServiceError("Supply the required structured investigation arguments.")
     from .economics import CaseNotFound, RevisionConflict
-    from .runtime import InvestigationError
+    from .runtime import InvestigationError, InvestigationService
 
     try:
-        return getattr(service, action)(**args)
+        investigator = InvestigationService(workspace, profitctl_binary=binary)
+        return getattr(investigator, action)(**args)
     except (InvestigationError, CaseNotFound, RevisionConflict) as exc:
         raise ServiceError(str(exc)) from None
     except Exception:
@@ -269,11 +270,11 @@ def _listener(path):
             os.close(lock)
 
 
-def _handle(conn, service, profiles):
+def _handle(conn, workspace, binary, profiles):
     with conn:
         try:
             payload = _read(conn, MAX_REQUEST, time.monotonic() + READ_TIMEOUT)
-            reply = {"result": _dispatch(payload, service, profiles)}
+            reply = {"result": _dispatch(payload, workspace, binary, profiles)}
             data = _encode(reply, MAX_RESPONSE)
         except ServiceError as exc:
             data = _encode({"error": str(exc)}, MAX_RESPONSE)
@@ -290,12 +291,13 @@ def _handle(conn, service, profiles):
 
 def serve(workspace, profitctl_binary, socket_path, profiles):
     """Run the local service in the foreground until its supervisor requests shutdown."""
-    from .runtime import InvestigationService
-
     binary = shutil.which(os.fspath(profitctl_binary))
     if binary is None:
         raise ServiceError("The configured ProfitCtl executable is unavailable.")
-    service = InvestigationService(workspace, profitctl_binary=str(Path(binary).resolve()))
+    workspace = Path(workspace).resolve(strict=True)
+    if not workspace.is_dir():
+        raise ServiceError("The configured workspace must be a directory.")
+    binary = str(Path(binary).resolve())
     stopping = threading.Event()
     slots = threading.BoundedSemaphore(WORKERS)
     with _private_directory(profiles) as directory, _listener(socket_path) as listener, ThreadPoolExecutor(WORKERS) as workers:
@@ -307,7 +309,7 @@ def serve(workspace, profitctl_binary, socket_path, profiles):
                 except TimeoutError:
                     continue
                 if slots.acquire(blocking=False):
-                    workers.submit(_handle, conn, service, directory).add_done_callback(lambda _: slots.release())
+                    workers.submit(_handle, conn, workspace, binary, directory).add_done_callback(lambda _: slots.release())
                 else:
                     with conn:
                         try:

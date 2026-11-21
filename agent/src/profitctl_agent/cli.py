@@ -10,13 +10,12 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Literal
 
-from mcp.server.fastmcp import FastMCP
-from mcp.types import ToolAnnotations
 from pydantic import Field, ValidationError
 
 from .economics import OwnerEvidence
 
 if TYPE_CHECKING:
+    from mcp.server.fastmcp import FastMCP
     from .design_service import SocketClient
     from .runtime import InvestigationService
 
@@ -41,7 +40,10 @@ def _invoke(operation: Callable[..., dict], **kwargs: Any) -> dict:
         ) from None
 
 
-def make_server(service: "InvestigationService | SocketClient", *, review_design: Callable[..., dict] | None = None) -> FastMCP:
+def make_server(service: "InvestigationService | SocketClient", *, review_design: Callable[..., dict] | None = None) -> "FastMCP":
+    from mcp.server.fastmcp import FastMCP
+    from mcp.types import ToolAnnotations
+
     server = FastMCP(
         "profitctl-agent",
         instructions=(

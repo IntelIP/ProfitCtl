@@ -76,7 +76,7 @@ def start(path):
 
 
 def health(socket_path, *, wait=False):
-    deadline = time.monotonic() + (20 if wait else 0)
+    deadline = time.monotonic() + (60 if wait else 0)
     while True:
         try:
             result = request(socket_path, {"action": "health"}, timeout=1)
