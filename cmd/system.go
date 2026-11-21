@@ -100,7 +100,30 @@ func systemCommand() *cobra.Command {
 		}
 		return nil
 	}}
-	root.AddCommand(inspect, evaluate, compare, receipts, outcomes)
+	design := &cobra.Command{Use: "design <file|->", Short: "Compare monthly and burst costs for two sourced workload designs", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		var d systemmodel.Design
+		var err error
+		if args[0] == "-" {
+			err = systemmodel.Decode(cmd.InOrStdin(), &d)
+		} else {
+			err = readSystemJSON(args[0], &d)
+		}
+		if err != nil {
+			return wrapExit(2, err)
+		}
+		report, err := systemmodel.EvaluateDesign(d)
+		if err != nil {
+			return wrapExit(2, err)
+		}
+		if err := writeSystemJSON(cmd, report); err != nil {
+			return err
+		}
+		if report.Status == "incomplete" {
+			return wrapExitSilent(1, fmt.Errorf("design inputs incomplete"))
+		}
+		return nil
+	}}
+	root.AddCommand(inspect, evaluate, compare, receipts, outcomes, design)
 	return root
 }
 func readSystemJSON(path string, target any) error {

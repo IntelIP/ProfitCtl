@@ -21,6 +21,8 @@ The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$H
 
 ## Codex and Claude Code
 
+For a ProfitCtl-owned investigation that resumes after a process restart, install the [standalone agent](standalone-investigations.md). The setup below provides direct access to economic calculations and saved decisions.
+
 Shared decisions require a build containing `profitctl decision` and `profitctl mcp --decisions`. Build from this checkout while the feature is under development. Use the same binary version and absolute workspace path in both clients. The workspace can be a dedicated private directory.
 
 ```bash
