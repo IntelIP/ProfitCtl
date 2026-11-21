@@ -368,7 +368,7 @@ func designSummary(r DesignReport) string {
 			}
 		}
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(append(parts, r.CostScope), " ")
 }
 
 func multiply(a, b *float64) (*float64, error) {

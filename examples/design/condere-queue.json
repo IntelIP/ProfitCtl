@@ -3,7 +3,7 @@
   "name": "condere-queue",
   "question": "When does it pay to split the Condere assessment worker into a preparation stage and a queued finalizer?",
   "workload": "A Condere assessment attempt starts once and produces one handoff to finalization in the split design. Bursts can occur while an analyst batch is submitted.",
-  "cost_scope": "USD of Google Cloud Run Jobs in us-central1 at 2 vCPU and 2 GiB per worker, plus modeled durable queue fees. Compute uses default on-demand marginal rates after the shared billing-account allowance is exhausted and assumes no discounts. Excludes shared databases, model inference, storage, network, reviewer labor and migration. Reopen if any excluded cost differs between options.",
+  "cost_scope": "Incremental USD for Cloud Run Jobs in us-central1 at on-demand marginal rates after the shared free allowance, plus a modeled queue. Traffic, stage times, worker slots and queue fees are planning assumptions. Excludes shared databases, inference, storage, networking, labor and migration. Reopen if these differ between options.",
   "volume_driver": "attempts",
   "volume_unit": "attempt",
   "expected_monthly": {"value": 200, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/typical-volume", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Planning scenario of 200 attempts/month. Count admissions, including failed attempts, before adopting."}},
