@@ -1,0 +1,185 @@
+{
+  "schema_version": "profitctl.design/v1",
+  "name": "condere-queue",
+  "question": "When does it pay to split the Condere assessment worker into a preparation stage and a queued finalizer?",
+  "workload": "A Condere assessment attempt starts once and produces one handoff to finalization in the split design. Bursts can occur while an analyst batch is submitted.",
+  "cost_scope": "USD of active worker compute at 2 vCPU / 2 GiB and durable queue fees. Excludes shared databases, model inference, storage, network, reviewer labor and migration. Reopen if any excluded cost differs between options.",
+  "volume_driver": "attempts",
+  "volume_unit": "attempt",
+  "expected_monthly": {"value": 200, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/typical-volume", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Planning scenario of 200 attempts/month. Count admissions, including failed attempts, before adopting."}},
+  "high_monthly": {"value": 2000, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/high-volume", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Planning scenario of 2,000 attempts/month under the same worker profile."}},
+  "valid_through_monthly": {"value": 5000, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/linear-range", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Assumed range of 0–5,000 attempts/month at the stated billing rates and resource sizes. Verify plan tiers, quotas, burst shape and stage times."}},
+  "peak": {
+    "arrivals_per_hour": {"value": 60, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/burst-rate", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "The modeled batch arrives at a sustained 60 attempts/hour for one hour. An arrival trace is unavailable."}},
+    "duration_hours": {"value": 1, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/burst-duration", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "A one-hour batch submission is an illustrative burst window."}},
+    "occupancy": [
+      {
+        "option": "baseline",
+        "busy_seconds_driver": "single-seconds",
+        "available_slots": {"value": 20, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/single-slots", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active worker quota. Validate cold-start and sustainable service capacity with a burst trace."}}
+      },
+      {
+        "option": "proposed",
+        "busy_seconds_driver": "prepare-seconds",
+        "available_slots": {"value": 6, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/prepare-slots", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active worker quota. Validate cold-start and sustainable service capacity with a burst trace."}}
+      },
+      {
+        "option": "proposed",
+        "busy_seconds_driver": "finalize-seconds",
+        "available_slots": {"value": 10, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/finalize-slots", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active worker quota. Validate cold-start and sustainable service capacity with a burst trace."}}
+      }
+    ]
+  },
+  "baseline": {
+    "schema_version": "profitctl.system/v1",
+    "name": "Single assessment worker",
+    "period": "monthly",
+    "currency": "USD",
+    "revenue_usd": {"value": 0, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/cost-only", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Revenue is outside this incremental architecture cost comparison."}},
+    "drivers": [
+      {
+        "id": "attempts",
+        "unit": "attempt"
+      },
+      {
+        "id": "single-seconds",
+        "unit": "second",
+        "inputs": [
+          {
+            "id": "single-time",
+            "from": "attempts",
+            "input_unit": "attempt",
+            "output_unit": "second",
+            "factor": {"value": 1020, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/single-time", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "17 billed minutes per attempted assessment across extraction and finalization, including billed waiting."}}
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "id": "single",
+        "provider": "Modeled container runtime",
+        "role": "One worker holds the assessment until finalization.",
+        "evidence": ["condere-queue/active-worker-profile"],
+        "costs": [
+          {
+            "id": "active-compute",
+            "driver": "single-seconds",
+            "unit": "second",
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+          }
+        ]
+      }
+    ]
+  },
+  "proposed": {
+    "schema_version": "profitctl.system/v1",
+    "name": "Queue and split workers",
+    "period": "monthly",
+    "currency": "USD",
+    "revenue_usd": {"value": 0, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/cost-only", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Revenue is outside this incremental architecture cost comparison."}},
+    "drivers": [
+      {
+        "id": "attempts",
+        "unit": "attempt"
+      },
+      {
+        "id": "prepare-seconds",
+        "unit": "second",
+        "inputs": [
+          {
+            "id": "prepare-time",
+            "from": "attempts",
+            "input_unit": "attempt",
+            "output_unit": "second",
+            "factor": {"value": 240, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/prepare-time", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Four billed minutes to prepare an attempted assessment."}}
+          }
+        ]
+      },
+      {
+        "id": "finalize-seconds",
+        "unit": "second",
+        "inputs": [
+          {
+            "id": "finalize-time",
+            "from": "attempts",
+            "input_unit": "attempt",
+            "output_unit": "second",
+            "factor": {"value": 420, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/finalize-time", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Seven billed minutes to finalize an attempted assessment after the handoff."}}
+          }
+        ]
+      },
+      {
+        "id": "queue-plan",
+        "unit": "month",
+        "value": {"value": 1, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/active-plan-month", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "The queue subscription runs for the entire calendar month."}}
+      }
+    ],
+    "services": [
+      {
+        "id": "prepare",
+        "provider": "Modeled container runtime",
+        "role": "Extract a bounded assessment payload, persist it, and enqueue its reference.",
+        "evidence": ["condere-queue/active-worker-profile"],
+        "costs": [
+          {
+            "id": "active-compute",
+            "driver": "prepare-seconds",
+            "unit": "second",
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+          }
+        ],
+        "depends_on": ["queue"]
+      },
+      {
+        "id": "queue",
+        "provider": "Modeled managed queue",
+        "role": "Durable handoff of assessment references between preparation and finalization.",
+        "evidence": ["condere-queue/handoff-plan"],
+        "costs": [
+          {
+            "id": "subscription",
+            "driver": "queue-plan",
+            "unit": "month",
+            "usd_per_unit": {"value": 15, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/queue-floor", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative monthly queue charge, payable once including idle months."}}
+          },
+          {
+            "id": "handoff",
+            "driver": "attempts",
+            "unit": "attempt",
+            "usd_per_unit": {"value": 0.001, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/handoff-fee", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "One successful handoff per attempt, including enqueue and acknowledgment in this scenario. Repeated operations may change billing."}}
+          }
+        ]
+      },
+      {
+        "id": "finalize",
+        "provider": "Modeled container runtime",
+        "role": "Load the assessment reference, complete finalization, persist and acknowledge the result.",
+        "evidence": ["condere-queue/active-worker-profile"],
+        "costs": [
+          {
+            "id": "active-compute",
+            "driver": "finalize-seconds",
+            "unit": "second",
+            "usd_per_unit": {"value": 4e-05, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/instance-second", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Illustrative active billing per 2 vCPU, 2 GiB worker-second. Replace with effective invoice rates and billing granularity."}}
+          }
+        ],
+        "depends_on": ["queue"]
+      }
+    ]
+  },
+  "sensitivity": {
+    "description": "The queued finalizer bills four additional minutes per attempt",
+    "edge_id": "finalize-time",
+    "replacement_factor": {"value": 660, "evidence": {"kind": "predicted", "measurement": "synthetic", "source": {"type": "synthetic_fixture", "artifact_identity": "condere-queue/slow-finalize", "captured_at": "2026-11-21"}, "confidence": "low", "confidence_rationale": "Retries, coordination or longer processing raise finalization to eleven minutes. Preparation remains four minutes."}}
+  },
+  "conditions": {
+    "latency": "Compare admission-to-result p95 and oldest queued job during a comparable burst. Set an analyst-approved completion deadline and include cold starts and time to drain.",
+    "retries": "Count retries and handoffs per original attempt. Use capped retries, backoff, a dead-letter queue and an owner for safe replay before crediting the split with savings.",
+    "confidentiality": "Enqueue an opaque assessment reference. Encrypt the payload and queue, restrict tenant reads and bound trace retention for private deal evidence.",
+    "integrity": "Bind each reference to tenant, assessment and immutable input revision. Use an idempotent result write keyed by attempt, and acknowledge only after durable completion.",
+    "availability": "Validate assumed dispatch and worker quotas under simultaneous arrivals. Track age and backlog, alert on stuck work and rehearse recovery of acknowledged and unacknowledged jobs.",
+    "least_privilege": "Give the preparer enqueue-only access. Grant the finalizer dequeue and narrowly scoped result-write access. Restrict dead-letter replay to a separate operator.",
+    "source": "Synthetic Condere assessment architecture planning exercise. Confirm each control with the workload owner and an independently observed burst before rollout."
+  }
+}
