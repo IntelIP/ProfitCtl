@@ -99,7 +99,7 @@ const assumedUnitCost = cost(every) / matchCount;
 
 <style>
   .agent-spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(34px, 5vw, 86px); align-items: start; padding-block: clamp(48px, 7vw, 110px); }
-  .agent-id, .file-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 15px; color: var(--green); font-size: 14px; font-weight: 600; }
+  .agent-id, .file-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 15px; color: var(--accent-ink); font-size: 14px; font-weight: 600; }
   .agent-id span, .file-label span { color: var(--muted); border-left: 1px solid var(--line-strong); padding-left: 15px; font-size: 13px; font-weight: 500; }
   h1 { margin-block: 25px 20px; font-size: clamp(44px, 4.9vw, 70px); font-weight: 600; line-height: 1.04; letter-spacing: -.044em; word-spacing: .045em; text-wrap: balance; }
   .intro-copy, .setup-lead { max-width: 41ch; color: var(--muted); font-size: clamp(17px, 1.4vw, 20px); line-height: 1.5; text-wrap: pretty; }
@@ -107,8 +107,8 @@ const assumedUnitCost = cost(every) / matchCount;
   .actions a, .primary, .fixture { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-weight: 600; }
   a { text-underline-offset: 4px; }
   .primary { padding: 8px 19px; border-radius: 999px; background: var(--ink); color: var(--on-ink); text-decoration: none; }
-  .primary:hover { background: var(--green); }
-  .case-file { border: 1px solid var(--line-strong); border-top: 4px solid var(--green); background: var(--panel); scroll-margin-top: 100px; }
+  .primary:hover { background: var(--accent-ink); }
+  .case-file { border: 1px solid var(--line-strong); border-top: 4px solid var(--accent-ink); background: var(--panel); scroll-margin-top: 100px; }
   .file-head, .stage-content { padding: 22px clamp(18px, 2.1vw, 30px); }
   .file-head { background: var(--tint); }
   .file-head h2, .setup h2 { font-size: clamp(29px, 2.8vw, 44px); font-weight: 550; letter-spacing: -.045em; line-height: 1.08; text-wrap: balance; }
@@ -119,29 +119,29 @@ const assumedUnitCost = cost(every) / matchCount;
   summary::-webkit-details-marker { display: none; }
   .stage > summary { display: grid; grid-template-columns: minmax(77px, .47fr) 1fr auto; align-items: center; gap: 10px; min-height: 52px; padding: 8px clamp(18px, 2.1vw, 30px); font-weight: 600; }
   .stage > summary span { color: var(--muted); font-size: 13px; font-weight: 500; }
-  summary::after { content: "+"; color: var(--green); font-size: 20px; line-height: 1; }
+  summary::after { content: "+"; color: var(--accent-ink); font-size: 20px; line-height: 1; }
   details[open] > summary::after { content: "−"; }
   summary:hover { background: var(--tint); }
   .stage-content { padding-top: 4px; }
   .metrics { display: flex; flex-wrap: wrap; gap: 18px 30px; margin-block: 6px 16px; }
   .metrics dt { margin-bottom: 5px; color: var(--muted); font-size: 13px; }
-  .metrics dd { color: var(--green); font-size: 32px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .metrics dd { color: var(--accent-ink); font-size: 32px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
   .metrics small { color: var(--muted); font-size: 13px; font-weight: 500; }
   .stage-content .result-title { color: var(--ink); font-size: 19px; font-weight: 600; margin-block: 4px 7px; }
   .response { margin-top: 8px; border: 1px solid var(--line); border-radius: 5px; }
-  .response summary { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 8px 12px; min-height: 44px; color: var(--green); font-size: 15px; font-weight: 600; }
+  .response summary { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 8px 12px; min-height: 44px; color: var(--accent-ink); font-size: 15px; font-weight: 600; }
   .response > div { padding: 0 12px 14px; }
-  .fixture { padding: 8px clamp(18px, 2.1vw, 30px); width: 100%; border-top: 1px solid var(--line); color: var(--green); font-size: 14px; }
+  .fixture { padding: 8px clamp(18px, 2.1vw, 30px); width: 100%; border-top: 1px solid var(--line); color: var(--accent-ink); font-size: 14px; }
   .setup { background: var(--tint); border-top: 1px solid var(--line); }
   .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 7vw, 106px); padding-block: clamp(44px, 6vw, 80px); }
   .setup h2 { margin-block: 15px; max-width: 17ch; }
   .setup .primary { margin-top: 24px; }
   .source-command { margin-top: 14px; }
-  .source-command summary { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--green); font-size: 15px; font-weight: 600; }
+  .source-command summary { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--accent-ink); font-size: 15px; font-weight: 600; }
   .source-command pre { margin: 5px 0 0; padding: 14px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--panel); font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
   .implementation > div { padding-block: 16px; border-top: 1px solid var(--line-strong); }
   .implementation dt { margin-bottom: 6px; font-size: 17px; font-weight: 600; }
-  .implementation a { color: var(--green); }
+  .implementation a { color: var(--accent-ink); }
   @media (max-width: 800px) {
     .agent-spread, .setup-grid { grid-template-columns: minmax(0, 1fr); }
     .agent-spread { padding-block: 40px; gap: 30px; }

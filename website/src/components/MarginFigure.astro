@@ -1,117 +1,52 @@
 ---
-import { calculateExample, exampleMarginTarget } from "../scripts/demo";
+import { exampleMarginTarget, percent } from "../scripts/demo";
 
-interface Props { users: number; price: number; volumes: number[]; }
-const { users, price, volumes } = Astro.props;
-const maxRequests = 150;
-const end = calculateExample({ users, price, requests: maxRequests });
-const start = calculateExample({ users, price, requests: 0 }).baseline.margin;
+interface Props {
+  basicMargin: number;
+  researchMargin: number;
+}
 
-// The near edge is all research, the far edge is all basic answers. Each slice
-// between them is the same request volume with a different research mix.
-function marginAt(requests: number, researchShare: number) {
-  const { baseline, candidate } = calculateExample({ users, price, requests });
-  return baseline.margin + researchShare * (candidate.margin - baseline.margin);
-}
-function point(requests: number, share: number, drop = 0): [number, number] {
-  const x = 73 + 865 * requests / maxRequests + (1 - share) * 163;
-  const y = 310 - marginAt(requests, share) * 2.55 - (1 - share) * 47 + drop;
-  return [Number(x.toFixed(2)), Number(y.toFixed(2))];
-}
-const face = [point(0, 1), point(0, 0), point(maxRequests, 0), point(maxRequests, 1)].join(" ");
-const targetStartShare = (exampleMarginTarget - end.baseline.margin) / (end.candidate.margin - end.baseline.margin);
-const targetContour = Array.from({ length: 25 }, (_, index) => {
-  const share = targetStartShare + (1 - targetStartShare) * index / 24;
-  const requests = maxRequests * (start - exampleMarginTarget) / (start - marginAt(maxRequests, share));
-  return point(requests, share);
-});
-const targetEnd = targetContour[targetContour.length - 1]!;
-const lattice = Array.from({ length: 31 }, (_, index) => maxRequests * index / 30);
-const inks = [
-  "light-dark(#103f35, #09271f)", "light-dark(#205c47, #164d3b)",
-  "light-dark(#33784f, #227459)", "light-dark(#55934c, #419566)",
-  "light-dark(#7dab58, #75b77b)",
+const { basicMargin, researchMargin } = Astro.props;
+const rows = [
+  { label: "Basic answers", margin: basicMargin },
+  { label: "With research", margin: researchMargin },
 ];
 ---
 
-<figure class="margin-figure" aria-label="Gross margin by monthly request volume and research mix">
-  <svg viewBox="0 0 1200 326" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id="margin-surface" x1="4%" y1="30%" x2="98%" y2="70%">
-        <stop offset="0" stop-color="light-dark(#ffffb0, #dfff9b)" /><stop offset=".31" stop-color="light-dark(#d2f78a, #9de4a0)" />
-        <stop offset=".64" stop-color="light-dark(#8ad888, #58b89b)" /><stop offset="1" stop-color="light-dark(#328e76, #327c71)" />
-      </linearGradient>
-    </defs>
-    <polygon points={face} transform="translate(13 39)" fill="light-dark(#173d2d1f, #00000080)" />
-    {inks.map((fill, index) => (
-      <polygon points={face} transform={`translate(0 ${(inks.length - index) * 4.6})`} fill={fill} stroke="light-dark(#193e30, #0a281e)" stroke-width="1"/>
+<figure class="margin-figure" style={`--target: ${exampleMarginTarget}%`}>
+  <figcaption>Gross margin <span>Revenue left after costs</span></figcaption>
+  <ul>
+    {rows.map(({ label, margin }) => (
+      <li>
+        <div class="row-label"><span>{label}</span><strong>{percent(margin)}</strong></div>
+        <div class="track" aria-hidden="true">
+          <div class="fill" style={{ width: `${margin}%` }}></div>
+          <div class="target-mark"></div>
+        </div>
+      </li>
     ))}
-    <polygon points={face} fill="url(#margin-surface)" stroke="light-dark(#194b36, #689d7e)" stroke-width="1.6"/>
-    {Array.from({ length: 30 }, (_, i) => (i + 1) / 31).map(share => (
-      <line x1={point(0, share)[0]} y1={point(0, share)[1]} x2={point(maxRequests, share)[0]} y2={point(maxRequests, share)[1]} class="lattice" />
-    ))}
-    {lattice.map(requests => (
-      <polyline points={[point(requests, 0), point(requests, 1), point(requests, 1, 22)].join(" ")} class="rib" />
-    ))}
-    <polyline points={targetContour.join(" ")} class="target-halo"/>
-    <polyline points={targetContour.join(" ")} class="target"/>
-    <polyline points={`${targetEnd} ${targetEnd[0] - 60},273 252,273`} class="leader"/>
-    {volumes.map((requests, index) => (
-      <g class:list={["active-slice", { alternate: index > 0 }]}>
-        <polyline points={[point(requests, 0), point(requests, 1)].join(" ")} class="slice-halo"/>
-        <polyline points={[point(requests, 0), point(requests, 1)].join(" ")} class="slice"/>
-        <polyline points={`${point(requests, 1)} ${point(requests, 1, 43)}`} class="leader"/>
-        {[0,1].map(share => <circle cx={point(requests, share)[0]} cy={point(requests, share)[1]} r="5" class="pin"/>)}
-      </g>
-    ))}
-  </svg>
-  <figcaption>
-    {volumes.map((requests, index) => [0, 1].map(share => {
-      const [x,y] = point(requests, share);
-      return <span class:list={["reading", "active-slice", { alternate: index > 0, rear: !share, front: share }]}
-        style={`left:${x/12}%;top:calc(var(--plot-height) * ${(y + (share ? 44 : -7))/326})`}>
-        {share ? "Research margin" : "Basic margin"} <strong>{marginAt(requests, share).toFixed(1)}%</strong>
-      </span>;
-    }))}
-    <span class="target-label">{exampleMarginTarget}% margin target</span>
-    <span class="range">{volumes.map((requests, index) => <span class:list={["active-slice", { alternate: index > 0 }]}><strong>{requests} monthly requests per user</strong> · range 0–{maxRequests}</span>)}</span>
-  </figcaption>
-  <span class="visually-hidden">The back edge shows gross margin for basic answers. The front edge shows gross margin with research. The dark line marks the selected request volume. The dashed line follows the margin target across the surface.</span>
+  </ul>
+  <div class="axis"><span>0%</span><span class="target-label">{exampleMarginTarget}% target</span><span>100%</span></div>
 </figure>
 
 <style>
-  .margin-figure { --plot-height: clamp(210px, 23vw, 330px); position: relative; width: min(1280px, 100%); margin: 0 auto; isolation: isolate; }
-  svg { display: block; width: 100%; height: var(--plot-height); overflow: visible; }
-  svg line, svg polyline { fill: none; vector-effect: non-scaling-stroke; }
-  .lattice { stroke: light-dark(#275f45, #1e5e4a); stroke-width: .85; opacity: .65; }
-  .rib { stroke: light-dark(#214d3d, #154e41); stroke-width: .85; opacity: .68; }
-  .target-halo { stroke: light-dark(#d9ffad, #ddffc6); stroke-width: 3; }
-  .target { stroke: light-dark(#214b38, #143f31); stroke-width: 1.5; stroke-dasharray: 5 4; }
-  .leader { stroke: light-dark(#32573a, #a1caa6); stroke-width: 1; }
-  .slice-halo { stroke: light-dark(#e6ffac, #edffac); stroke-width: 5; }
-  .slice { stroke: light-dark(#123e30, #0c3227); stroke-width: 2; }
-  .pin { fill: light-dark(#fff9c9, #f1ffb0); stroke: light-dark(#123e30, #0c3227); stroke-width: 2; }
-  figcaption { color: var(--hero-caption); font-size: 14px; line-height: 1.2; }
-  .reading { position: absolute; z-index: 1; padding: 2px 4px; background: var(--hero-field); font-weight: 500; white-space: nowrap; }
-  .reading strong, .range strong { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .rear { transform: translate(-50%, -100%); }
-  .front { transform: translateX(-68%); }
-  .target-label { position: absolute; top: calc(var(--plot-height) * .81); right: 80%; white-space: nowrap; }
-  .range { position: absolute; right: 8.3%; bottom: 4%; }
-  @media (max-width: 650px) {
-    .margin-figure { --plot-height: clamp(196px, 48vw, 245px); }
-    figcaption { font-size: 13px; }
-    .target-label { top: calc(var(--plot-height) * .84); left: 3.5%; right: auto; }
-    .range { position: static; display: block; padding: 0 14px 14px; text-align: right; }
-    .reading { padding: 0; transform: translateX(-50%); font-size: 13px; }
-    .rear { transform: translate(-50%, -100%); }
-    .front { transform: translateX(-87%); }
-    .lattice { stroke-width: .55; }
-    .rib { stroke-width: .6; }
-    .slice-halo { stroke-width: 3; }
-    .slice { stroke-width: 1.5; }
-  }
-  @media (max-width: 360px) {
-    .front { transform: translateX(-73%); }
+  .margin-figure { --rail: light-dark(#dce1da, #262d37); margin: 0; }
+  figcaption { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 3px 12px; font-size: 17px; font-weight: 600; }
+  figcaption span { color: var(--muted); font-size: 13px; font-weight: 400; }
+  ul { display: grid; gap: 17px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .row-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: 15px; }
+  .row-label strong { font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .track { position: relative; height: 12px; border-radius: 2px; background: var(--rail); }
+  .fill { height: 100%; border-radius: inherit; background: light-dark(#53695a, #a2afbf); }
+  li + li .fill { background: var(--accent-ink); }
+  .target-mark { position: absolute; inset-block: -4px; left: var(--target); width: 4px; transform: translateX(-50%); background: var(--case-panel); }
+  .target-mark::after { content: ""; position: absolute; inset-block: 0; left: 1px; border-left: 2px dashed var(--ink); }
+  .axis { position: relative; display: flex; justify-content: space-between; margin-top: 9px; color: var(--muted); font-size: 13px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+  .target-label { position: absolute; left: var(--target); transform: translateX(-50%); color: var(--ink); font-weight: 550; white-space: nowrap; }
+  @media (forced-colors: active) {
+    .track { outline: 1px solid CanvasText; }
+    .fill, li + li .fill { background: CanvasText; forced-color-adjust: none; }
+    .target-mark { background: Canvas; forced-color-adjust: none; }
+    .target-mark::after { border-color: CanvasText; }
   }
 </style>

@@ -68,7 +68,7 @@ const schema = pageType !== "product" ? {
     <meta name="twitter:image" content={imageURL.href} />
     <meta name="twitter:image:alt" content="ProfitCTL: Know your AI costs. Protect your margin." />
     <meta name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)" data-theme-color="light" />
-    <meta name="theme-color" content="#080a09" media="(prefers-color-scheme: dark)" data-theme-color="dark" />
+    <meta name="theme-color" content="#22262d" media="(prefers-color-scheme: dark)" data-theme-color="dark" />
     <script is:inline set:html={initializeColorTheme}></script>
     {pageType !== "error" && <script
       is:inline
@@ -122,7 +122,7 @@ const schema = pageType !== "product" ? {
         <nav class="product-nav" aria-label="Main navigation">
           <a href="/agent/" aria-current={pageType === "agent" ? "page" : undefined}>Agent</a>
           <a href="/docs/" aria-current={pageType === "docs" ? "page" : undefined}>Docs</a>
-          <a class="repo-link" href={repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <a href={repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
         <ThemeControl />
       </div>
@@ -142,27 +142,26 @@ const schema = pageType !== "product" ? {
   :root {
     font-family: "Instrument Sans", system-ui, sans-serif;
     color-scheme: light dark;
-    --dark-canvas: #080a09;
-    --dark-surface: #111412;
-    --dark-raised: #191c1a;
-    --dark-text: #eff2ef;
-    --dark-muted: #b9bfba;
-    --dark-line: #333835;
-    --dark-line-strong: #656d67;
+    --dark-canvas: #22262d;
+    --dark-surface: #2b313a;
+    --dark-raised: #363d47;
+    --dark-text: #f3f5f8;
+    --dark-muted: #c2cbd6;
+    --dark-line: #535e6c;
+    --dark-line-strong: #8996a7;
     --page: light-dark(#f5f5ee, var(--dark-canvas));
     --panel: light-dark(#ffffff, var(--dark-surface));
     --ink: light-dark(#20251d, var(--dark-text));
     --on-ink: light-dark(#ffffff, var(--dark-canvas));
     --muted: light-dark(#62685b, var(--dark-muted));
     --line: light-dark(#dce0d4, var(--dark-line));
-    --line-strong: light-dark(#9aa99c, var(--dark-line-strong));
+    --line-strong: light-dark(#758474, var(--dark-line-strong));
     --tint: light-dark(#eef4ec, var(--dark-raised));
-    --accent: light-dark(#c4ee84, #b6ef8b);
-    --green: light-dark(#426526, #afe18e);
+    --accent-ink: light-dark(#29577d, #aacbf0);
     --risk: light-dark(#9e422e, #ffba97);
     --terminal-surface: light-dark(#102c24, var(--dark-canvas));
     --terminal-rule: light-dark(#4b6859, var(--dark-line));
-    --terminal-accent: light-dark(#cbf397, #c3fa91);
+    --terminal-accent: light-dark(#cbf397, var(--accent-ink));
   }
   :root[data-theme="light"] { color-scheme: light; }
   :root[data-theme="dark"] { color-scheme: dark; }
@@ -196,7 +195,7 @@ const schema = pageType !== "product" ? {
   :where(h1, h2, h3, p, dl, dd, figure) { margin: 0; }
   a { color: inherit; }
   button { cursor: pointer; }
-  :where(a, button, input, summary):focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
+  :where(a, button, input, summary):focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 5px; }
   .site-shell { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
   section[id], article[id] { scroll-margin-top: 120px; }
   .site-header { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--page) 94%, transparent); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
@@ -205,7 +204,7 @@ const schema = pageType !== "product" ? {
   .site-header-inner .product-nav + [data-theme-control] { margin-inline-start: 0; }
   .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; width: fit-content; text-decoration: none; font-weight: 650; font-size: 20px; letter-spacing: -.03em; }
   .brand img { flex: none; }
-  .site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; text-decoration: none; color: var(--muted); }
+  .site-footer nav a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; text-decoration: none; color: var(--muted); }
   .site-footer nav a:hover { color: var(--ink); }
   .site-footer { margin-top: 88px; padding: 36px 0; border-top: 1px solid var(--line); }
   .footer-inner { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
@@ -219,10 +218,9 @@ const schema = pageType !== "product" ? {
     --panel: light-dark(#fff, var(--dark-surface));
     --ink: light-dark(#15291f, var(--dark-text));
     --on-ink: light-dark(#fff, var(--dark-canvas));
-    --green: light-dark(#275e40, #b7ed93);
     --muted: light-dark(#505e53, var(--dark-muted));
     --line: light-dark(#d7e0d5, var(--dark-line));
-    --line-strong: light-dark(#9aa99c, var(--dark-line-strong));
+    --line-strong: light-dark(#758474, var(--dark-line-strong));
     --tint: light-dark(#eef4ec, var(--dark-raised));
     --risk: light-dark(#923c1d, #ffba92);
   }
@@ -230,9 +228,8 @@ const schema = pageType !== "product" ? {
   .product-page .site-header { background: var(--page); border-bottom: 0; }
   .product-page .site-header-inner { width: calc(100% - clamp(32px, 6vw, 96px)); min-height: 66px; justify-content: space-between; }
   .product-nav { display: flex; align-items: center; gap: clamp(11px, 2vw, 30px); }
-  .product-nav a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--ink); font-size: 15px; text-decoration: none; }
+  .product-nav a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--ink); font-size: 15px; text-decoration: none; }
   .product-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
-  .product-nav .repo-link { font-weight: 600; }
   .product-page .site-footer { margin-top: 0; padding: 38px 0; }
   @media (max-width: 555px) {
     .product-page .site-shell { width: calc(100% - 36px); }
