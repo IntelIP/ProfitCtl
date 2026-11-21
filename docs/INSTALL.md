@@ -17,6 +17,8 @@ curl -fsSL https://raw.githubusercontent.com/IntelIP/ProfitCtl/main/scripts/inst
 
 The script installs the CLI to `~/.local/bin` and the skill to `${CODEX_HOME:-$HOME/.codex}/skills/profitctl-cost-aware`. If the binary directory is not on your `PATH`, the installed skill uses its bundled platform binary.
 
+ProfitCtl v0.4.0 does not offer a Homebrew tap. On macOS, use the release installer above or the Bun tarball below.
+
 ## Pin a Version
 
 The current evaluator prerelease is `v0.4.0-rc.1`. GitHub's latest-release endpoint excludes prereleases, so install it explicitly:
