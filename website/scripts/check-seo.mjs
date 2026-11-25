@@ -15,6 +15,11 @@ assert.ok(html.includes('name="robots" content="index, follow"'));
 assert.ok(robots.includes("User-agent: *\nAllow: /\n"));
 assert.ok(robots.includes(`Sitemap: ${new URL("sitemap.xml", origin)}`));
 assert.ok(sitemap.includes(`<loc>${canonical}</loc>`));
+// Every sitemap entry must be a page that is actually built, so parked pages cannot linger as dead links.
+for (const [, listed] of sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+  const path = new URL(listed).pathname;
+  await readFile(new URL(path.slice(1) + "index.html", output), "utf8").catch(() => assert.fail(`Sitemap lists a page that is not built: ${path}`));
+}
 const schema = JSON.parse(
   html.match(/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/s)[1],
 );
