@@ -26,10 +26,10 @@ const siteSchema = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^
 assert.equal(siteSchema?.name, "ProfitCTL");
 assert.equal(siteSchema?.url, canonical);
 
-const routes = ["/", "/docs/"];
+const routes = ["/"];
 const pages = new Map();
 for (const route of routes) {
-  const page = await readFile(new URL(route === "/" ? "index.html" : "docs/index.html", output), "utf8");
+  const page = await readFile(new URL(route.slice(1) + "index.html", output), "utf8");
   const url = new URL(route, origin).href;
   pages.set(route, page);
   assert.ok(!page.includes("profitctl.intelip.co"), `Retired domain in page: ${route}`);
@@ -55,7 +55,7 @@ for (const route of routes) {
   assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=calculator"'));
   assert.ok(page.includes('name="color-scheme" content="light dark"'));
   assert.ok(page.includes('name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)"'));
-  assert.ok(page.includes('name="theme-color" content="#080e0c" media="(prefers-color-scheme: dark)"'));
+  assert.ok(page.includes('name="theme-color" content="#0a0d13" media="(prefers-color-scheme: dark)"'));
   assert.ok(!page.includes('class="brand-mark"'), `Old letter badge: ${route}`);
   assert.ok(page.includes('aria-label="ProfitCTL home"><img src="/favicon.svg?v=calculator" width="32" height="32" alt="">ProfitCTL</a>'));
 }
@@ -87,4 +87,4 @@ assert.equal(legacyIcon.readUInt16LE(2), 1);
 assert.equal(legacyIcon.readUInt16LE(4), 4);
 assert.ok((await readFile(new URL("favicon.svg", output), "utf8")).includes('viewBox="0 0 64 64"'));
 assert.ok(schema.image.includes(new URL("/icons/profitctl-192.png", origin).href));
-console.log("Both pages: metadata, brand icons, social image, structured data, sitemap, and internal destinations verified.");
+console.log(`Checked metadata, brand icons, structured data, sitemap and internal links on ${routes.length} pages.`);

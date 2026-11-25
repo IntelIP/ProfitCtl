@@ -1,0 +1,59 @@
+---
+// Parked: the leading underscore keeps this page out of the built site. Rename to docs.astro to publish it again,
+// then restore its links in ProductLayout.astro, DecisionHero.astro, index.astro and scripts/check-seo.mjs.
+import ProductLayout from "../layouts/ProductLayout.astro";
+import VideoOverview from "../components/VideoOverview.astro";
+const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/IntelIP/ProfitCtl";
+const quickStart = ["git clone \\", "  " + repoUrl, "cd ProfitCtl", "go run . compare \\", "  examples/hybrid_steady_profit.yml \\", "  examples/hybrid_profit.yml"].join("\n");
+---
+<ProductLayout title="ProfitCTL Docs | Install, Model Costs & Compare Scenarios" description="Install ProfitCTL, run a saved cost comparison, read recurring margin results, and build your own scenario with clear assumptions and profitability targets." pageType="docs">
+  <div class="site-shell docs-layout">
+  <nav class="docs-toc" aria-label="On this page">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#install">Choose how to run it</a></li>
+      <li><a href="#first-comparison">Read the decision</a></li>
+      <li><a href="#your-scenario">Replace the assumptions</a></li>
+      <li><a href="#limits">What the demo shows</a></li>
+    </ol>
+  </nav>
+  <article class="docs-page">
+    <header class="docs-intro"><p class="eyebrow">ProfitCTL documentation</p><h1>Start with a saved scenario.<br />Then make it your own.</h1><p>ProfitCTL is an open-source command-line tool for comparing product costs and testing profitability assumptions. This guide takes you from setup to a useful first result.</p></header>
+    <section id="install"><h2>1. Choose how to run it.</h2><p>For a native binary, use the release installation guide. It covers macOS, Linux and Windows, how to pin a version, and how to verify the download. Pre-release versions are only installed if you ask for one by name.</p><a class="doc-link" href={repoUrl + "/blob/main/docs/INSTALL.md"} target="_blank" rel="noopener noreferrer">Release installation guide ↗</a><p>To run the current source, install Git and Go, then use the commands below in your terminal.</p><a class="doc-link" href={repoUrl} target="_blank" rel="noopener noreferrer">Get the source on GitHub ↗</a><pre><code>{quickStart}</code></pre><p class="note">The command-line tool runs without any API key. Features that call a paid AI provider need that provider set up separately.</p></section>
+    <section id="first-comparison"><h2>2. Read the decision, not just the revenue.</h2><p>The saved examples compare a steady-state contract with a pilot contract. The numbers are made up to show how the comparison works.</p><VideoOverview /><div class="fixture-result"><div><span>Steady-state recurring revenue</span><strong>$2,000 / month</strong></div><div><span>Operating margin</span><strong>95%</strong></div><div><span>Cost per user</span><strong>$2.00</strong></div></div><p>The pilot example books more revenue, while the steady-state example has the higher operating margin and lower cost per user. A large up-front payment and a business that stays profitable month after month are different questions.</p><p>The comparison output lists revenue, recurring revenue, fees, booked and operating margins, cost per user, pass or fail against your targets, and which option leads on each measure.</p></section>
+    <section id="your-scenario"><h2>3. Replace the assumptions.</h2><p>A scenario is a YAML file containing the business inputs you want to test.</p><ul><li><strong>Costs:</strong> fixed and variable costs, including infrastructure, model calls, tools, and payment fees.</li><li><strong>Pricing:</strong> subscriptions, usage pricing, plan mixes, or contract terms.</li><li><strong>Usage:</strong> users, growth, and simulation inputs.</li><li><strong>Targets:</strong> the margin and cost limits that define an acceptable outcome.</li><li><strong>Evidence:</strong> sources, capture dates, confidence, and notes for your cost assumptions.</li></ul><pre><code>profitctl simulate -f your-scenario.yml
+profitctl compare baseline.yml candidate.yml
+profitctl validate -f your-scenario.yml</code></pre><p>Use the installed CLI for these commands. The equivalent source invocation begins with <code>go run .</code>.</p></section>
+    <section id="limits"><h2>4. Know what the website demo shows.</h2><p>The guided terminal runs the real ProfitCTL CLI in your browser. It validates a fictional scenario, simulates a baseline, shows the margin failing as usage grows, and compares a lower cost per request. The story repeats automatically. Select a step to hold its result. With reduced motion enabled, the demo shows a single comparison without looping.</p><p>The demo uses bundled, read-only scenario files and made-up rates. It does not call AI providers, fetch live prices, or give access to your local files. Download a scenario to inspect its inputs or run the same commands with the installed CLI.</p><p>The separate cost calculator is a simplified gross-margin illustration. Scenarios in the command-line tool can also include payment fees, contract terms, the source of each cost, and simulation settings. Check assumptions against your own usage and rates before relying on an estimate.</p><p>The local CLI, Codex skill, and CI output are available today. Hosted team workspaces and approvals are planned.</p></section>
+  </article>
+  </div>
+</ProductLayout>
+<style>
+  .docs-layout { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: calc(var(--section-y) / 2); }
+  .docs-toc { display: none; }
+  @media (min-width: 1000px) {
+    /* Sidebar at the page edge, article centred in the space beside it. */
+    .docs-layout { grid-template-columns: 220px 1fr minmax(0, 540px) 1fr; align-items: start; }
+    .docs-toc { display: block; grid-column: 1; position: sticky; top: 110px; padding-right: 24px; border-right: 1px solid var(--line); }
+    .docs-page { grid-column: 3; }
+  }
+  .docs-toc p { color: var(--muted); font-size: var(--text-small); font-weight: 600; }
+  .docs-toc ol { display: grid; margin: 8px 0 0; padding: 0; list-style: none; counter-reset: toc; }
+  .docs-toc a { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--ink); font-size: var(--text-body); text-decoration: none; }
+  .docs-toc a::before { counter-increment: toc; content: counter(toc); color: var(--muted); font: 500 var(--text-small)/1 var(--font-mono); }
+  .docs-toc a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .docs-intro, .docs-page section { max-width: 540px; }
+  .eyebrow { margin: 0; color: var(--muted); font-size: var(--text-small); font-weight: 600; line-height: 1.5; }
+  h1 { margin-top: 12px; font-size: var(--text-h2); line-height: 1.08; letter-spacing: -.025em; font-weight: 600; text-wrap: balance; }
+  .docs-intro > p:last-child { margin-top: 18px; font-size: var(--text-lede); line-height: 1.6; color: var(--muted); text-wrap: pretty; }
+  .docs-page section { padding-top: 50px; }
+  h2 { font-size: var(--text-h3); line-height: 1.25; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+  section > p { margin-top: 16px; font-size: 16px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+  .doc-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 10px; font-size: 14px; color: var(--accent-ink); text-underline-offset: 4px; }
+  pre { margin: 24px 0 0; padding: 22px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: light-dark(#fafbf6, var(--dark-surface)); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.8; }
+  p code { padding: 2px 5px; border-radius: 4px; background: light-dark(#e8ede0, var(--dark-raised)); font-size: 13px; }
+  .note { padding: 14px 18px; border-radius: var(--radius); border-left: 3px solid var(--icon-sage); background: light-dark(#edf2e4, var(--dark-raised)); font-size: var(--text-small); }
+  .fixture-result { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 24px; }.fixture-result > div { display: grid; align-content: space-between; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--panel); }.fixture-result span { color: var(--muted); font-size: 13px; line-height: 1.5; }.fixture-result strong { font-size: 18px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+  ul { padding-left: 20px; margin-top: 20px; font-size: 16px; line-height: 1.7; color: var(--muted); }li + li { margin-top: 12px; }li strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 620px) { .docs-intro > p:last-child { font-size: 15px; }.fixture-result { grid-template-columns: 1fr; }.fixture-result > div { grid-template-rows: auto; gap: 4px; }pre { padding: 16px; font-size: 12px; }h2 { font-size: 24px; } }
+</style>

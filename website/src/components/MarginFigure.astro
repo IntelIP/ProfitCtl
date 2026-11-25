@@ -1,0 +1,114 @@
+---
+import { calculateExample, exampleMarginTarget, percent } from "../scripts/demo";
+
+interface Props {
+  users: number;
+  price: number;
+  requests: number;
+  maxRequests: number;
+}
+
+const { users, price, requests, maxRequests } = Astro.props;
+const at = (value: number) => calculateExample({ users, price, requests: value });
+const start = at(0);
+const end = at(maxRequests);
+const selected = at(requests);
+// Both cost lines are linear in requests, so the research line meets the target at one point.
+const crossing = (start.candidate.margin - exampleMarginTarget) / ((start.candidate.margin - end.candidate.margin) / maxRequests);
+const x = (value: number) => value / maxRequests * 100;
+const y = (margin: number) => 100 - Math.max(0, Math.min(100, margin));
+const marginTicks = [0, 20, 40, 60, 80, 100];
+const requestTicks = [0, 1, 2, 3, 4].map(step => maxRequests / 4 * step);
+const summary = `Line chart of gross margin against monthly requests per user, from 0 to ${maxRequests}. Basic answers fall from ${percent(start.baseline.margin)} to ${percent(end.baseline.margin)}. Research falls from ${percent(start.candidate.margin)} to ${percent(end.candidate.margin)} and drops below the ${exampleMarginTarget}% target at about ${Math.round(crossing)} requests.`;
+---
+
+<figure
+  class="margin-figure"
+  data-margin-figure
+  data-max={maxRequests}
+  data-side={requests > maxRequests * 0.75 ? "left" : "right"}
+  style={`--x:${x(requests)}%;--basic:${y(selected.baseline.margin)}%;--research:${y(selected.candidate.margin)}%;--target:${y(exampleMarginTarget)}%;--crossing:${x(crossing)}%`}
+>
+  <figcaption>
+    <span class="figure-title">Gross margin as usage grows</span>
+    <span class="legend"><span class="key basic"><i aria-hidden="true"></i>Basic answers</span><span class="key research"><i aria-hidden="true"></i>With research</span></span>
+  </figcaption>
+  <div class="plot-frame">
+    <div class="plot" data-plot>
+      <div class="margin-ticks" aria-hidden="true">{marginTicks.map(tick => <span style={`top:${y(tick)}%`}>{tick}%</span>)}</div>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={summary}>
+        {marginTicks.map(tick => <line class="grid" x1="0" x2="100" y1={y(tick)} y2={y(tick)} />)}
+        <polygon class="shortfall" points={`${x(crossing)},${y(exampleMarginTarget)} 100,${y(exampleMarginTarget)} 100,${y(end.candidate.margin)}`} />
+        <line class="target" x1="0" x2="100" y1={y(exampleMarginTarget)} y2={y(exampleMarginTarget)} />
+        <line class="series basic" x1="0" y1={y(start.baseline.margin)} x2="100" y2={y(end.baseline.margin)} />
+        <line class="series research" x1="0" y1={y(start.candidate.margin)} x2="100" y2={y(end.candidate.margin)} />
+      </svg>
+      <span class="target-label" aria-hidden="true">{exampleMarginTarget}% target</span>
+      <span class="crossing" aria-hidden="true"><i></i><span>Below target past {Math.round(crossing)} requests</span></span>
+      <div class="cursor" aria-hidden="true">
+        <i class="dot basic"></i><b class="value basic" data-basic-value>{percent(selected.baseline.margin)}</b>
+        <i class="dot research"></i><b class="value research" data-research-value>{percent(selected.candidate.margin)}</b>
+      </div>
+    </div>
+    <div class="request-ticks" aria-hidden="true">{requestTicks.map(tick => <span style={`left:${x(tick)}%`}>{tick}</span>)}</div>
+    <p class="axis-title" aria-hidden="true">Monthly requests per user</p>
+  </div>
+  <p class="crossing-note" aria-hidden="true">Research falls below the {exampleMarginTarget}% target past {Math.round(crossing)} requests.</p>
+</figure>
+
+<style>
+  .margin-figure { --grid: light-dark(#dfe5d8, #303a4c); --risk-fill: light-dark(#c8553a26, #ff9f7a3d); margin: 0; min-width: 0; }
+  figcaption { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; }
+  .figure-title { font-size: var(--text-body); font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: var(--text-small); }
+  .key { display: inline-flex; align-items: center; gap: 8px; }
+  .key i { width: 14px; height: 3px; border-radius: 2px; background: var(--series-basic); }
+  .key.research i { background: var(--series-research); }
+  .plot-frame { position: relative; margin-top: 20px; padding: 0 0 30px 42px; }
+  .crossing-note { display: none; margin-top: 12px; color: var(--muted); font-size: var(--text-small); line-height: 1.5; text-wrap: balance; }
+  .plot { position: relative; aspect-ratio: 16 / 9; cursor: ew-resize; touch-action: pan-y; }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  line, polygon { vector-effect: non-scaling-stroke; }
+  .grid { stroke: var(--grid); stroke-width: 1; }
+  .shortfall { fill: var(--risk-fill); }
+  .target { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 5 5; }
+  .series { stroke-width: 2.5; stroke-linecap: round; }
+  .series.basic { stroke: var(--series-basic); }
+  .series.research { stroke: var(--series-research); }
+  .margin-ticks span, .request-ticks span, .axis-title, .target-label, .crossing span { color: var(--muted); font-size: 13px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .margin-ticks { position: absolute; inset-block: 0; right: calc(100% + 8px); width: 34px; }
+  .margin-ticks span { position: absolute; right: 0; transform: translateY(-50%); }
+  .request-ticks { position: relative; height: 14px; margin-top: 12px; }
+  .request-ticks span { position: absolute; transform: translateX(-50%); }
+  .axis-title { position: absolute; right: 0; bottom: 0; left: 42px; text-align: center; }
+  .target-label { position: absolute; left: 8px; top: calc(var(--target) - 21px); color: var(--ink); font-weight: 600; }
+  .crossing { position: absolute; left: var(--crossing); top: var(--target); }
+  .crossing i { position: absolute; width: 10px; height: 10px; margin: -5px; border: 2px solid var(--ink); border-radius: 50%; background: var(--case-panel); }
+  .crossing span { position: absolute; left: 14px; bottom: 10px; color: var(--ink); font-weight: 600; }
+  .cursor { position: absolute; inset-block: 0; left: var(--x); width: 0; border-left: 1px solid var(--line-strong); }
+  .dot { position: absolute; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6.5px; border: 2px solid var(--case-panel); border-radius: 50%; }
+  .dot.basic { top: var(--basic); background: var(--series-basic); }
+  .dot.research { top: var(--research); background: var(--series-research); }
+  .value { position: absolute; left: 0; padding: 3px 6px; border-radius: 4px; background: var(--case-panel); color: var(--ink); font-size: 13px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; transform: translateX(-50%); }
+  .value.basic { top: calc(var(--basic) - 28px); }
+  /* The research line falls to the right, so its value sits above-right of the point; near the right edge it flips below-left. */
+  .value.research { top: calc(var(--research) - 26px); transform: translateX(8px); }
+  [data-side="left"] .value.research { top: calc(var(--research) + 8px); transform: translateX(calc(-100% - 8px)); }
+  @media (max-width: 555px) {
+    .plot { aspect-ratio: 4 / 3; }
+    /* Narrow plots have no clear space for the note, so it moves to a caption under the chart. */
+    .crossing span { display: none; }
+    .crossing-note { display: block; }
+  }
+  /* Stacked layout: the slider label directly below names the axis, so the axis title would repeat it. */
+  @media (max-width: 820px) {
+    .axis-title { display: none; }
+    .plot-frame { padding-bottom: 8px; }
+  }
+  @media (forced-colors: active) {
+    .grid, .target, .series { stroke: CanvasText; }
+    .series.research { stroke-dasharray: 2 4; }
+    .shortfall { fill: none; stroke: CanvasText; }
+    .dot { background: CanvasText; forced-color-adjust: none; }
+  }
+</style>

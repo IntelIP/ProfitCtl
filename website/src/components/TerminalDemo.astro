@@ -1,49 +1,79 @@
 ---
 import { terminalStory } from "../scripts/terminal-story";
 ---
-<section class="site-shell terminal-demo" id="demo" data-terminal-demo data-reveal>
-  <header class="cli-intro"><div><p class="eyebrow">01 / ProfitCTL in action</p><h2>Watch a margin problem unfold.</h2></div><p>Run the product in your browser. Follow a fictional AI SaaS from healthy margins to higher usage, then compare a cheaper route.</p></header>
+<section class="terminal-demo band" id="demo" data-terminal-demo>
+  <div class="site-shell">
+  <header class="cli-intro"><p class="eyebrow">ProfitCTL in action</p><h2 class="section-title">Watch a margin problem unfold.</h2><p class="lede">This is the real command-line tool, running in your browser. Follow a fictional AI product as usage grows and its margin fails, then see what a lower cost per request does.</p></header>
   <div class="cli-grid">
     <div class="cli-window">
       <div class="cli-toolbar"><span><i aria-hidden="true" /> profitctl</span></div>
-      <pre tabindex="0" aria-label="ProfitCTL command output"><code class="cli-command" data-terminal-command>$ profitctl</code><code data-terminal-output>Watch real commands run against the sample scenarios.
-Choose a story step to inspect its result.</code></pre>
-      <div class="cli-footer"><span class="cli-state" role="status" aria-live="polite" data-terminal-status>Ready to run</span><span>Real CLI · Fictional inputs</span></div>
+      <div class="cli-pane"><pre tabindex="0" aria-label="ProfitCTL command output"><code class="cli-command" data-terminal-command>$ profitctl</code><code data-terminal-output>Watch real commands run against the sample scenarios.
+Choose a story step to inspect its result.</code></pre></div>
+      <div class="cli-footer"><span class="cli-state" role="status" aria-live="polite" data-terminal-status>Ready to run</span><span class="cli-note">Real CLI · Fictional inputs · Select a step to hold it</span><span class="cli-scroll-hint" aria-hidden="true"><span class="hint-sideways">Scroll sideways for every column</span><span class="hint-down">Scroll for the full output</span></span></div>
     </div>
-    <div class="cli-story"><p class="story-label">One product. Four decisions.</p><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p></div>
+    <div class="cli-story"><ol>{terminalStory.map((step, index) => <li><button type="button" data-terminal-step={index} aria-current={index === 0 ? "step" : "false"}><span class="step-index">{String(index + 1).padStart(2, "0")}</span><span>{step.title}</span></button></li>)}</ol><p class="story-detail" data-terminal-detail>{terminalStory[0]?.detail}</p></div>
   </div>
-  <p class="cli-caption">The scenarios use made-up rates, not live provider prices. The real ProfitCTL CLI calculates every result on your device. The story repeats automatically; choosing a step holds its result.</p>
-  <noscript><p class="cli-caption">Enable JavaScript to run the demo, or install ProfitCtl to run your own scenarios.</p></noscript>
+  <noscript><p class="cli-caption">Enable JavaScript to run the demo, or install ProfitCTL to run your own scenarios.</p></noscript>
+  </div>
 </section>
 <script>
   import { initializeTerminalDemo } from "../scripts/terminal-demo";
   initializeTerminalDemo();
 </script>
 <style>
-  .terminal-demo { padding-top: 20px; scroll-margin-top: 120px; }
-  .cli-intro { display: grid; grid-template-columns: 1fr .8fr; gap: 60px; align-items: end; margin-bottom: 30px; }
-  .eyebrow { color: var(--muted); font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; }
-  h2 { max-width: 480px; margin-top: 15px; font-size: clamp(30px,3.5vw,44px); line-height: 1.16; font-weight: 550; letter-spacing: -.05em; text-wrap: balance; }
-  .cli-intro > p { max-width: 440px; font-size: 15px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  .cli-grid { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(240px,.8fr); gap: 26px; align-items: start; }
-  .cli-window { min-width: 0; overflow: hidden; border: 1px solid light-dark(#4d5842, #344038); border-radius: 20px; background: light-dark(#252d21, #0c1410); color: light-dark(#eef4e6, #dddeda); box-shadow: 0 18px 40px #272e2010; }
-  .cli-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 18px; border-bottom: 1px solid light-dark(#4a553f, #29372f); font-size: 12px; }
+  /* Tighter panel padding than other bands so the whole demo fits one desktop screen. */
+  .terminal-demo.band { padding-block: calc(var(--section-y) / 2); }
+  .terminal-demo { background: light-dark(var(--icon-ink), var(--dark-surface)); color: light-dark(#f0f6ee, var(--dark-text)); scroll-margin-top: 85px; }
+  .cli-intro { margin-bottom: clamp(32px, 4vw, 48px); }
+  .terminal-demo .eyebrow, .terminal-demo .lede { color: light-dark(#d1dfd3, var(--dark-muted)); }
+  .cli-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; }
+  .cli-window { min-width: 0; overflow: hidden; border: 1px solid light-dark(#4a5247, var(--dark-line)); border-radius: var(--radius-lg); background: var(--terminal-surface); color: light-dark(#f2f8ed, var(--dark-text)); }
+  .cli-toolbar, .cli-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; color: light-dark(#ceded0, var(--dark-muted)); font-size: var(--text-small); }
+  .cli-toolbar { border-bottom: 1px solid var(--terminal-rule); }
   .cli-toolbar > span { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; }
-  .cli-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  pre { height: 390px; margin: 0; padding: 22px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.8; tab-size: 4; }
-  .cli-command { display: block; margin-bottom: 18px; color: var(--accent); }
-  .cli-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-top: 1px solid light-dark(#4a553f, #29372f); font-size: 10px; line-height: 1.5; color: light-dark(#c1cfb5, #a3aea5); }
-  .cli-state { color: var(--accent); }
-  [data-state=risk] .cli-state, [data-state=error] .cli-state { color: #ffba97; }
-  .cli-story { padding: 6px 0; }
-  .story-label { margin-bottom: 16px; font-size: 11px; font-weight: 600; color: var(--muted); }
-  ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
-  li { border-bottom: 1px solid var(--line); }
-  li button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 14px 10px; border: 0; background: transparent; color: var(--muted); text-align: left; font-size: 13px; line-height: 1.5; }
-  li button[aria-current=step] { background: light-dark(#e8efdf, #1b2820); color: var(--green); font-weight: 600; }
-  .step-index { font-size: 10px; font-variant-numeric: tabular-nums; }
-  .step-arrow { margin-left: auto; }
-  .story-detail { min-height: 95px; margin-top: 22px; font-size: 13px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  .cli-caption { max-width: 850px; margin-top: 18px; font-size: 11px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
-  @media (max-width: 760px) { .cli-intro, .cli-grid { grid-template-columns: 1fr; gap: 22px; }.cli-intro { margin-bottom: 24px; }.cli-story { padding-top: 6px; }.story-detail { min-height: 0; }pre { height: 340px; padding: 18px; }.terminal-demo { scroll-margin-top: 110px; } }
+  .cli-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: var(--terminal-accent); }
+  pre { height: 280px; margin: 0; padding: 24px 16px; overflow: auto; font-family: var(--font-mono); font-size: var(--text-small); line-height: 1.75; tab-size: 4; }
+  .cli-command { display: block; margin-bottom: 18px; color: var(--terminal-accent); }
+  .cli-footer { border-top: 1px solid var(--terminal-rule); }
+  /* The demo script flags when output is wider or taller than the pane; the pane then fades at that edge and the footer says so. */
+  .cli-pane { position: relative; }
+  .cli-pane::before, .cli-pane::after { content: ""; position: absolute; display: none; pointer-events: none; }
+  .cli-pane::before { inset: 0 0 0 auto; width: 48px; background: linear-gradient(to right, transparent, var(--terminal-surface)); }
+  .cli-pane::after { inset: auto 0 0 0; height: 28px; background: linear-gradient(to bottom, transparent, var(--terminal-surface)); }
+  [data-overflow="true"] .cli-pane::before, [data-overflow-y="true"] .cli-pane::after { display: block; }
+  .cli-scroll-hint { display: none; color: light-dark(#f2f8ed, var(--dark-text)); font-weight: 600; }
+  [data-overflow="true"] .cli-scroll-hint, [data-overflow-y="true"] .cli-scroll-hint { display: inline; }
+  [data-overflow="true"] .cli-note, [data-overflow-y="true"] .cli-note { display: none; }
+  .hint-sideways, [data-overflow="true"] .hint-down { display: none; }
+  [data-overflow="true"] .hint-sideways { display: inline; }
+  pre { -webkit-font-smoothing: antialiased; }
+  @media (min-width: 700px) and (max-width: 899px) { pre { padding-inline: 12px; font-size: 11px; } }
+  @media (min-width: 700px) { pre { height: 304px; } }
+  .cli-state { color: var(--terminal-accent); }
+  [data-state=risk] .cli-state, [data-state=error] .cli-state { color: #ffc9aa; }
+  ol { margin: 0; padding: 0; list-style: none; }
+  li button { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 12px 5px; border: 0; color: light-dark(#d1dfd3, var(--dark-muted)); background: transparent; text-align: left; font-size: var(--text-body); line-height: 1.4; }
+  li button[aria-current=step] { color: light-dark(#ffffff, var(--dark-text)); font-weight: 600; }
+  li button[aria-current=step] .step-index { color: var(--terminal-accent); }
+  li button:hover { color: white; }
+  li button:focus-visible, pre:focus-visible { outline: 3px solid var(--terminal-accent); outline-offset: -3px; }
+  .step-index { width: 28px; font-family: var(--font-mono); font-size: var(--text-small); }
+  .story-detail, .cli-caption { color: light-dark(#d1dfd3, var(--dark-muted)); font-size: var(--text-body); line-height: 1.6; text-wrap: pretty; }
+  .cli-caption { max-width: 78ch; margin-top: 24px; font-size: var(--text-small); }
+  /* On wide screens the steps become a row of tabs above a full-width terminal, so wide CLI tables fit without sideways scrolling. */
+  /* The steps are tabs above the terminal at every width, with the one-line result directly under them, so the point of each step is readable even when the CLI table is wider than the screen. */
+  .cli-story { order: -1; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 12px; }
+  .story-detail { grid-column: 1 / -1; }
+  ol { display: contents; }
+  li { border-top: 2px solid light-dark(#4a5247, var(--dark-line)); border-bottom: 0; }
+  li:has(button[aria-current=step]) { border-top-color: var(--terminal-accent); }
+  li button { align-items: baseline; gap: 10px; min-height: 52px; padding: 12px 4px; }
+  .story-detail { margin-top: 12px; min-height: 3.2em; color: light-dark(#f0f6ee, var(--dark-text)); }
+  @media (min-width: 700px) {
+    .cli-story { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0 16px; }
+    .story-detail { min-height: 1.6em; }
+  }
+  @media (max-width:760px) {
+    pre { padding: 16px; }
+  }
 </style>
