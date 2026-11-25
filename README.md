@@ -23,9 +23,9 @@
   <a href="./CONTRIBUTING.md">Contribute</a>
 </p>
 
-[![Watch ProfitCtl compare revenue, operating margin, and cost per user in 30 seconds.](./website/public/images/profitctl-demo-v2.jpg)](https://profitctl.com/#watch)
+[![Watch ProfitCtl compare revenue, operating margin, and cost per user in 30 seconds.](./website/public/images/profitctl-demo-v2.jpg)](https://profitctl.com/media/profitctl-demo-v2.mp4)
 
-**[Watch the 30-second demo](https://profitctl.com/#watch)** · Actual ProfitCtl output using illustrative saved scenarios.
+**[Watch the 30-second demo](https://profitctl.com/media/profitctl-demo-v2.mp4)** · Actual ProfitCtl output using illustrative saved scenarios.
 
 ## From an assumption to a decision you can defend
 

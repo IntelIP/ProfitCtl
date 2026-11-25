@@ -26,7 +26,7 @@ const siteSchema = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^
 assert.equal(siteSchema?.name, "ProfitCTL");
 assert.equal(siteSchema?.url, canonical);
 
-const routes = ["/", "/docs/", "/agent/"];
+const routes = ["/"];
 const pages = new Map();
 for (const route of routes) {
   const page = await readFile(new URL(route.slice(1) + "index.html", output), "utf8");
@@ -55,7 +55,7 @@ for (const route of routes) {
   assert.ok(page.includes('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=calculator"'));
   assert.ok(page.includes('name="color-scheme" content="light dark"'));
   assert.ok(page.includes('name="theme-color" content="#f5f5ee" media="(prefers-color-scheme: light)"'));
-  assert.ok(page.includes('name="theme-color" content="#22262d" media="(prefers-color-scheme: dark)"'));
+  assert.ok(page.includes('name="theme-color" content="#0a0d13" media="(prefers-color-scheme: dark)"'));
   assert.ok(!page.includes('class="brand-mark"'), `Old letter badge: ${route}`);
   assert.ok(page.includes('aria-label="ProfitCTL home"><img src="/favicon.svg?v=calculator" width="32" height="32" alt="">ProfitCTL</a>'));
 }

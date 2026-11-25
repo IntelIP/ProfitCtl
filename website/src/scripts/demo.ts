@@ -66,7 +66,7 @@ export function initializeDemo() {
         setText(`[data-${name}-margin]`, percent(option.margin));
         setText(`[data-${name}-unit]`, money(option.unitCost, 2));
         const bar = demo.querySelector<HTMLElement>(`[data-${name}-bar]`)!;
-        bar.style.width = `${Math.min(100, option.cost / result.revenue * 100)}%`;
+        bar.style.width = `${Math.max(0, Math.min(100, option.margin))}%`;
       }
       const verdict = demo.querySelector<HTMLElement>("[data-verdict]")!;
       verdict.dataset.state = result.passes ? "pass" : "risk";
@@ -104,18 +104,9 @@ export function initializeDemo() {
     } catch {
       copyButton.textContent = "Select the command to copy";
     }
+    // Return to the resting label so the button can confirm a second copy.
+    window.setTimeout(() => { copyButton.textContent = "Copy command"; }, 2500);
   });
 
-  if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    document.querySelectorAll("[data-reveal]").forEach((element) => observer.observe(element));
-  }
   update();
 }

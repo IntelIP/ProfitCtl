@@ -1,8 +1,7 @@
-<section class="site-shell video-overview" id="watch" aria-labelledby="video-heading">
-  <header class="video-heading">
-    <div><p class="eyebrow">Video overview</p><h2 id="video-heading">A pilot can hide the cost of growth.</h2></div>
-    <p>Watch a 30-second comparison. Revenue rises in a pilot while operating margin falls. The recurring numbers tell a different story.</p>
-  </header>
+---
+// Embedded in the Docs page beside the pilot example it illustrates.
+---
+<div class="video-overview" id="watch">
   <div class="video-frame">
     <video
       id="overview-video"
@@ -16,10 +15,10 @@
       width="1920"
       height="1080"
       poster="/images/profitctl-demo-v2.jpg"
-      aria-label="ProfitCtl illustrative scenario comparison"
+      aria-label="ProfitCTL illustrative scenario comparison"
       aria-describedby="video-description"
     >
-      <p>ProfitCtl compares revenue, operating margin, and cost per user across saved scenarios.</p>
+      <p>ProfitCTL compares revenue, operating margin, and cost per user across saved scenarios.</p>
     </video>
     <button class="video-toggle" type="button" hidden aria-controls="overview-video" aria-label="Play animation" title="Play animation">
       <svg class="pause-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 3h3v10H4zm5 0h3v10H9z" /></svg>
@@ -28,7 +27,7 @@
   </div>
   <p class="video-error" role="status" hidden>The animation could not load. Use the play control to retry.</p>
   <p class="visually-hidden" id="video-description">In these illustrative saved scenarios, the steady-state example has $2,000 in revenue, a 95% operating margin, and $2.00 cost per user. The pilot has $6,500 in revenue, a 69% operating margin, and $12.40 cost per user. Recurring revenue is $2,000 in both. These are sample figures, not customer results.</p>
-</section>
+</div>
 
 <script>
   const video = document.querySelector<HTMLVideoElement>("#overview-video");
@@ -88,19 +87,15 @@
 </script>
 
 <style>
-  .video-overview { display: grid; grid-template-columns: minmax(245px,.7fr) minmax(0,1.35fr); align-items: center; gap: clamp(32px,7vw,104px); padding-block: clamp(72px,8.5vw,140px); }
-  .eyebrow { color: var(--accent-ink); font-size: 14px; font-weight: 600; line-height: 1.5; }
-  h2 { margin-top: 15px; font-size: clamp(38px,4.4vw,68px); line-height: 1.03; font-weight: 550; letter-spacing: -.026em; word-spacing: .04em; text-wrap: balance; }
-  .video-heading > p { max-width: 39ch; margin-top: 20px; font-size: 17px; line-height: 1.57; color: var(--muted); text-wrap: pretty; }
-  .video-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 5px; background: var(--tint); }
+  .video-overview { margin-top: 24px; scroll-margin-top: 110px; }
+  .video-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--tint); }
   .video-player { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-  .video-toggle { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: var(--panel); cursor: pointer; }
+  .video-toggle { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: #f5f5ee; background: var(--icon-ink); cursor: pointer; }
   .video-toggle[hidden], .video-error[hidden], .video-toggle[data-playing="true"] .play-icon, .video-toggle:not([data-playing="true"]) .pause-icon { display: none; }
-  .video-toggle:hover { color: var(--accent-ink); }
+  .video-toggle:hover { background: #3a4136; }
   .video-toggle:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 3px; }
-  .video-error { grid-column: 1 / -1; color: var(--risk); font-size: 14px; line-height: 1.6; }
+  .video-error { margin-top: 8px; color: var(--risk); font-size: var(--text-small); line-height: 1.6; }
   @media (max-width:760px) {
-    .video-overview { grid-template-columns: minmax(0,1fr); }
     .video-toggle { right: 8px; bottom: 8px; }
   }
 </style>

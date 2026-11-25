@@ -38,6 +38,14 @@ export function initializeTerminalDemo() {
       milliseconds -= performance.now() - start;
     }
   }
+  const pane = root.querySelector<HTMLElement>("pre")!;
+  // Tells the styles when the output is wider than the terminal, so they can show a scroll cue.
+  function measureOverflow() {
+    root!.dataset.overflow = String(pane.scrollWidth > pane.clientWidth + 1);
+    root!.dataset.overflowY = String(pane.scrollHeight > pane.clientHeight + 1 && pane.scrollTop + pane.clientHeight < pane.scrollHeight - 1);
+  }
+  window.addEventListener("resize", measureOverflow);
+  pane.addEventListener("scroll", measureOverflow, { passive: true });
   function update() {
     playback.dispatchEvent(new Event("change"));
   }
@@ -68,6 +76,8 @@ export function initializeTerminalDemo() {
         detail.textContent = step.detail;
         command.textContent = "$ ";
         output.textContent = "";
+        pane.scrollTo(0, 0);
+        measureOverflow();
         root!.dataset.state = "running";
         const text = `profitctl ${step.args.join(" ")}`;
         if (reducedMotion.matches) command.textContent += text;
@@ -80,6 +90,7 @@ export function initializeTerminalDemo() {
           await wait(reducedMotion.matches ? 1 : 45, signal);
           output.textContent += line + "\n";
         }
+        measureOverflow();
         const marginFailed = step.args[0] === "simulate" && result.exitCode === 1;
         root!.dataset.state = marginFailed ? "risk" : "pass";
         status.textContent = marginFailed ? "Margin target failed" : step.args[0] === "compare" ? "Comparison complete" : "Command complete";
